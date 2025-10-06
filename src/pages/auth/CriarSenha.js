@@ -47,7 +47,6 @@ export default function CriarSenha({ route }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // Aqui você pode passar dados ou fazer requisição para API
       navigation.navigate('Login');
     }, 2000);
   };
@@ -107,6 +106,12 @@ export default function CriarSenha({ route }) {
         loading={loading}
         variant="primary"
       />
+
+      <CustomButton
+              title="Teste Navegar Login"
+              onPress={() => navigation.navigate('Login')}
+              variant="secondary"
+            />
     
       <StatusBar style="auto" />
     </View>

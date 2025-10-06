@@ -102,7 +102,7 @@ export default function Login({ onLogin }) {
 
       <CustomButton
         title="Criar Conta"
-        onPress={() => navigation.navigate('CriarSenha')}
+        onPress={() => navigation.navigate('CriarConta')}
         variant="secondary"
       />
 

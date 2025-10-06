@@ -1,52 +1,60 @@
-// screens/EsqueceuSenha/index.js
+// screens/CriarConta/index.js
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-// Import de Componentes
+//Import de Componentes
 import Logo from '../../components/Logo';
 import CustomInput from '../../components/CustomInput';
 import CustomButton from '../../components/CustomButton';
 import ErrorMessage from '../../components/ErrorMessage';
 
-export default function EsqueceuSenha() {
+export default function CriarConta({ route }) {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleContinue = () => {
-    // Validação de campo vazio
-    if (!email) {
-      setError("Por favor, preencha o email.");
+  const handleCreatePress = () => {
+    if (!email || !fullName) {
+      setError("Por favor, preencha todos os campos.");
       return;
     }
 
-    // Validação básica de email
+    //Validação básica de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Por favor, insira um email válido.");
       return;
     }
 
-    // Limpa erro e simula envio
+    //Validação de nome (mínimo 3 caracteres)
+    if (fullName.trim().length < 3) {
+  setError("O nome deve ter pelo menos 3 caracteres.");
+  return;
+}
+
+if (/\d/.test(fullName)) {
+  setError("O nome não deve conter números.");
+  return;
+}
+
+
+    //Simula loading e navega para criar senha
     setError("");
     setLoading(true);
-    
     setTimeout(() => {
       setLoading(false);
-      // Navega para a tela de código de segurança
-      navigation.navigate('CodigoDeSeguranca');
-    }, 2000);
+      navigation.navigate('CriarSenha');
+    }, 1000);
   };
 
   return (
     <View style={styles.container}>
       <Logo />
-
-      <Text style={styles.textLogin}>Esqueceu sua Senha?</Text>
-
+      <Text style={styles.textTitle}>Criar Conta</Text>
       <View style={styles.spacer} />
 
       <CustomInput
@@ -56,28 +64,29 @@ export default function EsqueceuSenha() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      
+      <CustomInput
+        placeholder="Nome Completo"
+        value={fullName}
+        onChangeText={setFullName}
+        autoCapitalize="words"
+      />
 
       <ErrorMessage message={error} />
-      
-      <View style={styles.spacer} />
-      <View style={styles.spacer} />
-      <View style={styles.spacer} />  
-      <View style={styles.spacer} />  
-      <View style={styles.spacer} />
-      
+
       <CustomButton
         title="Continue"
-        onPress={handleContinue}
+        onPress={handleCreatePress}
         loading={loading}
         variant="primary"
       />
 
       <CustomButton
-              title="Teste Navegar Login"
-              onPress={() => navigation.navigate('Login')}
-              variant="secondary"
-            />
-    
+        title="Já tenho uma conta"
+        onPress={() => navigation.navigate('Login')}
+        variant="secondary"
+      />
+
       <StatusBar style="auto" />
     </View>
   );
@@ -94,7 +103,7 @@ const styles = StyleSheet.create({
   spacer: { 
     height: 30 
   },
-  textLogin: { 
+  textTitle: { 
     fontSize: 30, 
     color: '#1F41BB', 
     fontWeight: 'bold',
