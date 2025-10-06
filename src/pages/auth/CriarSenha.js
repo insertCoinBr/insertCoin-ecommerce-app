@@ -1,55 +1,112 @@
+// screens/CriarSenha/index.js
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  Image,
-  TouchableOpacity, 
-  TextInput,
-  ActivityIndicator
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importa o hook de navegação
+import { StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
+//Import de Componentes
+import Logo from '../../components/Logo';
+import CustomInput from '../../components/CustomInput';
+import CustomButton from '../../components/CustomButton';
+import ErrorMessage from '../../components/ErrorMessage';
+import PasswordRequirement from '../../components/PasswordRequirement';
 
 export default function CriarSenha({ route }) {
-  const navigation = useNavigation(); // Inicializa o hook
+  const navigation = useNavigation();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  // Validações de senha
+  const hasMinLength = password.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+
+  const handleContinue = () => {
+    if (!password || !confirmPassword) {
+      setError("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setError("A senha não atende aos requisitos mínimos.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      // Navega para a tela de Login após criar a senha
+      // Aqui você pode passar dados ou fazer requisição para API
       navigation.navigate('Login');
     }, 2000);
   };
 
   return (
     <View style={styles.container}>
+      <Logo />
 
-      <Image source={require('../../../assets/InsertCoin.png')} style={{ width: 119, height: 142 }} />
-
-      <Text style={styles.textLogin}>Cria Sua Nova Senha</Text>
+      <Text style={styles.textLogin}>Crie Sua Nova Senha</Text>
 
       <View style={styles.spacer} />
 
-      <TextInput style={styles.input} placeholder="Senha" secureTextEntry={true} />
-      <TextInput style={styles.input} placeholder="Confirme sua Senha" secureTextEntry={true} />
+      <CustomInput 
+        placeholder="Senha" 
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry={true}
+        autoCapitalize="none"
+      />
       
-      <Text style={styles.textLink2}>Mínimo de 8 caracteres</Text>
-      <Text style={styles.textLink2}>Pelo menos 1 letra maiúscula</Text>
-      <Text style={styles.textLink2}>Pelo menos 1 letra minúscula</Text>
-      <Text style={styles.textLink2}>Pelo menos 1 número</Text>
-      <Text style={styles.textLink2}>Pelo menos 1 caractere especial</Text>
+      <CustomInput 
+        placeholder="Confirme sua Senha" 
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry={true}
+        autoCapitalize="none"
+      />
+
+      <ErrorMessage message={error} />
       
-      <TouchableOpacity style={styles.buttonLogar} onPress={handleLogin} disabled={loading}>
-        {/* CORREÇÃO: Mostra o ActivityIndicator ou o Texto baseado no estado 'loading' */}
-        {loading ? (
-          <ActivityIndicator size="small" color="#ffffffff" />
-        ) : (
-          <Text style={styles.buttonLogarText}>Continue</Text>
-        )}
-      </TouchableOpacity>
+      <View style={styles.requirementsContainer}>
+        <PasswordRequirement 
+          text="Mínimo de 8 caracteres" 
+          isValid={hasMinLength} 
+        />
+        <PasswordRequirement 
+          text="Pelo menos 1 letra maiúscula" 
+          isValid={hasUpperCase} 
+        />
+        <PasswordRequirement 
+          text="Pelo menos 1 letra minúscula" 
+          isValid={hasLowerCase} 
+        />
+        <PasswordRequirement 
+          text="Pelo menos 1 número" 
+          isValid={hasNumber} 
+        />
+        <PasswordRequirement 
+          text="Pelo menos 1 caractere especial" 
+          isValid={hasSpecialChar} 
+        />
+      </View>
+      
+      <CustomButton
+        title="Continue"
+        onPress={handleContinue}
+        loading={loading}
+        variant="primary"
+      />
     
       <StatusBar style="auto" />
     </View>
@@ -64,59 +121,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 50,
   },
-  spacer: { height: 30 },
+  spacer: { 
+    height: 30 
+  },
   textLogin: { 
     fontSize: 30, 
     color: '#1F41BB', 
     fontWeight: 'bold',
     marginTop: 58,
   },
-  input: { 
-    margin: 10,
-    height: 60, 
-    width: '100%', 
-    marginTop: 30, 
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    fontSize: 16,
-    borderWidth: 2, // Em vez de 'border'
-    borderColor: '#1F41BB', // Em vez de 'border'
-    backgroundColor: '#F1F4FF', // Em vez de 'background'
-  },
-  buttonEsqueceu: { 
-    marginTop: 10, 
-    padding: 10, 
-    alignSelf: 'flex-end', // Posiciona o botão à direita
-  },
-  buttonLogar: { 
-    marginTop: 20, 
-    padding: 10, 
-    backgroundColor: '#1F41BB', 
-    borderRadius: 10,
+  requirementsContainer: {
     width: '100%',
-    fontSize: 20,
-    height: 60, // Altura fixa para não mudar com o loading
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // --- ESTILOS NOVOS PARA OS TEXTOS ---
-  buttonLogarText: {
-    color: '#ffffff', // Cor branca para o texto do botão de logar
-    fontWeight: 'bold',
-    fontSize: 20,
-  },
-  buttonCriarConta: { 
-    marginTop: 10, 
-    padding: 10,
-    
-  },
-  textLink: {
-    color: '#1F41BB',
-    fontSize: 16,  // Cor azul para os links "Esqueceu Senha" e "Criar Conta"
-  },
-  textLink2: {
-    alignSelf: 'flex',
-    color: '#1F41BB',
-    fontSize: 16,  // Cor azul para os links "Esqueceu Senha" e "Criar Conta"
+    marginTop: 15,
+    marginBottom: 10,
+    paddingLeft: 5,
   },
 });
