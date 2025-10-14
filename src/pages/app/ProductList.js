@@ -1,58 +1,114 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, StyleSheet, ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ProductCard from "../../components/ProductCard";
+
+// COMPONENTES
+import SearchHeader from '../../components/SearchHeader';
+import CarouselDestaques from '../../components/CarouselDestaques';
+import FilterBar from '../../components/FilterBar';
+import ProductGrid from '../../components/ProductGrid';
+import BottomTabBar from '../../components/BottomTabBar';
+
+// HOOKS
+import useFontLoader from '../../hooks/useFontLoader';
+
+// SERVIÇOS
 import { getProdutosList } from "../../services/produtosService";
 
-// PALETA DE CORES
 const COLORS = {
-  background: "#F7F8FA",
+  background: "#1A1027",
   primary: "#4C38A4",
-  textDark: "#333333",
-  textLight: "#FFFFFF",
-  inactive: "#EAEAEA",
+  textColors: "#FFFFFF",
 };
 
 export default function ProductList({ navigation }) {
   const [produtosList, setProdutosList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+  const [destaques, setDestaques] = useState([]);
+  const [filtroAtivo, setFiltroAtivo] = useState('Todos');
+  const [precoOrdem, setPrecoOrdem] = useState('asc');
+  const [searchText, setSearchText] = useState('');
+  const [activeTab, setActiveTab] = useState('Home'); 
+
+  const fontLoaded = useFontLoader();
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (searchText.trim() === '') {
+      setFilteredList(produtosList);
+    } else {
+      const filtered = produtosList.filter(item =>
+        item.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchText.toLowerCase())
+      );
+      setFilteredList(filtered);
+    }
+  }, [searchText, produtosList]);
 
   async function fetchData() {
     setLoading(true);
     const response = await getProdutosList();
     setProdutosList(response);
     setFilteredList(response);
-    const categoriasUnicas = [
-      ...new Set(response.map((produto) => produto.category)),
-    ];
-    setCategorias(categoriasUnicas);
+    setDestaques(response.slice(0, 5));
     setLoading(false);
   }
 
-  useEffect(() => {
-    if (categoriaSelecionada) {
-      setFilteredList(
-        produtosList.filter((produto) => produto.category === categoriaSelecionada)
-      );
-    } else {
-      setFilteredList(produtosList);
+  const handleFiltro = (filtro) => {
+    if (filtro === 'Preco' && filtroAtivo === 'Preco') {
+      const novaOrdem = precoOrdem === 'asc' ? 'desc' : 'asc';
+      setPrecoOrdem(novaOrdem);
+      
+      let lista = [...produtosList];
+      lista.sort((a, b) => novaOrdem === 'asc' ? a.price - b.price : b.price - a.price);
+      setFilteredList(lista);
+      return;
     }
-  }, [categoriaSelecionada, produtosList]);
+    
+    setFiltroAtivo(filtro);
+    let lista = [...produtosList];
+    
+    switch(filtro) {
+      case 'Preco':
+        setPrecoOrdem('asc');
+        lista.sort((a, b) => a.price - b.price);
+        break;
+      case 'Categoria':
+        lista.sort((a, b) => a.category.localeCompare(b.category));
+        break;
+      case 'Plataforma':
+        lista.sort((a, b) => (b.rating?.rate || 0) - (a.rating?.rate || 0));
+        break;
+      case 'Todos':
+      default:
+        setPrecoOrdem('asc');
+        break;
+    }
+    
+    setFilteredList(lista);
+  };
+
+  const handleProductPress = (produto) => {
+    navigation.navigate("ProductDetail", { produto });
+  };
+
+  const handleTabPress = (route, tabName) => {
+    setActiveTab(tabName);
+    navigation.navigate(route);
+  };
+
+  if (!fontLoaded) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size={"large"} color={COLORS.primary} />
+        <Text style={styles.loadingText}>Carregando recursos...</Text>
+      </View>
+    );
+  }
 
   if (loading && produtosList.length === 0) {
     return (
@@ -64,64 +120,40 @@ export default function ProductList({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterContainer}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              !categoriaSelecionada && styles.filterButtonSelected,
-            ]}
-            onPress={() => setCategoriaSelecionada(null)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                !categoriaSelecionada && styles.filterTextSelected,
-              ]}
-            >
-              Todos
-            </Text>
-          </TouchableOpacity>
-          {categorias.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.filterButton,
-                categoriaSelecionada === cat && styles.filterButtonSelected,
-              ]}
-              onPress={() => setCategoriaSelecionada(cat)}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  categoriaSelecionada === cat && styles.filterTextSelected,
-                ]}
-              >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      <SearchHeader
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        onProfilePress={() => navigation.navigate("ListIntegrantes")}
+        placeholder="Buscar produtos..."
+      />
 
-      <FlatList
-        style={styles.list}
-        data={filteredList}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <ProductCard
-            produto={item}
-            onPress={() =>
-              navigation.navigate("ProductDetail", { produto: item })
-            }
-          />
-        )}
-        numColumns={2}
-        contentContainerStyle={{ paddingVertical: 10 }}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <CarouselDestaques 
+          destaques={destaques}
+          onItemPress={handleProductPress}
+          borderType="black"
+          centerColor={COLORS.primary}
+        />
+
+        <FilterBar 
+          filtroAtivo={filtroAtivo}
+          onFiltroPress={handleFiltro}
+          precoOrdem={precoOrdem}
+        />
+
+        <ProductGrid 
+          produtos={filteredList}
+          onItemPress={handleProductPress}
+          searchText={searchText}
+          borderType="black"
+          centerColor={COLORS.primary}
+        />
+      </ScrollView>
+
+      {/* BOTTOM TAB BAR */}
+      <BottomTabBar 
+        activeTab={activeTab}
+        onTabPress={handleTabPress}
       />
     </SafeAreaView>
   );
@@ -138,33 +170,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: COLORS.background,
   },
-  filterContainer: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  filterButton: {
-    backgroundColor: COLORS.inactive,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  filterButtonSelected: {
-    backgroundColor: COLORS.primary,
-  },
-  filterText: {
-    color: COLORS.textDark,
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  filterTextSelected: {
-    color: COLORS.textLight,
-    fontWeight: "600",
-  },
-  list: {
-    flex: 1,
-    paddingHorizontal: 8,
+  loadingText: {
+    fontSize: 16,
+    color: COLORS.textColors,
+    marginTop: 16,
+    fontFamily: 'VT323',
   },
 });

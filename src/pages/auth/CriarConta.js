@@ -13,12 +13,12 @@ import ErrorMessage from '../../components/ErrorMessage';
 export default function CriarConta({ route }) {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleCreatePress = () => {
-    if (!email || !fullName) {
+    if (!email || !username) {
       setError("Por favor, preencha todos os campos.");
       return;
     }
@@ -31,12 +31,12 @@ export default function CriarConta({ route }) {
     }
 
     //Validação de nome (mínimo 3 caracteres)
-    if (fullName.trim().length < 3) {
+    if (username.trim().length < 3) {
   setError("O nome deve ter pelo menos 3 caracteres.");
   return;
 }
 
-if (/\d/.test(fullName)) {
+if (/\d/.test(username)) {
   setError("O nome não deve conter números.");
   return;
 }
@@ -66,9 +66,9 @@ if (/\d/.test(fullName)) {
       />
       
       <CustomInput
-        placeholder="Nome Completo"
-        value={fullName}
-        onChangeText={setFullName}
+        placeholder="Nome de Usuário"
+        value={username}
+        onChangeText={setUsername}
         autoCapitalize="words"
       />
 

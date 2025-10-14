@@ -1,8 +1,8 @@
-// screens/EsqueceuSenha/index.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from "../../context/AuthContext";
 
 // Import de Componentes
 import Logo from '../../components/Logo';
@@ -12,7 +12,7 @@ import ErrorMessage from '../../components/ErrorMessage';
 
 export default function EsqueceuSenha() {
   const navigation = useNavigation();
-  const [email, setEmail] = useState("");
+ const { email, setEmail } = useContext(AuthContext);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

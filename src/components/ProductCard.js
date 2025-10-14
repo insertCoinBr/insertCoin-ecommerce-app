@@ -1,18 +1,19 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 
-// Paleta de cores para consistência
+// Paleta de cores para consistência com tema RPG
 const COLORS = {
   white: '#FFFFFF',
+  colorValue: '#3cff00ff',
   primary: '#4C38A4',
   textDark: '#212121',
-  textMuted: '#666666',
-  border: '#F0F0F0',
+  textMuted: '#9c9898ff',
+  divider: '#E0E0E0',
 };
 
-export default function ProductCard({ produto, onPress }) {
+export default function ProductCard({ produto}) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
+    <View style={styles.card}>
       <View style={styles.imageContainer}>
         <Image 
           source={{ uri: produto.image }} 
@@ -21,59 +22,59 @@ export default function ProductCard({ produto, onPress }) {
         />
       </View>
       
+      <View style={styles.divider} />
+      
       <View style={styles.contentContainer}>
         <Text style={styles.name} numberOfLines={2}> 
           {produto.title}
         </Text>
         <Text style={styles.price}>R$ {produto.price.toFixed(2)}</Text>
-        <Text style={styles.category}>{produto.category}</Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    margin: 8,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 1,
-    
+    backgroundColor: 'transparent',
   },
   imageContainer: {
     width: '100%',
-    aspectRatio: 1, 
-    padding: 10, 
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    height: 100,
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
   },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.divider,
+    marginHorizontal: 8,
+    marginVertical: 4,
+  },
   contentContainer: {
-    padding: 12,
+    padding: 8,
+    paddingTop: 4,
   },
   name: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textDark,
-    marginBottom: 8,
-    minHeight: 38, 
+    fontFamily: "VT323",
+    fontSize: 16,
+    color: COLORS.white,
+    marginBottom: 6,
+    minHeight: 36,
+    lineHeight: 16,
   },
   price: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  category: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    fontFamily: "VT323",
+    fontSize: 20,
+    color: COLORS.colorValue,
+    marginBottom: 3,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
 });

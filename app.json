@@ -1,29 +1,31 @@
 {
   "expo": {
-    "name": "SiteEcommerce",
-    "slug": "SiteEccommerce",
+    "name": "InsertCoin Ecommerce",
+    "slug": "InsertCoinEcommerce",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/LogoInsetCoin1.png",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "image": "./assets/LogoInsetCoin1.png",
+      "resizeMode": "contain"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/LogoInsetCoin1.png"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/LogoInsetCoin1.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-video"
+    ]
   }
 }

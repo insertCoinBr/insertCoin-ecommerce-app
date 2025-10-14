@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from "../../context/AuthContext";
 
 //Import de Componentes
 import Logo from '../../components/Logo';
@@ -12,6 +13,7 @@ export default function CodigoDeSeguranca({ route }) {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const { email } = useContext(AuthContext);
 
   const isCodeComplete = code.every(digit => digit !== "");
 
@@ -37,7 +39,7 @@ export default function CodigoDeSeguranca({ route }) {
 
       <Text style={styles.textLogin}>Código de Segurança</Text>
       <Text style={styles.textLink2}>Código enviado para seu email:</Text>
-      <Text style={styles.textLink2}>anderson@insertcoin.com</Text>
+      <Text style={styles.textLink2}>{email}</Text>
 
       <View style={styles.spacer} />
 
@@ -118,5 +120,8 @@ const styles = StyleSheet.create({
     color: '#626262',
     fontWeight: 'bold',
     fontSize: 20,
+  },
+  spacer: { 
+    height: 30 
   },
 });
