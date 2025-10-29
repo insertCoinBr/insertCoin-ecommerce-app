@@ -1,20 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function HomeAdm({route}) {
+export default function HomeAdm({ route, onLogout }) {
   const navigation = useNavigation();
+  const [searchText, setSearchText] = useState("");
 
   const menuItems = [
-  { title: "Employees", route: "EmployeesMenu" },
-  { title: "Carts", route: "Carts" },
-  { title: "Clients", route: "Clients" },
-  { title: "Orders", route: "Orders" },
-  { title: "Products", route: "Products" },
-  { title: "Promotions", route: "Promotions" },
-  { title: "Notifications", route: "Notifications" },
-];
+    { title: "Employees", route: "EmployeesMenu" },
+    { title: "Carts", route: "Carts" },
+    { title: "Clients", route: "Clients" },
+    { title: "Orders", route: "Orders" },
+    { title: "Products", route: "Products" },
+    { title: "Promotions", route: "Promotions" },
+    { title: "Notifications", route: "Notifications" },
+  ];
+
+  const filteredItems = searchText
+    ? menuItems.filter(item =>
+        item.title.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : menuItems;
+
+  const handleMenuPress = (routeName) => {
+    console.log('Navegando para:', routeName);
+    navigation.navigate(routeName);
+  };
 
   return (
     <View style={styles.container}>
@@ -25,8 +37,11 @@ export default function HomeAdm({route}) {
           <Text style={styles.title}>InsertCoin</Text>
         </View>
 
-        <TouchableOpacity style={styles.clientButton}>
-          <Text style={styles.clientText}>Client</Text>
+        <TouchableOpacity 
+          style={styles.clientButton}
+          onPress={onLogout}
+        >
+          <Text style={styles.clientText}>Sair</Text>
         </TouchableOpacity>
       </View>
 
@@ -37,16 +52,18 @@ export default function HomeAdm({route}) {
           placeholder="Type to search"
           placeholderTextColor="#ccc"
           style={styles.input}
+          value={searchText}
+          onChangeText={setSearchText}
         />
       </View>
 
       {/* Menu */}
       <ScrollView style={{ marginTop: 15 }}>
-        {menuItems.map((item, index) => (
+        {filteredItems.map((item, index) => (
           <TouchableOpacity
             key={index}
             style={styles.menuItem}
-            onPress={() => navigation.navigate(item.route)} // ajuste conforme suas rotas
+            onPress={() => handleMenuPress(item.route)}
           >
             <Text style={styles.menuText}>{item.title}</Text>
             <Ionicons name="chevron-forward-outline" size={18} color="#aaa" />
@@ -118,9 +135,5 @@ const styles = StyleSheet.create({
   menuText: {
     color: "#fff",
     fontSize: 16,
-  },
-  footer: {
-    alignItems: "center",
-    marginTop: 30,
   },
 });
