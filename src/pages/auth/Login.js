@@ -15,8 +15,8 @@ import CustomInput from '../../components/CustomInput';
 import CustomButton from '../../components/CustomButton';
 import ErrorMessage from '../../components/ErrorMessage';
 
-export default function Login({ onLogin }) {
-   const navigation = useNavigation();
+export default function Login({ onLogin, onAdminLogin }) {
+  const navigation = useNavigation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -44,6 +44,11 @@ export default function Login({ onLogin }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdminPress = () => {
+    console.log('Navegando para área administrativa');
+    onAdminLogin();
   };
 
   const showValidLoginsAlert = () => {
@@ -87,7 +92,6 @@ export default function Login({ onLogin }) {
 
       <CustomButton 
         style={styles.buttonEsqueceu}
-        //textStyle={styles.textEsqueceu}
         title="Esqueceu Senha?"
         onPress={() => navigation.navigate('EsqueceuSenha')}
         variant="secondary"
@@ -119,8 +123,8 @@ export default function Login({ onLogin }) {
       />
 
       <CustomButton
-        title="adm"
-        onPress={() => navigation.navigate("HomeAdm")}
+        title="Área Administrativa"
+        onPress={handleAdminPress}
         variant="secondary"
       />
 
@@ -148,9 +152,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginTop: 10,
     padding: 10,
-  },
-  textEsqueceu: {
-    fontSize: 14,
-    textDecorationLine: 'underline',
   },
 });

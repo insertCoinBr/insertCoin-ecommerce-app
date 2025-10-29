@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AdminContainer from "../../components/admin/AdminContainer";
 import MenuItem from "../../components/admin/MenuItem";
 
-export default function EmployeesMenu({route, navigation}) {
+export default function EmployeesMenu({route}) {
   const navigation = useNavigation();
   const [isExpanded, setIsExpanded] = useState(false);
 

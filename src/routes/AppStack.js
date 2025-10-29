@@ -37,12 +37,7 @@ export default function AppStack({ onLogout }) {
       <Stack.Screen
         name="ProductDetail"
         component={ProductDetail}
-        options={{
-          title: "Detalhes do Produto",
-          headerStyle: { backgroundColor: "#4C38A4" },
-          headerTintColor: "#fff",
-          headerTitleAlign: "center",
-        }}
+        options={{headerShown: false}}
       />
 
       <Stack.Screen

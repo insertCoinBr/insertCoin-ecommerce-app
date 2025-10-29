@@ -11,12 +11,13 @@ import EditEmployeeForm from '../pages/admin/EditEmployeeForm';
 
 const Stack = createNativeStackNavigator();
 
-export default function AdmStack() {
+export default function AdmStack({ onLogout }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* ADICIONE ESTAS LINHAS AQUI ↓ */}
-      <Stack.Screen name="HomeAdm" component={HomeAdm} options={{ headerShown: false }}/>
-      <Stack.Screen name="EmployeesMenu" component={EmployeesMenu} options={{ headerShown: false }}/>
+      <Stack.Screen name="HomeAdm">
+        {(props) => <HomeAdm {...props} onLogout={onLogout} />}
+      </Stack.Screen>
+      <Stack.Screen name="EmployeesMenu" component={EmployeesMenu} />
       <Stack.Screen name="AddEmployee" component={AddEmployee} />
       <Stack.Screen name="RemoveEmployee" component={RemoveEmployee} />
       <Stack.Screen name="EditEmployee" component={EditEmployee} />
