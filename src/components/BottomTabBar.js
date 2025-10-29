@@ -17,7 +17,7 @@ const tabs = [
     name: 'Notification', 
     label: 'Notificação',
     icon: require('../../assets/IconsPixel/bellIcon.png'),
-    route: 'Notifications'
+    route: 'notifications'
   },
   { 
     name: 'Home', 
@@ -29,13 +29,13 @@ const tabs = [
     name: 'Orders', 
     label: 'Pedidos',
     icon: require('../../assets/IconsPixel/OrderIcon.png'),
-    route: 'Orders'
+    route: 'orders'
   },
   { 
     name: 'Cart', 
     label: 'Carrinho',
     icon: require('../../assets/IconsPixel/carIcon.png'),
-    route: 'Cart'
+    route: 'carts'
   },
 ];
 
@@ -44,7 +44,7 @@ function TabButton({ tab, isActive, onPress }) {
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
-      toValue: isActive ? 1.2 : 1,
+      toValue: isActive ? 1.3 : 0.8,
       friction: 5,
       tension: 40,
       useNativeDriver: true,
@@ -101,10 +101,11 @@ export default function BottomTabBar({ activeTab, onTabPress }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: 'absolut',
-    bottom: 0,
+    position: 'absolute',
+    bottom: '4%',
     alignSelf: 'center',
     alignItems: 'center',
+    
   },
   container: {
     flexDirection: 'row',
@@ -118,6 +119,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    
   },
   iconContainer: {
     width: 32,
@@ -138,10 +140,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   labelActive: {
-    fontSize: 20,
+    fontSize: 18,
     color: COLORS.textColor,
-    textShadowColor: '#000',
+    textShadowColor: '#000000ff',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
+    
+  },
+  iconActive: {
+    
+
   },
 });

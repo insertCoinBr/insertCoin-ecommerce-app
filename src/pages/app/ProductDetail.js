@@ -63,7 +63,9 @@ export default function ProductDetail({ route }) {
         <View style={styles.contentContainer}>
           <Text style={styles.category}>{product?.category}</Text>
           <Text style={styles.name}>{product?.title}</Text>
-          <Text style={styles.price}>R$ {product?.price.toFixed(2)}</Text>
+          <Text style={styles.price}>
+            R$ {Number(produto.price || 0).toFixed(2)}
+          </Text>
           
           <View style={styles.separator} />
           

@@ -18,7 +18,9 @@ export default function ProductCard({ produto}) {
         <Image 
           source={{ uri: produto.image }} 
           style={styles.image} 
-          resizeMode="contain"
+          //resizeMode="contain" //Mantém a proporção da imagem nao corta a imagem
+          //resizeMode="cover" //Ocupa todo o espaço porem corta a imagem
+          resizeMode="stretch" //Ocupa todo o espaço porem distorce a imagem
         />
       </View>
       
@@ -28,7 +30,9 @@ export default function ProductCard({ produto}) {
         <Text style={styles.name} numberOfLines={2}> 
           {produto.title}
         </Text>
-        <Text style={styles.price}>R$ {produto.price.toFixed(2)}</Text>
+        <Text style={styles.price}>
+  R$ {Number(produto.price || 0).toFixed(2)}
+</Text>
       </View>
     </View>
   );
@@ -41,14 +45,15 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: 100,
-    padding: 8,
+    height: '50%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
+    borderRadius: 8,
+    backgroundColor: COLORS.white,
   },
   divider: {
     height: 1,

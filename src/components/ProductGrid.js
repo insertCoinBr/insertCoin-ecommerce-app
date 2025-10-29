@@ -36,7 +36,7 @@ export default function ProductGrid({
     >
       <RPGBorder 
         width={(width / 2) - 24} 
-        height={220} 
+        height={221} 
         tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
@@ -70,7 +70,7 @@ export default function ProductGrid({
 
 const styles = StyleSheet.create({
   productsSection: {
-    marginBottom: 20,
+    marginBottom: 75,
   },
   sectionTitle: {
     fontFamily: "VT323",

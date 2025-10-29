@@ -1,65 +1,63 @@
-// src/components/SearchHeader.js
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RPGBorder from './RPGBorder';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const COLORS = {
-  primary: '#190b5cff',
+  primary: '#4C38A4',
   background: '#1A1027',
   cardBg: '#FFFFFF',
   textDark: '#333333',
-  shadow: '#000',
+  text: '#999',
+
 };
 
 export default function SearchHeader({ 
   searchText, 
   onSearchChange, 
   onProfilePress,
+  onSearchFocus,
   placeholder = "Buscar produtos...",
   showProfile = true,
   style
 }) {
   const searchWidth = showProfile ? screenWidth - 100 : screenWidth - 32;
 
+   const inputRef = useRef(null);
+
   return (
     <View style={[styles.header, style]}>
-
-      {/* BARRA DE PESQUISA */}
+      {/* BARRA DE PESQUISA COM RPGBORDER */}
       <RPGBorder 
         width={searchWidth} 
         height={50} 
         tileSize={8}
         centerColor={COLORS.cardBg}
-        borderType="white" // Padrão é black
+        borderType="white"
       >
         <View style={styles.searchContent}>
-          <Image 
-            source={require('../../assets/IconsPixel/iconSearch.png')}
-            style={styles.searchIcon}
-
-          />
+            <Image 
+              source={require('../../assets/IconsPixel/iconSearch.png')}
+              style={styles.searchIcon}
+            />
           <TextInput
             style={styles.searchInput}
             placeholder={placeholder}
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.text}
             value={searchText}
             onChangeText={onSearchChange}
-            id='Pesquisa'
+            onFocus={onSearchFocus}
           />
-          
         </View>
       </RPGBorder>
       
-      {/* BOTÃO DE PERFIL */}
+      {/* BOTÃO DE PERFIL SEM BORDA */}
       {showProfile && (
         <TouchableOpacity 
           onPress={onProfilePress}
           activeOpacity={0.7}
           style={styles.profileButton}
-          id='Perfil'
         >
           <Image
             source={require('../../assets/IconsPixel/iconUser.png')}
@@ -78,10 +76,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.background,
+    backgroundColor: "transparent",
     gap: 12,
   },
-  // CONTEÚDO DA BARRA DE PESQUISA
   searchContent: {
     flex: 1,
     flexDirection: 'row',
@@ -90,8 +87,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   searchIcon: {
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     marginRight: 8,
     resizeMode: 'contain',
   },
@@ -102,12 +99,6 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     height: '100%',
   },
-  clearButton: {
-    padding: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // BOTÃO DE PERFIL
   profileButton: {
     width: 50,
     height: 50,

@@ -34,7 +34,7 @@ export default function CarouselDestaques({
       style={styles.carouselItemWrapper}
     >
       <RPGBorder 
-        width={CAROUSEL_ITEM_WIDTH - 80} 
+        width={CAROUSEL_ITEM_WIDTH - 60} 
         height={240} 
         tileSize={10}
         centerColor={centerColor}
@@ -44,7 +44,7 @@ export default function CarouselDestaques({
           <Image
             source={{ uri: item.image }}
             style={styles.carouselImage}
-            resizeMode="contain"
+            resizeMode="stretch" //Ocupa todo o espaço porem distorce a imagem
           />
         </View>
       </RPGBorder>
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
   carouselImage: {
     width: "100%",
     height: "100%",
+    borderRadius: 8,
   },
   indicatorContainer: {
     flexDirection: "row",

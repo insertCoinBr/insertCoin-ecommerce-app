@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, StyleSheet, ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
 import SearchHeader from '../../components/SearchHeader';
@@ -30,12 +31,20 @@ export default function ProductList({ navigation }) {
   const [precoOrdem, setPrecoOrdem] = useState('asc');
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('Home'); 
+  const [filterBarY, setFilterBarY] = useState(0); // Posição do FilterBar
 
   const fontLoaded = useFontLoader();
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useFocusEffect(
+      useCallback(() => {
+        setActiveTab("Home");
+      }, [])
+    );
 
   useEffect(() => {
     if (searchText.trim() === '') {
@@ -101,6 +110,24 @@ export default function ProductList({ navigation }) {
     navigation.navigate(route);
   };
 
+  // Função para scroll quando clicar no campo de busca
+  const handleSearchFocus = () => {
+    if (filterBarY > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: filterBarY + 80, // abaixo do FilterBar
+          animated: true,
+        });
+      }, 300); 
+    }
+  };
+
+  // Captura a posição do FilterBar
+  const handleFilterBarLayout = (event) => {
+    const { y } = event.nativeEvent.layout;
+    setFilterBarY(y);
+  };
+
   if (!fontLoaded) {
     return (
       <View style={styles.loaderContainer}>
@@ -123,11 +150,17 @@ export default function ProductList({ navigation }) {
       <SearchHeader
         searchText={searchText}
         onSearchChange={setSearchText}
-        onProfilePress={() => navigation.navigate("ListIntegrantes")}
+        onSearchFocus={handleSearchFocus}
+        onProfilePress={() => navigation.navigate("Profile")}
         placeholder="Buscar produtos..."
       />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        ref={scrollViewRef} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <CarouselDestaques 
           destaques={destaques}
           onItemPress={handleProductPress}
@@ -135,11 +168,13 @@ export default function ProductList({ navigation }) {
           centerColor={COLORS.primary}
         />
 
-        <FilterBar 
-          filtroAtivo={filtroAtivo}
-          onFiltroPress={handleFiltro}
-          precoOrdem={precoOrdem}
-        />
+        <View onLayout={handleFilterBarLayout}>
+          <FilterBar 
+            filtroAtivo={filtroAtivo}
+            onFiltroPress={handleFiltro}
+            precoOrdem={precoOrdem}
+          />
+        </View>
 
         <ProductGrid 
           produtos={filteredList}
@@ -151,7 +186,7 @@ export default function ProductList({ navigation }) {
       </ScrollView>
 
       {/* BOTTOM TAB BAR */}
-      <BottomTabBar 
+      <BottomTabBar  
         activeTab={activeTab}
         onTabPress={handleTabPress}
       />
@@ -175,5 +210,8 @@ const styles = StyleSheet.create({
     color: COLORS.textColors,
     marginTop: 16,
     fontFamily: 'VT323',
+  },
+  scrollContent:{
+    paddingBottom: 100,
   },
 });

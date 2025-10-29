@@ -12,7 +12,7 @@ import ErrorMessage from '../../components/ErrorMessage';
 
 export default function EsqueceuSenha() {
   const navigation = useNavigation();
- const { email, setEmail } = useContext(AuthContext);
+  const { email, setEmail } = useContext(AuthContext);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

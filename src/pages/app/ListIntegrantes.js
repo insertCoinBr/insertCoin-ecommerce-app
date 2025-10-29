@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 // COMPONENTES
 import IntegranteCard from "../../components/IntegranteCard";
 import AnimatedCardList from "../../components/AnimatedCardList";
+import PageHeader from "../../components/PageHeader";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
@@ -65,7 +66,7 @@ const integrantes = [
   },
 ];
 
-export default function ListIntegrantes() {
+export default function ListIntegrantes({ navigation }) {
   const fontLoaded = useFontLoader();
 
   if (!fontLoaded) {
@@ -80,6 +81,11 @@ export default function ListIntegrantes() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <PageHeader 
+            onBackPress={() => navigation.goBack()} 
+            title="Creditos" 
+              />
+
       <View style={styles.container}>
         <AnimatedCardList
           data={integrantes}
