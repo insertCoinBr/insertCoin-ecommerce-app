@@ -7,14 +7,14 @@ export default function HomeAdm({route}) {
   const navigation = useNavigation();
 
   const menuItems = [
-    { title: "Employees", route: "Employees" },
-    { title: "Carts", route: "Carts" },
-    { title: "Clients", route: "Clients" },
-    { title: "Orders", route: "Orders" },
-    { title: "Products", route: "Products" },
-    { title: "Promotions", route: "Promotions" },
-    { title: "Notifications", route: "Notifications" },
-  ];
+  { title: "Employees", route: "EmployeesMenu" },
+  { title: "Carts", route: "Carts" },
+  { title: "Clients", route: "Clients" },
+  { title: "Orders", route: "Orders" },
+  { title: "Products", route: "Products" },
+  { title: "Promotions", route: "Promotions" },
+  { title: "Notifications", route: "Notifications" },
+];
 
   return (
     <View style={styles.container}>

@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 
 import AuthStack from "./AuthStack";
 import AppStack from "./AppStack";
+import AdmStack from "./AdmStack";
 
 export default function Routes() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,5 +18,6 @@ export default function Routes() {
 
       
     </NavigationContainer>
+  
   );
 }

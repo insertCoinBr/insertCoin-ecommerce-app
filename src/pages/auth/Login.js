@@ -120,7 +120,7 @@ export default function Login({ onLogin }) {
 
       <CustomButton
         title="adm"
-        onPress={() => navigation.navigate('HomeAdm')}
+        onPress={() => navigation.navigate("HomeAdm")}
         variant="secondary"
       />
 
