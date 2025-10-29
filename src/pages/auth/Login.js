@@ -118,6 +118,12 @@ export default function Login({ onLogin }) {
         variant="secondary"
       />
 
+      <CustomButton
+        title="adm"
+        onPress={() => navigation.navigate('HomeAdm')}
+        variant="secondary"
+      />
+
       <StatusBar style="auto" />
     </View>
   );

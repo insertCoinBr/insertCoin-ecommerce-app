@@ -6,7 +6,7 @@ import CodigoDeSeguranca from "../pages/auth/CodigoDeSeguranca";
 import EsqueceuSenha from "../pages/auth/EsqueceuSenha";
 import CriarSenha from "../pages/auth/CriarSenha";
 import CriarConta from "../pages/auth/CriarConta";
-
+import HomeAdm from "../pages/adm/homeAdm";
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +24,8 @@ export default function AuthStack({ onLogin }) {
       <Stack.Screen name="CriarSenha" component={CriarSenha} />
 
       <Stack.Screen name="CriarConta" component={CriarConta} />
+
+      <Stack.Screen name="HomeAdm" component={HomeAdm} options={{ headerShown: false }}/>
 
     </Stack.Navigator>
   );
