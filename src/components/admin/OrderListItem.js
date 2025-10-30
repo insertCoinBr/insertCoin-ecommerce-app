@@ -1,20 +1,20 @@
 import React from "react";
 import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 
-export default function CartListItem({ cart, onPress }) {
+export default function OrderListItem({ order, onPress }) {
   return (
-    <TouchableOpacity style={styles.cartItem} onPress={onPress}>
+    <TouchableOpacity style={styles.OrderItem} onPress={onPress}>
       <View style={styles.row}>
-        <Text style={styles.cartId}>{cart.id}</Text>
-        <Text style={styles.date}>{cart.date}</Text>
-        <Text style={styles.status}>{cart.status}</Text>
+        <Text style={styles.orderId}>{order.id}</Text>
+        <Text style={styles.date}>{order.date}</Text>
+        <Text style={styles.status}>{order.status}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  cartItem: {
+  OrderItem: {
     backgroundColor: "#0D1429",
     borderRadius: 8,
     padding: 15,
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  cartId: {
+  orderId: {
     color: "#fff",
     fontSize: 14,
     flex: 1,

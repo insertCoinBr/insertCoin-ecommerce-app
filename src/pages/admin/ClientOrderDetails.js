@@ -1,47 +1,23 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import InfoRow from "../../components/admin/InfoRow";
 
-export default function CartDetails() {
+export default function OrderDetails() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { cart } = route.params;
+  const { order, client } = route.params;
 
-  // Mock data - substitua com dados reais da sua API
-  const cartDetails = {
-    id: cart.id,
-    status: "Created",
+  const orderDetails = {
+    id: order.id,
+    status: "Completed",
     dateTime: "22/08/2025 - 10:30:24",
-    fullName: "Anderson Bohnem",
-    email: "andersonbohnem@insertcoin.com.br",
+    fullName: client ? client.name : "Anderson Bohnem",
+    email: client ? client.email : "andersonbohnem@insertcoin.com.br",
     totalPrice: "R$ 200,00",
     purchaseDetails: "Red Dead Redemption 2",
-  };
-
-  const handleDeleteCart = () => {
-    Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to delete this cart?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            // Aqui você faria a chamada à API para deletar o carrinho
-            Alert.alert("Success", "Cart deleted successfully", [
-              { text: "OK", onPress: () => navigation.goBack() }
-            ]);
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -49,7 +25,6 @@ export default function CartDetails() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
@@ -63,38 +38,24 @@ export default function CartDetails() {
         </View>
       </View>
 
-      {/* Title */}
-      <Text style={styles.title}>Cart</Text>
+      <Text style={styles.title}>Order</Text>
 
-      {/* Content */}
       <ScrollView 
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cart ID Card */}
         <View style={styles.idCard}>
-          <Text style={styles.idText}>{cartDetails.id}</Text>
+          <Text style={styles.idText}>{orderDetails.id}</Text>
         </View>
 
-        {/* Cart Details */}
-        <InfoRow label="Order Status:" value={cartDetails.status} />
-        <InfoRow label="Date and time:" value={cartDetails.dateTime} />
-        <InfoRow label="Full Name:" value={cartDetails.fullName} />
-        <InfoRow label="Email:" value={cartDetails.email} />
-        <InfoRow label="Total price:" value={cartDetails.totalPrice} />
-        <InfoRow label="Purchase details:" value={cartDetails.purchaseDetails} />
+        <InfoRow label="Order Status:" value={orderDetails.status} />
+        <InfoRow label="Date and time:" value={orderDetails.dateTime} />
+        <InfoRow label="Full Name:" value={orderDetails.fullName} />
+        <InfoRow label="Email:" value={orderDetails.email} />
+        <InfoRow label="Total price:" value={orderDetails.totalPrice} />
+        <InfoRow label="Purchase details:" value={orderDetails.purchaseDetails} />
       </ScrollView>
-
-      {/* Delete Button Fixed at Bottom */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={handleDeleteCart}
-        >
-          <Text style={styles.deleteButtonText}>Delete Cart</Text>
-        </TouchableOpacity>
-      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -152,25 +113,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   idText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  buttonContainer: {
-    paddingVertical: 10,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: "#1B254F",
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  deleteButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",

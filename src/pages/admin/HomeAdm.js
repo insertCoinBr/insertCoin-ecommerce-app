@@ -6,19 +6,23 @@ import { Ionicons } from "@expo/vector-icons";
 export default function HomeAdm({ route, onLogout }) {
   const navigation = useNavigation();
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(false);
-  const [isCartExpanded, setIsCartExpanded] = useState(false);  
+  const [isOrderExpanded, setIsOrderExpanded] = useState(false);
+  const [isClientsExpanded, setIsClientsExpanded] = useState(false);  
 
   const employeeOptions = [
     { title: "Add Employee", route: "AddEmployee" },
     { title: "Remove Employee", route: "RemoveEmployee" },
-    { title: "Edit Employee", route: "EditEmployee" },
+    { title: "View & Edit Employee", route: "EditEmployee" },
   ];
-  const cartOptions = [
-    { title: "View & Remove Cart", route: "Carts" },
+  const OrderOptions = [
+    { title: "View & Cancel Order", route: "Order" },
+  ];
+  const ClientsOptions = [
+    { title: "Add Client", route: "AddClient" },
+    { title: "Remove Client", route: "RemoveClient" },
+    { title: "View & Edit Client", route: "ViewEditClient" },
   ];
   const otherMenuItems = [
-    { title: "Clients", route: "Clients" },
-    { title: "Orders", route: "Orders" },
     { title: "Products", route: "Products" },
     { title: "Promotions", route: "Promotions" },
     { title: "Notifications", route: "Notifications" },
@@ -70,21 +74,47 @@ export default function HomeAdm({ route, onLogout }) {
                 </View>
               )}
 
-              {/* Cart Options Expandable */}
+              {/* Order Options Expandable */}
               <TouchableOpacity 
                 style={styles.expandableItem}
-                onPress={() => setIsCartExpanded(!isCartExpanded)}
+                onPress={() => setIsOrderExpanded(!isOrderExpanded)}
               >
-                <Text style={styles.menuText}>Cart Options</Text>
+                <Text style={styles.menuText}>Orders</Text>
                 <Ionicons
-                  name={isCartExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
+                  name={isOrderExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
                   size={18}
                   color="#aaa"
                 />
               </TouchableOpacity>
-              {isCartExpanded && (
+              {isOrderExpanded && (
                 <View style={styles.subMenu}>
-                  {cartOptions.map((option, index) => (
+                  {OrderOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.subMenuItem}
+                      onPress={() => navigation.navigate(option.route)}
+                    >
+                      <Text style={styles.subMenuText}>{option.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Clients Options Expandable */}
+              <TouchableOpacity 
+                style={styles.expandableItem}
+                onPress={() => setIsClientsExpanded(!isClientsExpanded)}
+              >
+                <Text style={styles.menuText}>Clients</Text>
+                <Ionicons
+                  name={isClientsExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
+                  size={18}
+                  color="#aaa"
+                />
+              </TouchableOpacity>
+              {isClientsExpanded && (
+                <View style={styles.subMenu}>
+                  {ClientsOptions.map((option, index) => (
                     <TouchableOpacity
                       key={index}
                       style={styles.subMenuItem}

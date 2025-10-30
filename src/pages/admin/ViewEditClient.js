@@ -3,36 +3,35 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image 
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
-import CartListItem from "../../components/admin/CartListItem";
 
-export default function Carts() {
+export default function ViewEditClient() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
 
-  // Mock data - substitua com dados reais da sua API
-  const carts = [
-    { id: "1000000039", date: "22/08/2025", status: "Created" },
-    { id: "1000000038", date: "21/08/2025", status: "Created" },
-    { id: "1000000037", date: "20/08/2025", status: "Created" },
-    { id: "1000000036", date: "21/08/2025", status: "Created" },
-    { id: "1000000035", date: "20/08/2025", status: "Created" },
-    { id: "1000000034", date: "21/08/2025", status: "Created" },
-    { id: "1000000033", date: "20/08/2025", status: "Created" },
-    { id: "1000000032", date: "21/08/2025", status: "Created" },
-    { id: "1000000031", date: "20/08/2025", status: "Created" },
+  const clients = [
+    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem" },
+    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat" },
+    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
+    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
+    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles" },
+    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos" },
+    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva" },
+    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra" },
+    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda" },
+    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima" },
   ];
 
-  const filteredCarts = carts.filter(cart =>
-    cart.id.toLowerCase().includes(searchText.toLowerCase())
+  const filteredClients = clients.filter(client =>
+    client.email.toLowerCase().includes(searchText.toLowerCase()) ||
+    client.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const handleCartPress = (cart) => {
-    navigation.navigate("CartDetails", { cart });
+  const handleSelectClient = (client) => {
+    navigation.navigate("EditClientForm", { client });
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
@@ -46,10 +45,8 @@ export default function Carts() {
         </View>
       </View>
 
-      {/* Title */}
-      <Text style={styles.title}>Carts</Text>
+      <Text style={styles.title}>Clients</Text>
 
-      {/* Search */}
       <View style={styles.searchBox}>
         <Ionicons name="search-outline" size={18} color="#ccc" />
         <TextInput
@@ -61,21 +58,15 @@ export default function Carts() {
         />
       </View>
 
-      {/* Table Header */}
-      <View style={styles.tableHeader}>
-        <Text style={[styles.headerText, styles.cartColumn]}>Carts</Text>
-        <Text style={[styles.headerText, styles.dateColumn]}>Date</Text>
-        <Text style={[styles.headerText, styles.statusColumn]}>Status</Text>
-      </View>
-
-      {/* Cart List */}
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-        {filteredCarts.map((cart, index) => (
-          <CartListItem
-            key={index}
-            cart={cart}
-            onPress={() => handleCartPress(cart)}
-          />
+      <ScrollView style={styles.list}>
+        {filteredClients.map((client) => (
+          <TouchableOpacity
+            key={client.id}
+            style={styles.clientItem}
+            onPress={() => handleSelectClient(client)}
+          >
+            <Text style={styles.clientEmail}>{client.email}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -119,7 +110,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
-    textAlign: "center",
   },
   searchBox: {
     flexDirection: "row",
@@ -135,32 +125,17 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginLeft: 8,
   },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1B254F",
-    marginBottom: 10,
-  },
-  headerText: {
-    color: "#aaa",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  cartColumn: {
-    flex: 1,
-  },
-  dateColumn: {
-    flex: 1,
-    textAlign: "center",
-  },
-  statusColumn: {
-    flex: 1,
-    textAlign: "right",
-  },
   list: {
     flex: 1,
+  },
+  clientItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1B254F",
+  },
+  clientEmail: {
+    color: "#fff",
+    fontSize: 15,
   },
   logo: {
     width: 24,
