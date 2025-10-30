@@ -7,6 +7,8 @@ import AddEmployee from '../pages/admin/AddEmployee';
 import RemoveEmployee from '../pages/admin/RemoveEmployee';
 import EditEmployee from '../pages/admin/EditEmployee';
 import EditEmployeeForm from '../pages/admin/EditEmployeeForm';
+import Carts from '../pages/admin/Carts';
+import CartDetails from '../pages/admin/CartDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +22,8 @@ export default function AdmStack({ onLogout }) {
       <Stack.Screen name="RemoveEmployee" component={RemoveEmployee} />
       <Stack.Screen name="EditEmployee" component={EditEmployee} />
       <Stack.Screen name="EditEmployeeForm" component={EditEmployeeForm} />
+      <Stack.Screen name="Carts" component={Carts} />
+      <Stack.Screen name="CartDetails" component={CartDetails} />
     </Stack.Navigator>
   );
 }

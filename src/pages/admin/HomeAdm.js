@@ -5,17 +5,18 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeAdm({ route, onLogout }) {
   const navigation = useNavigation();
-  const [searchText, setSearchText] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(false);
+  const [isCartExpanded, setIsCartExpanded] = useState(false);  
 
   const employeeOptions = [
     { title: "Add Employee", route: "AddEmployee" },
     { title: "Remove Employee", route: "RemoveEmployee" },
     { title: "Edit Employee", route: "EditEmployee" },
   ];
-
+  const cartOptions = [
+    { title: "View & Remove Cart", route: "Carts" },
+  ];
   const otherMenuItems = [
-    { title: "Carts", route: "Carts" },
     { title: "Clients", route: "Clients" },
     { title: "Orders", route: "Orders" },
     { title: "Products", route: "Products" },
@@ -33,7 +34,7 @@ export default function HomeAdm({ route, onLogout }) {
         </View>
 
         <TouchableOpacity 
-          style={styles.clientButton}
+          style={styles.backButton}
           onPress={onLogout}
         >
           <Text style={styles.clientText}>Sair</Text>
@@ -45,19 +46,45 @@ export default function HomeAdm({ route, onLogout }) {
               {/* Employees Expandable */}
               <TouchableOpacity 
                 style={styles.expandableItem}
-                onPress={() => setIsExpanded(!isExpanded)}
+                onPress={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
               >
                 <Text style={styles.menuText}>Employees</Text>
                 <Ionicons 
-                  name={isExpanded ? "chevron-down-outline" : "chevron-forward-outline"} 
+                  name={isEmployeesExpanded ? "chevron-down-outline" : "chevron-forward-outline"} 
                   size={18} 
                   color="#aaa" 
                 />
               </TouchableOpacity>
       
-              {isExpanded && (
+              {isEmployeesExpanded && (
                 <View style={styles.subMenu}>
                   {employeeOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.subMenuItem}
+                      onPress={() => navigation.navigate(option.route)}
+                    >
+                      <Text style={styles.subMenuText}>{option.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Cart Options Expandable */}
+              <TouchableOpacity 
+                style={styles.expandableItem}
+                onPress={() => setIsCartExpanded(!isCartExpanded)}
+              >
+                <Text style={styles.menuText}>Cart Options</Text>
+                <Ionicons
+                  name={isCartExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
+                  size={18}
+                  color="#aaa"
+                />
+              </TouchableOpacity>
+              {isCartExpanded && (
+                <View style={styles.subMenu}>
+                  {cartOptions.map((option, index) => (
                     <TouchableOpacity
                       key={index}
                       style={styles.subMenuItem}
@@ -111,7 +138,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  clientButton: {
+  backButton: {
     backgroundColor: "#1D3CFD",
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -134,6 +161,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   scrollView: {
+    marginTop: 30, 
     flex: 1,
   },
   expandableItem: {
