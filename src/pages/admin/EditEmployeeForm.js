@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import PermissionDropdown from "../../components/admin/PermissionDropdown";
+import PrimaryButton from "../../components/admin/PrimaryButton";
 
 export default function EditEmployeeForm() {
   const navigation = useNavigation();
@@ -50,7 +52,7 @@ export default function EditEmployeeForm() {
 
     // Aqui você faria a chamada à API para atualizar o funcionário
     Alert.alert("Success", "Employee updated successfully", [
-      { text: "OK", onPress: () => navigation.navigate("EmployeesMenu") }
+      { text: "OK", onPress: () => navigation.navigate("HomeAdm") }
     ]);
   };
 
@@ -132,45 +134,17 @@ export default function EditEmployeeForm() {
           </View>
         )}
 
-        {/* Permission Selector */}
-        <TouchableOpacity
-          style={styles.permissionButton}
-          onPress={() => setShowPermissions(!showPermissions)}
-        >
-          <Text style={styles.permissionButtonText}>
-            {selectedPermission || "Select of Permission"}
-          </Text>
-          <Ionicons 
-            name={showPermissions ? "chevron-up" : "chevron-down"} 
-            size={20} 
-            color="#A855F7" 
-          />
-        </TouchableOpacity>
-
-        {showPermissions && (
-          <View style={styles.permissionList}>
-            {permissions.map((permission, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.permissionItem}
-                onPress={() => {
-                  setSelectedPermission(permission);
-                  setShowPermissions(false);
-                }}
-              >
-                <Text style={styles.permissionText}>{permission}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        <PermissionDropdown
+  selectedPermission={selectedPermission}
+  onSelectPermission={setSelectedPermission}
+  permissions={["Gerente", "Super Admin"]}
+/>
 
         {/* Update Button */}
-        <TouchableOpacity 
-          style={styles.updateButton}
+        <PrimaryButton
+          title="Update Employee"
           onPress={handleUpdateEmployee}
-        >
-          <Text style={styles.updateButtonText}>Update Employee</Text>
-        </TouchableOpacity>
+        />
       </ScrollView>
     </View>
   );
@@ -194,7 +168,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   backText: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 16,
     marginLeft: 4,
   },
@@ -209,7 +183,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   title: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 30,
@@ -276,18 +250,5 @@ const styles = StyleSheet.create({
   permissionText: {
     color: "#fff",
     fontSize: 16,
-  },
-  updateButton: {
-    backgroundColor: "#A855F7",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  updateButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

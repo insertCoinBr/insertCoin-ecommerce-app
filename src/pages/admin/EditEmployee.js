@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -15,11 +15,6 @@ export default function EditEmployee() {
     { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
     { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
     { id: 5, email: "cristianesalles@insertcoin.com.br", name: "Cristiane Salles" },
-    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos" },
-    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva" },
-    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra" },
-    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda" },
-    { id: 10, email: "juligalima@insertcoin.com.br", name: "Julia Lima" },
   ];
 
   const filteredEmployees = employees.filter(emp =>
@@ -42,7 +37,7 @@ export default function EditEmployee() {
           </View>
         </TouchableOpacity>
         <View style={styles.headerRight}>
-          <Ionicons name="logo-bitcoin" size={20} color="#FFD700" />
+          <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
           <Text style={styles.headerTitle}>InsertCoin</Text>
         </View>
       </View>
@@ -96,7 +91,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   backText: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 16,
     marginLeft: 4,
   },
@@ -111,7 +106,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   title: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
@@ -141,5 +136,10 @@ const styles = StyleSheet.create({
   employeeEmail: {
     color: "#fff",
     fontSize: 15,
+  },
+  logo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
   },
 });

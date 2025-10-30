@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Importações
 import HomeAdm from '../pages/admin/HomeAdm';
-import EmployeesMenu from '../pages/admin/EmployeesMenu';
 import AddEmployee from '../pages/admin/AddEmployee';
 import RemoveEmployee from '../pages/admin/RemoveEmployee';
 import EditEmployee from '../pages/admin/EditEmployee';
@@ -17,7 +16,6 @@ export default function AdmStack({ onLogout }) {
       <Stack.Screen name="HomeAdm">
         {(props) => <HomeAdm {...props} onLogout={onLogout} />}
       </Stack.Screen>
-      <Stack.Screen name="EmployeesMenu" component={EmployeesMenu} />
       <Stack.Screen name="AddEmployee" component={AddEmployee} />
       <Stack.Screen name="RemoveEmployee" component={RemoveEmployee} />
       <Stack.Screen name="EditEmployee" component={EditEmployee} />

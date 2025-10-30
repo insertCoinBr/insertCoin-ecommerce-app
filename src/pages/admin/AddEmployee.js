@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, Text, TextInput, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import PermissionDropdown from "../../components/admin/PermissionDropdown";
+import PrimaryButton from "../../components/admin/PrimaryButton";
 
 export default function AddEmployee() {
   const navigation = useNavigation();
@@ -11,9 +13,6 @@ export default function AddEmployee() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedPermission, setSelectedPermission] = useState("");
-  const [showPermissions, setShowPermissions] = useState(false);
-
-  const permissions = ["Gerente", "Super Admin"];
 
   const validatePassword = (pass) => {
     const hasUpperCase = /[A-Z]/.test(pass);
@@ -43,14 +42,16 @@ export default function AddEmployee() {
       return;
     }
 
-    // Aqui você faria a chamada à API para criar o funcionário
     Alert.alert("Success", "Employee created successfully", [
       { text: "OK", onPress: () => navigation.goBack() }
     ]);
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -60,7 +61,7 @@ export default function AddEmployee() {
           </View>
         </TouchableOpacity>
         <View style={styles.headerRight}>
-          <Ionicons name="logo-bitcoin" size={20} color="#FFD700" />
+          <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
           <Text style={styles.headerTitle}>InsertCoin</Text>
         </View>
       </View>
@@ -68,8 +69,12 @@ export default function AddEmployee() {
       {/* Title */}
       <Text style={styles.title}>Add Employee</Text>
 
-      {/* Form */}
-      <ScrollView style={styles.form}>
+      {/* Form - ScrollView */}
+      <ScrollView 
+        style={styles.formScroll}
+        contentContainerStyle={styles.formContent}
+        showsVerticalScrollIndicator={false}
+      >
         <TextInput
           style={styles.input}
           placeholder="Full Name"
@@ -125,47 +130,21 @@ export default function AddEmployee() {
           </Text>
         </View>
 
-        {/* Permission Selector */}
-        <TouchableOpacity
-          style={styles.permissionButton}
-          onPress={() => setShowPermissions(!showPermissions)}
-        >
-          <Text style={styles.permissionButtonText}>
-            {selectedPermission || "Select of Permission"}
-          </Text>
-          <Ionicons 
-            name={showPermissions ? "chevron-up" : "chevron-down"} 
-            size={20} 
-            color="#A855F7" 
-          />
-        </TouchableOpacity>
-
-        {showPermissions && (
-          <View style={styles.permissionList}>
-            {permissions.map((permission, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.permissionItem}
-                onPress={() => {
-                  setSelectedPermission(permission);
-                  setShowPermissions(false);
-                }}
-              >
-                <Text style={styles.permissionText}>{permission}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Create Button */}
-        <TouchableOpacity 
-          style={styles.createButton}
-          onPress={handleCreateEmployee}
-        >
-          <Text style={styles.createButtonText}>Create Employee</Text>
-        </TouchableOpacity>
+        <PermissionDropdown
+          selectedPermission={selectedPermission}
+          onSelectPermission={setSelectedPermission}
+          permissions={["Gerente", "Super Admin"]}
+        />
       </ScrollView>
-    </View>
+
+      {/* Botão fixo no final */}
+      <View style={styles.buttonContainer}>
+        <PrimaryButton
+          title="Create Employee"
+          onPress={handleCreateEmployee}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -187,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   backText: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 16,
     marginLeft: 4,
   },
@@ -202,13 +181,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   title: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 20,
   },
-  form: {
+  formScroll: {
     flex: 1,
+  },
+  formContent: {
+    paddingBottom: 20,
   },
   input: {
     backgroundColor: "#0D1429",
@@ -225,57 +207,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   requirement: {
-    color: "#A855F7",
+    color: "#ffffffff",
     fontSize: 12,
     marginBottom: 4,
   },
   valid: {
     color: "#22C55E",
   },
-  permissionButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#A855F7",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
+  buttonContainer: {
+    paddingVertical: 10,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: "#1B254F",
   },
-  permissionButtonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  permissionList: {
-    backgroundColor: "#0D1429",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1E3A8A",
-    marginBottom: 15,
-  },
-  permissionItem: {
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1E3A8A",
-  },
-  permissionText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  createButton: {
-    backgroundColor: "#A855F7",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  createButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  logo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
   },
 });

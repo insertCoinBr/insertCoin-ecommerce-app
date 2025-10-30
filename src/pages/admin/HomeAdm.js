@@ -6,9 +6,15 @@ import { Ionicons } from "@expo/vector-icons";
 export default function HomeAdm({ route, onLogout }) {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const menuItems = [
-    { title: "Employees", route: "EmployeesMenu" },
+  const employeeOptions = [
+    { title: "Add Employee", route: "AddEmployee" },
+    { title: "Remove Employee", route: "RemoveEmployee" },
+    { title: "Edit Employee", route: "EditEmployee" },
+  ];
+
+  const otherMenuItems = [
     { title: "Carts", route: "Carts" },
     { title: "Clients", route: "Clients" },
     { title: "Orders", route: "Orders" },
@@ -16,17 +22,6 @@ export default function HomeAdm({ route, onLogout }) {
     { title: "Promotions", route: "Promotions" },
     { title: "Notifications", route: "Notifications" },
   ];
-
-  const filteredItems = searchText
-    ? menuItems.filter(item =>
-        item.title.toLowerCase().includes(searchText.toLowerCase())
-      )
-    : menuItems;
-
-  const handleMenuPress = (routeName) => {
-    console.log('Navegando para:', routeName);
-    navigation.navigate(routeName);
-  };
 
   return (
     <View style={styles.container}>
@@ -45,32 +40,48 @@ export default function HomeAdm({ route, onLogout }) {
         </TouchableOpacity>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchBox}>
-        <Ionicons name="search-outline" size={18} color="#ccc" />
-        <TextInput
-          placeholder="Type to search"
-          placeholderTextColor="#ccc"
-          style={styles.input}
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-      </View>
-
       {/* Menu */}
-      <ScrollView style={{ marginTop: 15 }}>
-        {filteredItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={() => handleMenuPress(item.route)}
-          >
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Ionicons name="chevron-forward-outline" size={18} color="#aaa" />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+            <ScrollView style={styles.scrollView}>
+              {/* Employees Expandable */}
+              <TouchableOpacity 
+                style={styles.expandableItem}
+                onPress={() => setIsExpanded(!isExpanded)}
+              >
+                <Text style={styles.menuText}>Employees</Text>
+                <Ionicons 
+                  name={isExpanded ? "chevron-down-outline" : "chevron-forward-outline"} 
+                  size={18} 
+                  color="#aaa" 
+                />
+              </TouchableOpacity>
+      
+              {isExpanded && (
+                <View style={styles.subMenu}>
+                  {employeeOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.subMenuItem}
+                      onPress={() => navigation.navigate(option.route)}
+                    >
+                      <Text style={styles.subMenuText}>{option.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+      
+              {/* Other Menu Items */}
+              {otherMenuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.menuItem}
+                  onPress={() => navigation.navigate(item.route)}
+                >
+                  <Text style={styles.menuText}>{item.title}</Text>
+                  <Ionicons name="chevron-forward-outline" size={18} color="#aaa" />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
   );
 }
 
@@ -110,20 +121,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
   },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#141B3A",
-    borderRadius: 10,
-    marginTop: 20,
-    paddingHorizontal: 10,
-    height: 40,
-  },
-  input: {
-    flex: 1,
-    color: "#fff",
-    marginLeft: 8,
-  },
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -135,5 +132,45 @@ const styles = StyleSheet.create({
   menuText: {
     color: "#fff",
     fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  expandableItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomColor: "#1B254F",
+    borderBottomWidth: 1,
+  },
+  menuText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  subMenu: {
+    backgroundColor: "#0D1429",
+    borderLeftWidth: 2,
+    borderLeftColor: "#A855F7",
+    marginLeft: 10,
+  },
+  subMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingLeft: 15,
+    borderBottomColor: "#1B254F",
+    borderBottomWidth: 1,
+  },
+  subMenuIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#A855F7",
+    marginRight: 12,
+  },
+  subMenuText: {
+    color: "#fff",
+    fontSize: 15,
   },
 });
