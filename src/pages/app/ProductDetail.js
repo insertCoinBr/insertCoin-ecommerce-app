@@ -41,7 +41,39 @@ export default function ProductDetail({ route }) {
     setLoading(false);
   }
 
-  if (loading || !product) {
+  const handleAddToCart = () => {
+    Alert.alert(
+      "Adicionado ao Carrinho",
+      `${product.title} foi adicionado ao seu carrinho!`,
+      [{ text: "OK" }]
+    );
+  };
+
+  const handleBuyNow = () => {
+    Alert.alert(
+      "Comprar Agora",
+      "Você será redirecionado para o checkout.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Continuar", 
+          onPress: () => navigation.navigate('Payment', { total: product.price })
+        }
+      ]
+    );
+  };
+
+  const handleToggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    Alert.alert(
+      isFavorite ? "Removido dos Favoritos" : "Adicionado aos Favoritos",
+      isFavorite 
+        ? `${product.title} foi removido da sua lista de desejos.`
+        : `${product.title} foi adicionado à sua lista de desejos!`
+    );
+  };
+
+  if (!fontLoaded || loading || !product) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size={"large"} color={COLORS.primary} />
