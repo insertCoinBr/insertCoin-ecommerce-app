@@ -71,10 +71,11 @@ export default function AppStack({ onLogout }) {
       />
 
       <Stack.Screen 
-        name="Profile" 
-        component={Profile}
+        name="Profile"
         options={{ headerShown: false }}
-      />
+      >
+        {(props) => <Profile {...props} onLogout={onLogout} />}
+      </Stack.Screen>
       
       <Stack.Screen 
         name="FrequencyQuestions" 

@@ -55,11 +55,19 @@ export default function Profile({ navigation,onLogout }) {
     console.log("Conta excluída");
     setModalVisible(false);
     // Lógica de exclusão aqui
+    // Após excluir, fazer logout
+    if (onLogout) {
+      onLogout();
+    }
   };
 
   const handleLogout = () => {
     console.log("Usuário deslogado");
-    
+    setModalVisibleLogout(false);
+    // Chama a função de logout passada como prop
+    if (onLogout) {
+      onLogout();
+    }
   };
   
 
