@@ -38,7 +38,7 @@ export default function SearchHeader({
       >
         <View style={styles.searchContent}>
             <Image 
-              source={require('../../assets/IconsPixel/iconSearch.png')}
+              source={require('../../../assets/IconsPixel/iconSearch.png')}
               style={styles.searchIcon}
             />
           <TextInput
@@ -60,7 +60,7 @@ export default function SearchHeader({
           style={styles.profileButton}
         >
           <Image
-            source={require('../../assets/IconsPixel/iconUser.png')}
+            source={require('../../../assets/IconsPixel/iconUser.png')}
             style={styles.profileImage}
           />
         </TouchableOpacity>

@@ -4,11 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import SearchHeader from '../../components/SearchHeader';
-import CarouselDestaques from '../../components/CarouselDestaques';
-import FilterBar from '../../components/FilterBar';
-import ProductGrid from '../../components/ProductGrid';
-import BottomTabBar from '../../components/BottomTabBar';
+import SearchHeader from '../../components/app/SearchHeader';
+import CarouselDestaques from '../../components/app/CarouselDestaques';
+import FilterBar from '../../components/app/FilterBar';
+import ProductGrid from '../../components/app/ProductGrid';
+import BottomTabBar from '../../components/app/BottomTabBar';
 
 // HOOKS
 import useFontLoader from '../../hooks/useFontLoader';

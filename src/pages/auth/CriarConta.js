@@ -5,10 +5,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 //Import de Componentes
-import Logo from '../../components/Logo';
-import CustomInput from '../../components/CustomInput';
-import CustomButton from '../../components/CustomButton';
-import ErrorMessage from '../../components/ErrorMessage';
+import Logo from '../../components/app/Logo';
+import CustomInput from '../../components/app/CustomInput';
+import CustomButton from '../../components/app/CustomButton';
+import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function CriarConta({ route }) {
   const navigation = useNavigation();

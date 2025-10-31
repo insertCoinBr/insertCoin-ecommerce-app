@@ -5,9 +5,9 @@ import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from "../../context/AuthContext";
 
 //Import de Componentes
-import Logo from '../../components/Logo';
-import CodeInput from '../../components/CodeInput';
-import CustomButton from '../../components/CustomButton';
+import Logo from '../../components/app/Logo';
+import CodeInput from '../../components/app/CodeInput';
+import CustomButton from '../../components/app/CustomButton';
 
 export default function CodigoDeSeguranca({ route }) {
   const navigation = useNavigation();

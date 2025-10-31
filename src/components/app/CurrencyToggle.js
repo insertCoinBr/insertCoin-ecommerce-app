@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import RPGBorder from './RPGBorder';
-import { CurrencyContext } from "../context/CurrencyContext";
+import { CurrencyContext } from "./../../context/CurrencyContext";
 
 export default function CurrencyToggle({
   onToggle, // opcional callback externo

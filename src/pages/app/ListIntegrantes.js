@@ -3,9 +3,9 @@ import { View, StyleSheet, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // COMPONENTES
-import IntegranteCard from "../../components/IntegranteCard";
-import AnimatedCardList from "../../components/AnimatedCardList";
-import PageHeader from "../../components/PageHeader";
+import IntegranteCard from "../../components/app/IntegranteCard";
+import AnimatedCardList from "../../components/app/AnimatedCardList";
+import PageHeader from "../../components/app/PageHeader";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";

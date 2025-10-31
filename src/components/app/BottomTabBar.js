@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Image, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 
 // COMPONENTES
-import RPGBorder from './RPGBorder';
+import RPGBorder from '../app/RPGBorder';
 
 const { width } = Dimensions.get('window');
 
@@ -16,25 +16,25 @@ const tabs = [
   { 
     name: 'Notification', 
     label: 'Notificação',
-    icon: require('../../assets/IconsPixel/bellIcon.png'),
+    icon: require('../../../assets/IconsPixel/bellIcon.png'),
     route: 'notifications'
   },
   { 
     name: 'Home', 
     label: 'Home',
-    icon: require('../../assets/IconsPixel/houseIcon.png'),
+    icon: require('../../../assets/IconsPixel/houseIcon.png'),
     route: 'ProductList'
   },
   { 
     name: 'Orders', 
     label: 'Pedidos',
-    icon: require('../../assets/IconsPixel/OrderIcon.png'),
+    icon: require('../../../assets/IconsPixel/OrderIcon.png'),
     route: 'orders'
   },
   { 
     name: 'Cart', 
     label: 'Carrinho',
-    icon: require('../../assets/IconsPixel/carIcon.png'),
+    icon: require('../../../assets/IconsPixel/carIcon.png'),
     route: 'carts'
   },
 ];

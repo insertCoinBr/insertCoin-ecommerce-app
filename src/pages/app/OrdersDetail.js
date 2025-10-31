@@ -3,10 +3,10 @@ import { View, StyleSheet, ScrollView, ActivityIndicator, Text,Dimensions } from
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import OrderItemCard from "../../components/OrderItemCard";
-import TotalCard from "../../components/TotalCard";
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import OrderItemCard from "../../components/app/OrderItemCard";
+import TotalCard from "../../components/app/TotalCard";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";

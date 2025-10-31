@@ -37,7 +37,7 @@ export default function ConfirmModal({
               {/* Ícone de Alerta Fixo */}
               <View style={styles.iconContainer}>
                 <Image 
-                  source={require("../../assets/IconsPixel/iconAlert.png")} 
+                  source={require("../../../assets/IconsPixel/iconAlert.png")} 
                   style={styles.alertIcon}
                   resizeMode="contain"
                 />

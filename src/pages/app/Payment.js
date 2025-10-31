@@ -1,17 +1,20 @@
 // src/pages/app/Payment.js
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import PaymentMethodCard from "../../components/PaymentMethodCard";
-import RPGBorder from "../../components/RPGBorder";
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import PaymentMethodCard from "../../components/app/PaymentMethodCard";
+import RPGBorder from "../../components/app/RPGBorder";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
+
+// CONTEXT
+import { CurrencyContext } from "../../context/CurrencyContext";
 
 const COLORS = {
   background: "#1A1027",
@@ -22,6 +25,7 @@ const COLORS = {
 
 export default function Payment({ navigation, route }) {
   const fontLoaded = useFontLoader();
+  const { currency } = useContext(CurrencyContext);
   const [activeTab, setActiveTab] = useState('Cart');
   const [selectedPayment, setSelectedPayment] = useState('credit');
   
@@ -32,12 +36,15 @@ export default function Payment({ navigation, route }) {
   const [cardCVV, setCardCVV] = useState('');
 
   // Total do carrinho (vindo da navegação)
-  const { total = 1745.00 } = route.params || {};
+  const { total = 0.00 } = route.params || {};
 
   useFocusEffect(
     useCallback(() => {
       setActiveTab("Cart");
-    }, [])
+      if (selectedPayment === 'pix' && currency === 'USD') {
+        setSelectedPayment('credit');
+      }
+    }, [currency])
   );
 
   const handleTabPress = (route, tabName) => {
@@ -50,13 +57,10 @@ export default function Payment({ navigation, route }) {
   };
 
   const handleFinalizePurchase = () => {
-    // Validação básica
     if (selectedPayment === 'credit' && (!cardName || !cardNumber || !cardDate || !cardCVV)) {
       alert('Por favor, preencha todos os dados do cartão');
       return;
     }
-
-    // Navega para tela de sucesso
     navigation.navigate('Success');
   };
 
@@ -104,14 +108,17 @@ export default function Payment({ navigation, route }) {
             centerColor={COLORS.secondary}
           />
 
-          <PaymentMethodCard
-            title="Pix"
-            icon={require('../../../assets/IconsPixel/iconPix.png')}
-            isSelected={selectedPayment === 'pix'}
-            onPress={() => setSelectedPayment('pix')}
-            borderType="blue"
-            centerColor={COLORS.secondary}
-          />
+          {/* PIX so se a moeda for BRL */}
+          {currency === 'BRL' && (
+            <PaymentMethodCard
+              title="Pix"
+              icon={require('../../../assets/IconsPixel/iconPix.png')}
+              isSelected={selectedPayment === 'pix'}
+              onPress={() => setSelectedPayment('pix')}
+              borderType="blue"
+              centerColor={COLORS.secondary}
+            />
+          )}
         </View>
 
         {/* Formulário de Cartão de Crédito */}

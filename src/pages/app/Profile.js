@@ -5,13 +5,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import ProfileHeader from "../../components/ProfileHeader";
-import MenuButton from "../../components/MenuButton";
-import CurrencyToggle from "../../components/CurrencyToggle";
-import SectionTitle from "../../components/SectionTitle";
-import ConfirmModal from '../../components/ConfirmModal';
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import ProfileHeader from "../../components/app/ProfileHeader";
+import MenuButton from "../../components/app/MenuButton";
+import CurrencyToggle from "../../components/app/CurrencyToggle";
+import SectionTitle from "../../components/app/SectionTitle";
+import ConfirmModal from '../../components/app/ConfirmModal';
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";

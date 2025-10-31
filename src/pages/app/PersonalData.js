@@ -4,11 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import MenuButton from "../../components/MenuButton";
-import ProfileHeader from "../../components/ProfileHeader";
-import RPGBorder from "../../components/RPGBorder";
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import MenuButton from "../../components/app/MenuButton";
+import ProfileHeader from "../../components/app/ProfileHeader";
+import RPGBorder from "../../components/app/RPGBorder";
 
 import useFontLoader from "../../hooks/useFontLoader";
 

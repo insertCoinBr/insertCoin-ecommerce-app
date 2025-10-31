@@ -26,7 +26,7 @@ export default function OrderCard({
     <Pressable onPress={onPress} style={styles.wrapper}>
       <RPGBorder 
         width={380} 
-        height={140} 
+        height="auto"
         tileSize={10} 
         centerColor={"#1F41BB"}
         borderType={"blue"}

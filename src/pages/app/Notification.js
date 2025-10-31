@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet, ScrollView, Text } from "react-native";
+import { View, StyleSheet, ScrollView, Text, Share  } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import NotificationCard from "../../components/NotificationCard";
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import NotificationCard from "../../components/app/NotificationCard";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
@@ -77,10 +77,26 @@ export default function Notification({ navigation }) {
     ));
   };
 
-  const handleShare = (notification) => {
-    console.log('Compartilhar:', notification.title);
-    // Implementar lógica de compartilhamento
-  };
+  const handleShare = async (notification) => {
+  try {
+    const message = `${notification.title}\n\n${notification.description}`;
+
+    const result = await Share.share({ message });
+
+    if (result.action === Share.sharedAction) {
+      if (result.activityType) {
+        console.log(`Compartilhado com: ${result.activityType} — id=${notification.id} title="${notification.title}"`);
+      } else {
+        console.log(`Compartilhado com sucesso — id=${notification.id} title="${notification.title}"`);
+      }
+    } else if (result.action === Share.dismissedAction) {
+      console.log(`Compartilhamento cancelado — id=${notification.id} title="${notification.title}"`);
+    }
+  } catch (error) {
+    console.error("Erro ao compartilhar:", error);
+  }
+};
+
 
   if (!fontLoaded) {
     return null;

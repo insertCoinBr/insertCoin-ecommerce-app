@@ -4,10 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
-import PageHeader from "../../components/PageHeader";
-import BottomTabBar from "../../components/BottomTabBar";
-import FilterBar from "../../components/FilterBar";
-import OrderCard from "../../components/OrderCard";
+import PageHeader from "../../components/app/PageHeader";
+import BottomTabBar from "../../components/app/BottomTabBar";
+import FilterBar from "../../components/app/FilterBar";
+import OrderCard from "../../components/app/OrderCard";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";

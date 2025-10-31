@@ -21,18 +21,18 @@ export default function CartItemCard({
     <View style={styles.wrapper}>
       <RPGBorder 
         width={345} 
-        height={104} 
+        height="auto" 
         tileSize={8} 
         centerColor={centerColor}
         borderType={borderType}
       >
         <View style={styles.container}>
           {/* Imagem do Produto */}
-          <View style={styles.imageContainer}>
+          <View>
             <Image
               source={{ uri: product.image }}
               style={styles.productImage}
-              resizeMode="contain"
+              resizeMode="stretch"
             />
           </View>
 
@@ -97,18 +97,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     gap: 12,
   },
-  imageContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+  productImage: {
+    width: 75,
+    height: 75,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
   },
   infoContainer: {
     flex: 1,

@@ -16,7 +16,6 @@ export default function CarouselDestaques({
   destaques, 
   onItemPress,
   borderType = "black",
-  centerColor = COLORS.primary
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const carouselRef = useRef(null);
@@ -34,19 +33,14 @@ export default function CarouselDestaques({
       style={styles.carouselItemWrapper}
     >
       <RPGBorder 
-        width={CAROUSEL_ITEM_WIDTH - 60} 
+        width={CAROUSEL_ITEM_WIDTH - 61} 
         height={240} 
         tileSize={10}
-        centerColor={centerColor}
+        centerImage={{ uri: item.image }}
+        imageResizeMode="stretch"
         borderType={borderType}
       >
-        <View style={styles.carouselItemContent}>
-          <Image
-            source={{ uri: item.image }}
-            style={styles.carouselImage}
-            resizeMode="stretch" //Ocupa todo o espaço porem distorce a imagem
-          />
-        </View>
+    
       </RPGBorder>
     </TouchableOpacity>
   );

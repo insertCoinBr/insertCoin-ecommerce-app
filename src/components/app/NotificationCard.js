@@ -57,8 +57,8 @@ export default function NotificationCard({
               <Image
                 source={
                   isFavorite 
-                    ? require('../../assets/IconsPixel/iconHeart.png')
-                    : require('../../assets/IconsPixel/iconHeartNull.png')
+                    ? require('../../../assets/IconsPixel/iconHeart.png')
+                    : require('../../../assets/IconsPixel/iconHeartNull.png')
                 }
                 style={styles.actionIcon}
                 resizeMode="contain"
@@ -67,7 +67,7 @@ export default function NotificationCard({
 
             {/* Botão Compartilhar */}
             <TouchableOpacity 
-              onPress={() => onShare?.(notification)}
+              onPress={() => onShare(notification)}
               style={styles.actionButton}
               activeOpacity={0.7}
             >

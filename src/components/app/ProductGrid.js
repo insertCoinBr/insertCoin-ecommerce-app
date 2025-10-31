@@ -21,7 +21,7 @@ export default function ProductGrid({
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Image 
-        source={require('../../assets/IconsPixel/iconSearch.png')}
+        source={require('../../../assets/IconsPixel/iconSearch.png')}
         style={styles.searchIcon}
       />
       <Text style={styles.emptyText}>Nenhum produto encontrado</Text>

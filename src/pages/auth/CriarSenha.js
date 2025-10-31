@@ -4,11 +4,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 //Import de Componentes
-import Logo from '../../components/Logo';
-import CustomInput from '../../components/CustomInput';
-import CustomButton from '../../components/CustomButton';
-import ErrorMessage from '../../components/ErrorMessage';
-import PasswordRequirement from '../../components/PasswordRequirement';
+import Logo from '../../components/app/Logo';
+import CustomInput from '../../components/app/CustomInput';
+import CustomButton from '../../components/app/CustomButton';
+import ErrorMessage from '../../components/app/ErrorMessage';
+import PasswordRequirement from '../../components/app/PasswordRequirement';
 
 export default function CriarSenha({ route }) {
   const navigation = useNavigation();
