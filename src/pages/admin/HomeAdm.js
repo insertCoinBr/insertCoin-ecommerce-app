@@ -7,7 +7,8 @@ export default function HomeAdm({ route, onLogout }) {
   const navigation = useNavigation();
   const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(false);
   const [isOrderExpanded, setIsOrderExpanded] = useState(false);
-  const [isClientsExpanded, setIsClientsExpanded] = useState(false);  
+  const [isClientsExpanded, setIsClientsExpanded] = useState(false);
+  const [isProductExpanded, setIsProductExpanded] = useState(false);  
 
   const employeeOptions = [
     { title: "Add Employee", route: "AddEmployee" },
@@ -22,8 +23,12 @@ export default function HomeAdm({ route, onLogout }) {
     { title: "Remove Client", route: "RemoveClient" },
     { title: "View & Edit Client", route: "ViewEditClient" },
   ];
+  const ProductOptions = [
+    { title: "Add Product", route: "AddProduct" },
+    { title: "Remove Product", route: "RemoveProduct" },
+    { title: "View & Edit Product", route: "ViewEditProduct" },
+  ];
   const otherMenuItems = [
-    { title: "Products", route: "Products" },
     { title: "Promotions", route: "Promotions" },
     { title: "Notifications", route: "Notifications" },
   ];
@@ -115,6 +120,32 @@ export default function HomeAdm({ route, onLogout }) {
               {isClientsExpanded && (
                 <View style={styles.subMenu}>
                   {ClientsOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.subMenuItem}
+                      onPress={() => navigation.navigate(option.route)}
+                    >
+                      <Text style={styles.subMenuText}>{option.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Product Options Expandable */}
+              <TouchableOpacity 
+                style={styles.expandableItem}
+                onPress={() => setIsProductExpanded(!isProductExpanded)}
+              >
+                <Text style={styles.menuText}>Products</Text>
+                <Ionicons
+                  name={isProductExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
+                  size={18}
+                  color="#aaa"
+                />
+              </TouchableOpacity>
+              {isProductExpanded && (
+                <View style={styles.subMenu}>
+                  {ProductOptions.map((option, index) => (
                     <TouchableOpacity
                       key={index}
                       style={styles.subMenuItem}

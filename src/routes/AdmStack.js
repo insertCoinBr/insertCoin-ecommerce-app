@@ -16,6 +16,11 @@ import ViewEditClient from '../pages/admin/ViewEditClient';
 import EditClientForm from '../pages/admin/EditClientForm';
 import ClientOrders from '../pages/admin/ClientOrders';
 import ClientOrderDetails from '../pages/admin/ClientOrderDetails';
+import ProductsMenu from '../pages/admin/ProductsMenu';
+import AddProduct from '../pages/admin/AddProduct';
+import RemoveProduct from '../pages/admin/RemoveProduct';
+import ViewEditProduct from '../pages/admin/ViewEditProduct';
+import EditProductForm from '../pages/admin/EditProductForm';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +43,11 @@ export default function AdmStack({ onLogout }) {
       <Stack.Screen name="EditClientForm" component={EditClientForm} />
       <Stack.Screen name="ClientOrders" component={ClientOrders} />
       <Stack.Screen name="ClientOrderDetails" component={ClientOrderDetails} />
+      <Stack.Screen name="ProductsMenu" component={ProductsMenu} />
+      <Stack.Screen name="AddProduct" component={AddProduct} />
+      <Stack.Screen name="RemoveProduct" component={RemoveProduct} />
+      <Stack.Screen name="ViewEditProduct" component={ViewEditProduct} />
+      <Stack.Screen name="EditProductForm" component={EditProductForm} />
     </Stack.Navigator>
   );
 }
