@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modalEmployee: {
-    color: "#A855F7",
+    color: "#ff0000ff",
     fontSize: 14,
     marginBottom: 24,
     textAlign: "center",

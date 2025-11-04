@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -67,7 +67,7 @@ export default function EditEmployeeForm() {
           </View>
         </TouchableOpacity>
         <View style={styles.headerRight}>
-          <Ionicons name="logo-bitcoin" size={20} color="#FFD700" />
+          <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
           <Text style={styles.headerTitle}>InsertCoin</Text>
         </View>
       </View>
@@ -250,5 +250,10 @@ const styles = StyleSheet.create({
   permissionText: {
     color: "#fff",
     fontSize: 16,
+  },
+  logo: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
   },
 });

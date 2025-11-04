@@ -133,6 +133,7 @@ export default function AddPromotion() {
       routes: [{ name: 'HomeAdm' }],
     });
   };
+  
 
   return (
     <KeyboardAvoidingView 

@@ -9,7 +9,8 @@ export default function HomeAdm({ route, onLogout }) {
   const [isOrderExpanded, setIsOrderExpanded] = useState(false);
   const [isClientsExpanded, setIsClientsExpanded] = useState(false);
   const [isProductExpanded, setIsProductExpanded] = useState(false);
-  const [isPromotionExpanded, setIsPromotionExpanded] = useState(false);   
+  const [isPromotionExpanded, setIsPromotionExpanded] = useState(false);
+  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false);     
 
   const employeeOptions = [
     { title: "Add Employee", route: "AddEmployee" },
@@ -34,8 +35,10 @@ export default function HomeAdm({ route, onLogout }) {
     { title: "Remove Promotion", route: "RemovePromotion" },
     { title: "View & Edit Promotion", route: "ViewEditPromotion" },
   ];
-  const otherMenuItems = [
-    { title: "Notifications", route: "Notifications" },
+  const NotificationOptions = [
+    { title: "Add Notification", route: "AddNotification" },
+    { title: "Remove Notification", route: "RemoveNotification" },
+    { title: "View & Edit Notification", route: "ViewEditNotification" },
   ];
 
   return (
@@ -187,18 +190,32 @@ export default function HomeAdm({ route, onLogout }) {
                   ))}
                 </View>
               )}
-      
-              {/* Other Menu Items */}
-              {otherMenuItems.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.menuItem}
-                  onPress={() => navigation.navigate(item.route)}
-                >
-                  <Text style={styles.menuText}>{item.title}</Text>
-                  <Ionicons name="chevron-forward-outline" size={18} color="#aaa" />
-                </TouchableOpacity>
-              ))}
+
+              {/* Notification Options Expandable */}
+              <TouchableOpacity 
+                style={styles.expandableItem}
+                onPress={() => setIsNotificationExpanded(!isNotificationExpanded)}
+              >
+                <Text style={styles.menuText}>Notification</Text>
+                <Ionicons
+                  name={isNotificationExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
+                  size={18}
+                  color="#aaa"
+                />
+              </TouchableOpacity>
+              {isNotificationExpanded && (
+                <View style={styles.subMenu}>
+                  {NotificationOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.subMenuItem}
+                      onPress={() => navigation.navigate(option.route)}
+                    >
+                      <Text style={styles.subMenuText}>{option.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </ScrollView>
           </View>
   );

@@ -11,6 +11,9 @@ import NotificationCard from "../../components/app/NotificationCard";
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
 
+// SERVIÇO DE STORAGE
+import { NotificationStorage } from "../../services/NotificationStorage";
+
 const COLORS = {
   background: "#1A1027",
   primary: "#4C38A4",
@@ -20,83 +23,60 @@ const COLORS = {
 export default function Notification({ navigation }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState('Notification');
-
-  // Dados de notificações (normalmente viriam de uma API)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Resident Evil 4 (2005)",
-      description: "Novo pacote de skins disponível! Reviva o clássico agora com mapa melhorado!",
-      image: "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg",
-      isFavorite: false
-    },
-    {
-      id: 2,
-      title: "Dragon Dogma: Deliverance II",
-      description: "Expansão anunciada! Prepare-se para novas batalhas épicas no mundo medieval.",
-      image: "https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg",
-      isFavorite: false
-    },
-    {
-      id: 3,
-      title: "Marlyn Potter: Quidditch Chain",
-      description: "Evento especial de temporada! Desbloqueie itens únicos e recompensas exclusivas!",
-      image: "https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg",
-      isFavorite: true
-    },
-    {
-      id: 4,
-      title: "EA sports FC 25",
-      description: "Nova atualização de temporada disponível! Escale seu time com jogadores atualizados.",
-      image: "https://fakestoreapi.com/img/71YXzeOuslL._AC_UY879_.jpg",
-      isFavorite: false
-    },
-    {
-      id: 5,
-      title: "Mortal Kombat II Premium Edit",
-      description: "Novo lutador na loja! Atualize sua coleção e aproveite o desconto.",
-      image: "https://fakestoreapi.com/img/71pWzhdJNwL._AC_UL640_QL65_ML3_.jpg",
-      isFavorite: false
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
       setActiveTab("Notification");
+      loadNotifications();
     }, [])
   );
+
+  const loadNotifications = async () => {
+    try {
+      const storedNotifications = await NotificationStorage.getAll();
+      setNotifications(storedNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
 
   const handleTabPress = (route, tabName) => {
     setActiveTab(tabName);
     navigation.navigate(route);
   };
 
-  const handleToggleFavorite = (id, isFavorite) => {
+  const handleToggleFavorite = async (id, isFavorite) => {
     setNotifications(notifications.map(notif =>
       notif.id === id ? { ...notif, isFavorite } : notif
     ));
+    
+    // Atualizar no storage
+    try {
+      await NotificationStorage.update(id, { isFavorite });
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+    }
   };
 
   const handleShare = async (notification) => {
-  try {
-    const message = `${notification.title}\n\n${notification.description}`;
+    try {
+      const message = `${notification.title}\n\n${notification.description}`;
+      const result = await Share.share({ message });
 
-    const result = await Share.share({ message });
-
-    if (result.action === Share.sharedAction) {
-      if (result.activityType) {
-        console.log(`Compartilhado com: ${result.activityType} — id=${notification.id} title="${notification.title}"`);
-      } else {
-        console.log(`Compartilhado com sucesso — id=${notification.id} title="${notification.title}"`);
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log(`Compartilhado com: ${result.activityType} — id=${notification.id} title="${notification.title}"`);
+        } else {
+          console.log(`Compartilhado com sucesso — id=${notification.id} title="${notification.title}"`);
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log(`Compartilhamento cancelado — id=${notification.id} title="${notification.title}"`);
       }
-    } else if (result.action === Share.dismissedAction) {
-      console.log(`Compartilhamento cancelado — id=${notification.id} title="${notification.title}"`);
+    } catch (error) {
+      console.error("Erro ao compartilhar:", error);
     }
-  } catch (error) {
-    console.error("Erro ao compartilhar:", error);
-  }
-};
-
+  };
 
   if (!fontLoaded) {
     return null;
@@ -113,16 +93,22 @@ export default function Notification({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {notifications.map((notification) => (
-          <NotificationCard
-            key={notification.id}
-            notification={notification}
-            onToggleFavorite={handleToggleFavorite}
-            onShare={handleShare}
-            borderType="blue"
-            centerColor={COLORS.secondary}
-          />
-        ))}
+        {notifications.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>Nenhuma notificação disponível</Text>
+          </View>
+        ) : (
+          notifications.map((notification) => (
+            <NotificationCard
+              key={notification.id}
+              notification={notification}
+              onToggleFavorite={handleToggleFavorite}
+              onShare={handleShare}
+              borderType="blue"
+              centerColor={COLORS.secondary}
+            />
+          ))
+        )}
       </ScrollView>
 
       <BottomTabBar 
@@ -141,5 +127,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 120,
     paddingTop: 16,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 60,
+  },
+  emptyText: {
+    color: "#888",
+    fontSize: 16,
   },
 });

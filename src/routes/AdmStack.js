@@ -24,6 +24,11 @@ import SelectSpecificGames from '../pages/admin/SelectSpecificGames';
 import RemovePromotion from '../pages/admin/RemovePromotion';
 import ViewEditPromotion from '../pages/admin/ViewEditPromotion';
 import EditPromotionForm from '../pages/admin/EditPromotionForm';
+import AddNotification from '../pages/admin/AddNotification';
+import SelectPromotion from '../pages/admin/SelectPromotion';
+import RemoveNotification from '../pages/admin/RemoveNotification';
+import ViewEditNotification from '../pages/admin/ViewEditNotification';
+import EditNotificationForm from '../pages/admin/EditNotificationForm';
 
 const Stack = createNativeStackNavigator();
 
@@ -54,6 +59,11 @@ export default function AdmStack({ onLogout }) {
       <Stack.Screen name="RemovePromotion" component={RemovePromotion} />
       <Stack.Screen name="ViewEditPromotion" component={ViewEditPromotion} />
       <Stack.Screen name="EditPromotionForm" component={EditPromotionForm} />
+      <Stack.Screen name="AddNotification" component={AddNotification} />
+      <Stack.Screen name="SelectPromotion" component={SelectPromotion} />
+      <Stack.Screen name="RemoveNotification" component={RemoveNotification} />
+      <Stack.Screen name="ViewEditNotification" component={ViewEditNotification} />
+      <Stack.Screen name="EditNotificationForm" component={EditNotificationForm} />
     </Stack.Navigator>
   );
 }

@@ -1,47 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import { NotificationStorage } from "../../services/NotificationStorage";
 
-export default function RemoveClient() {
+export default function RemoveNotification() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
-  const [clients, setClients] = useState([
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem" },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat" },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
-    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles" },
-    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos" },
-    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva" },
-    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra" },
-    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda" },
-    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima" },
-  ]);
-
-  const filteredClients = clients.filter(client =>
-    client.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    client.name.toLowerCase().includes(searchText.toLowerCase())
+  useFocusEffect(
+    React.useCallback(() => {
+      loadNotifications();
+    }, [])
   );
 
-  const handleSelectClient = (client) => {
-    setSelectedClient(client);
+  const loadNotifications = async () => {
+    const data = await NotificationStorage.getAll();
+    setNotifications(data);
+  };
+
+  const filteredNotifications = notifications.filter(notif =>
+    notif.title.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const handleSelectNotification = (notification) => {
+    setSelectedNotification(notification);
     setShowModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    setClients(clients.filter(client => client.id !== selectedClient.id));
-    setShowModal(false);
-    Alert.alert("Success", "Client removed successfully");
+  const handleConfirmDelete = async () => {
+    try {
+      await NotificationStorage.delete(selectedNotification.id);
+      setShowModal(false);
+      await loadNotifications();
+      Alert.alert("Success", "Notification removed successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to remove notification");
+    }
   };
 
   const handleCancelDelete = () => {
     setShowModal(false);
-    setSelectedClient(null);
+    setSelectedNotification(null);
   };
 
   return (
@@ -60,7 +64,7 @@ export default function RemoveClient() {
           </View>
         </View>
 
-        <Text style={styles.title}>Clients</Text>
+        <Text style={styles.title}>Notifications</Text>
 
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={18} color="#ccc" />
@@ -74,15 +78,28 @@ export default function RemoveClient() {
         </View>
 
         <ScrollView style={styles.list}>
-          {filteredClients.map((client) => (
+          {filteredNotifications.map((notification) => (
             <TouchableOpacity
-              key={client.id}
-              style={styles.clientItem}
-              onPress={() => handleSelectClient(client)}
+              key={notification.id}
+              style={styles.notificationItem}
+              onPress={() => handleSelectNotification(notification)}
             >
-              <Text style={styles.clientEmail}>{client.email}</Text>
+              <View style={styles.notificationInfo}>
+                <Text style={styles.notificationTitle}>{notification.title}</Text>
+                <Text style={styles.notificationSubtitle} numberOfLines={2}>
+                  {notification.description}
+                </Text>
+              </View>
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
             </TouchableOpacity>
           ))}
+
+          {filteredNotifications.length === 0 && (
+            <View style={styles.emptyState}>
+              <Ionicons name="notifications-off-outline" size={48} color="#666" />
+              <Text style={styles.emptyText}>No notifications found</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
 
@@ -96,9 +113,9 @@ export default function RemoveClient() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Confirm Deletion</Text>
             <Text style={styles.modalText}>
-              Are you sure you want to remove this client?
+              Are you sure you want to remove this notification?
             </Text>
-            <Text style={styles.modalClient}>{selectedClient?.email}</Text>
+            <Text style={styles.modalNotification}>{selectedNotification?.title}</Text>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -176,14 +193,38 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  clientItem: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1B254F",
+  notificationItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#0D1429",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
   },
-  clientEmail: {
+  notificationInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
+  notificationTitle: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  notificationSubtitle: {
+    color: "#aaa",
+    fontSize: 13,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 60,
+  },
+  emptyText: {
+    color: "#666",
+    fontSize: 16,
+    marginTop: 12,
   },
   modalOverlay: {
     flex: 1,
@@ -212,7 +253,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: "center",
   },
-  modalClient: {
+  modalNotification: {
     color: "#ff0000ff",
     fontSize: 14,
     marginBottom: 24,
