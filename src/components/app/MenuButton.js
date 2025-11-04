@@ -1,4 +1,3 @@
-// src/components/MenuButton.js
 import React from 'react';
 import { TouchableOpacity, Text, Image, StyleSheet, View } from 'react-native';
 import RPGBorder from './RPGBorder';
@@ -24,6 +23,9 @@ export default function MenuButton({
         tileSize={8} 
         centerColor={disabled ? "#666666" : centerColor}
         borderType={borderType}
+        contentPadding={4}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.container}>
           {img && (
@@ -48,11 +50,9 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   container: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
     gap: 12,
   },
   icon: {
@@ -67,8 +67,5 @@ const styles = StyleSheet.create({
   },
   textDisabled: {
     color: "#AAAAAA",
-  },
-  textContainer: {
-    padding: 5,
   },
 });

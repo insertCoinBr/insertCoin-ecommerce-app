@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import RPGBorder from './RPGBorder';
 
 const COLORS = {
   primary: "#4C38A4",
+  secondary: "#1F41BB",
   textColors: "#FFFFFF",
   textDark: "#333333",
   textLight: "#FFFFFF",
-  inactive: "#EAEAEA",
-  borderSelect: "#000000ff",
+  inactive: "#FFFFFF",
 };
 
 export default function FilterBar({ 
@@ -25,35 +26,57 @@ export default function FilterBar({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterContainer}
       >
-        {filtros.map((filtro) => (
-          <TouchableOpacity
-            key={filtro}
-            style={[
-              styles.filterButton,
-              filtroAtivo === filtro && styles.filterButtonSelected,
-            ]}
-            onPress={() => onFiltroPress(filtro)}
-          >
-            <View style={styles.filterButtonContent}>
-              <Text
-                style={[
-                  styles.filterText,
-                  filtroAtivo === filtro && styles.filterTextSelected,
-                ]}
+        {filtros.map((filtro) => {
+          const isActive = filtroAtivo === filtro;
+          
+          // Define largura baseada no tamanho do texto
+          let buttonWidth = 110;
+          if (filtro === 'Categoria' || filtro === 'Plataforma' || filtro === 'Processando' || filtro === 'Cancelado') {
+            buttonWidth = 142;
+          } else if (filtro === 'Entregue') {
+            buttonWidth = 120;
+          }
+          
+          return (
+            <TouchableOpacity
+              key={filtro}
+              onPress={() => onFiltroPress(filtro)}
+              activeOpacity={0.8}
+              style={styles.filterButtonWrapper}
+            >
+              <RPGBorder
+                width={buttonWidth}
+                height={50}
+                tileSize={8}
+                centerColor={isActive ? COLORS.secondary : COLORS.inactive}
+                borderType={isActive ? "blue" : "white"}
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
-                {filtro === 'Preco' ? 'Preço' : filtro}
-              </Text>
-              {filtro === 'Preco' && filtroAtivo === 'Preco' && (
-                <Icon 
-                  name={precoOrdem === 'asc' ? 'arrow-up' : 'arrow-down'} 
-                  size={16} 
-                  color={COLORS.textLight}
-                  style={{ marginLeft: 5 }}
-                />
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
+                <View style={styles.filterButtonContent}>
+                  <Text
+                    style={[
+                      styles.filterText,
+                      isActive && styles.filterTextSelected,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {filtro === 'Preco' ? 'Preço' : filtro}
+                  </Text>
+                  {filtro === 'Preco' && isActive && (
+                    <Icon 
+                      name={precoOrdem === 'asc' ? 'arrow-up' : 'arrow-down'} 
+                      size={16} 
+                      color={COLORS.textLight}
+                      style={styles.priceIcon}
+                    />
+                  )}
+                </View>
+              </RPGBorder>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -72,31 +95,26 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     paddingHorizontal: 16,
+    paddingVertical: 4,
   },
-  filterButton: {
-    backgroundColor: COLORS.inactive,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  filterButtonWrapper: {
     marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   filterButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  filterButtonSelected: {
-    borderColor: COLORS.borderSelect,
-    borderWidth: 1,
-    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
   },
   filterText: {
     color: COLORS.textDark,
     fontFamily: "VT323",
     fontSize: 18,
+    textAlign: 'center',
   },
   filterTextSelected: {
     color: COLORS.textLight,
-    fontFamily: "VT323",
+  },
+  priceIcon: {
+    marginLeft: 4,
   },
 });

@@ -31,7 +31,7 @@ export default function ProductList({ navigation }) {
   const [precoOrdem, setPrecoOrdem] = useState('asc');
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('Home'); 
-  const [filterBarY, setFilterBarY] = useState(0); // Posição do FilterBar
+  const [filterBarY, setFilterBarY] = useState(0);
 
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);

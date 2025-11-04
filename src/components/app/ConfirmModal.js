@@ -15,7 +15,6 @@ export default function ConfirmModal({
   centerColorButton1,
   borderTypeButton2,
   centerColorButton2
-
 }) {
   return (
     <Modal
@@ -30,8 +29,11 @@ export default function ConfirmModal({
             width={320} 
             height={305} 
             tileSize={8} 
-            centerColor= "#4C38A4"
-            borderType= "black"
+            centerColor="#4C38A4"
+            borderType="black"
+            contentPadding={12}
+            contentJustify="space-between"
+            contentAlign="center"
           >
             <View style={styles.modalContent}>
               {/* Ícone de Alerta Fixo */}
@@ -63,6 +65,9 @@ export default function ConfirmModal({
                     tileSize={8} 
                     centerColor={centerColorButton1}
                     borderType={borderTypeButton1}
+                    contentPadding={4}
+                    contentJustify="center"
+                    contentAlign="center"
                   >
                     <View style={styles.button}>
                       <Text style={styles.buttonText}>{cancelText}</Text>
@@ -82,6 +87,9 @@ export default function ConfirmModal({
                     tileSize={8} 
                     centerColor={centerColorButton2}
                     borderType={borderTypeButton2}
+                    contentPadding={4}
+                    contentJustify="center"
+                    contentAlign="center"
                   >
                     <View style={styles.button}>
                       <Text style={styles.buttonText}>{confirmText}</Text>
@@ -109,12 +117,11 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    padding: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   iconContainer: {
-    marginTop: 8,
+    marginTop: 4,
   },
   alertIcon: {
     width: 90,
@@ -125,7 +132,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontFamily: "VT323",
     textAlign: 'center',
-   // marginBottom: 8,
   },
   message: {
     color: "#CCCCCC",
@@ -146,15 +152,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 24,
     fontFamily: "VT323",
-    fontWeight: "bold",
     textAlign: 'center',
   },
 });

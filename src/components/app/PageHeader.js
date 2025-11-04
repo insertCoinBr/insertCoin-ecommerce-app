@@ -19,6 +19,9 @@ export default function PageHeader({ onBackPress, title }) {
         centerColor={COLORS.primary}
         borderType="blue"
         tileSize={8}
+        contentPadding={4}
+        contentJustify="center"
+        contentAlign="center"
       >
         <TouchableOpacity
           onPress={onBackPress}

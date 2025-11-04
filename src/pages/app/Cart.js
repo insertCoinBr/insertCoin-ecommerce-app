@@ -280,6 +280,9 @@ export default function Cart({ navigation }) {
                 tileSize={8}
                 centerColor="#ff4444"
                 borderType="red"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <View style={styles.couponButton}>
                   <Text style={styles.couponButtonText}>Remover</Text>
@@ -294,6 +297,9 @@ export default function Cart({ navigation }) {
                 tileSize={8}
                 centerColor={COLORS.secondary}
                 borderType="blue"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <View style={styles.couponButton}>
                   <Text style={styles.couponButtonText}>Aplicar</Text>
@@ -341,6 +347,9 @@ export default function Cart({ navigation }) {
             tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
+            contentPadding={4}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.checkoutButton}>
               <Text style={styles.checkoutButtonText}>Finalizar Compra</Text>

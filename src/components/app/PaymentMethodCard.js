@@ -24,6 +24,9 @@ export default function PaymentMethodCard({
         tileSize={8} 
         centerColor={isSelected ? centerColor : "#1F41BB"}
         borderType={isSelected ? borderType : "blue"}
+        contentPadding={4}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.container}>
           {/* Ícone */}

@@ -17,7 +17,7 @@ export default function OrderItemCard({
   return (
     <View style={styles.wrapper}>
       <RPGBorder 
-        width={355} 
+        width={345} 
         height={101} 
         tileSize={8} 
         centerColor={centerColor}
@@ -65,8 +65,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   imageContainer: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -97,7 +97,6 @@ const styles = StyleSheet.create({
     color: "#FFD700",
     fontSize: 20,
     fontFamily: "VT323",
-    fontWeight: "bold",
   },
   subtotal: {
     color: "#FFFFFF",

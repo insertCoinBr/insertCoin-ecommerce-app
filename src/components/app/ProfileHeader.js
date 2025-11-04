@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 24,
     fontFamily: "VT323",
-    fontWeight: "bold",
     marginBottom: 4,
   },
   userEmail: {
@@ -114,6 +113,5 @@ const styles = StyleSheet.create({
     color: "#FFD700",
     fontSize: 18,
     fontFamily: "VT323",
-    fontWeight: "bold",
   },
 });

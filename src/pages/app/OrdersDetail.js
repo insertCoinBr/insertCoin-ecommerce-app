@@ -69,20 +69,6 @@ export default function OrderDetails({ navigation, route }) {
             quantity: 1,
             price: 800.00
           },
-          {
-            id: 5,
-            name: "PEAK",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3527290/31bac6b2eccf09b368f5e95ce510bae2baf3cfcd/header.jpg?t=1759172507",
-            quantity: 1,
-            price: 800.00
-          },
-          {
-            id: 6,
-            name: "PEAK",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3527290/31bac6b2eccf09b368f5e95ce510bae2baf3cfcd/header.jpg?t=1759172507",
-            quantity: 1,
-            price: 800.00
-          },
         ],
         total: 2800.00
       };

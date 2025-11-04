@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -23,7 +23,7 @@ export default function Orders({ navigation }) {
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
 
   // Dados de exemplo dos pedidos
-  const pedidos = [
+  const pedidos = useMemo(() => [
     {
       id: 1,
       orderNumber: "123456-78901",
@@ -45,7 +45,21 @@ export default function Orders({ navigation }) {
       date: "10/01/24",
       total: "R$ 499,99",
     },
-  ];
+    {
+      id: 4,
+      orderNumber: "456789-01234",
+      status: "Processando",
+      date: "18/01/24",
+      total: "R$ 599,99",
+    },
+    {
+      id: 5,
+      orderNumber: "567890-12345",
+      status: "Entregue",
+      date: "05/01/24",
+      total: "R$ 199,99",
+    },
+  ], []);
 
   // Atualiza a tab ativa quando entra na tela
   useFocusEffect(
@@ -59,7 +73,7 @@ export default function Orders({ navigation }) {
     setFiltroAtivo(filtro);
   };
 
-  // Filtro dinâmico dos pedidos — usa useMemo para evitar recomputar à toa
+  // Filtro dinâmico dos pedidos
   const pedidosFiltrados = useMemo(() => {
     if (filtroAtivo === "Todos") return pedidos;
     return pedidos.filter((p) => p.status === filtroAtivo);
@@ -73,6 +87,7 @@ export default function Orders({ navigation }) {
   const handleOrderPress = (pedido) => {
     navigation.navigate("OrderDetails", {
       orderNumber: pedido.orderNumber,
+      order: pedido, // Passa o objeto completo também
     });
   };
 
@@ -82,25 +97,28 @@ export default function Orders({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <PageHeader onBackPress={() => navigation.goBack()} title="Meus Pedidos" />
+      <PageHeader 
+        onBackPress={() => navigation.goBack()} 
+        title="Meus Pedidos" 
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Barra de Filtros */}
         <FilterBar
           filtroAtivo={filtroAtivo}
           onFiltroPress={handleFiltro}
           filtros={["Todos", "Processando", "Entregue", "Cancelado"]}
         />
 
+        {/* Lista de Pedidos */}
         <View style={styles.cardsContainer}>
           {pedidosFiltrados.length > 0 ? (
             pedidosFiltrados.map((pedido) => (
               <OrderCard
                 key={pedido.id}
-                borderType="black"
-                centerColor={COLORS.primary}
                 orderNumber={pedido.orderNumber}
                 status={pedido.status}
                 date={pedido.date}
@@ -109,8 +127,11 @@ export default function Orders({ navigation }) {
               />
             ))
           ) : (
-            <View style={{ padding: 20 }}>
-              <PageHeader title="Nenhum pedido encontrado" />
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Nenhum pedido encontrado</Text>
+              <Text style={styles.emptySubtitle}>
+                Não há pedidos com status "{filtroAtivo}"
+              </Text>
             </View>
           )}
         </View>
@@ -132,5 +153,25 @@ const styles = StyleSheet.create({
   cardsContainer: {
     alignItems: "center",
     paddingVertical: 16,
+    gap: 12,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontFamily: "VT323",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    color: "#CCCCCC",
+    fontSize: 18,
+    fontFamily: "VT323",
+    textAlign: "center",
   },
 });

@@ -17,10 +17,13 @@ export default function TotalCard({
     <View style={styles.wrapper}>
       <RPGBorder 
         width={width * 0.9} 
-        height={height * 0.08} 
+        height= {height * 0.1} 
         tileSize={8} 
         centerColor={centerColor}
         borderType={borderType}
+        contentPadding={4}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.container}>
           <Text style={styles.label}>Total:</Text>
@@ -33,6 +36,7 @@ export default function TotalCard({
 
 const styles = StyleSheet.create({
   wrapper: {
+    marginBottom:"5%",
     alignItems: 'center',
   },
   container: {
@@ -44,14 +48,14 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: "VT323",
-    fontWeight: "bold",
+    
   },
   totalValue: {
     color: "#FFD700",
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "VT323",
-    fontWeight: "bold",
+   
   },
 });

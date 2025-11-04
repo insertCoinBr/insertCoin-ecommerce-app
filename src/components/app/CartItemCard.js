@@ -1,4 +1,3 @@
-// src/components/CartItemCard.js
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -21,18 +20,21 @@ export default function CartItemCard({
     <View style={styles.wrapper}>
       <RPGBorder 
         width={345} 
-        height="auto" 
+        height={110} 
         tileSize={8} 
         centerColor={centerColor}
         borderType={borderType}
+        contentPadding={8}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.container}>
           {/* Imagem do Produto */}
-          <View>
+          <View style={styles.imageWrapper}>
             <Image
               source={{ uri: product.image }}
               style={styles.productImage}
-              resizeMode="stretch"
+              resizeMode="contain"
             />
           </View>
 
@@ -94,14 +96,17 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
     gap: 12,
   },
-  productImage: {
+  imageWrapper: {
     width: 75,
     height: 75,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
   },
   infoContainer: {
     flex: 1,
@@ -109,10 +114,10 @@ const styles = StyleSheet.create({
   },
   productName: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "VT323",
     marginBottom: 4,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   price: {
     color: "#FFD700",

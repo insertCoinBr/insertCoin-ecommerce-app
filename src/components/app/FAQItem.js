@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RPGBorder from './RPGBorder';
 
-export default function FAQItem({ 
+// Habilita animações suaves no Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+export default function FAQItem({
   question,
   answer,
   borderType = "blue",
@@ -11,31 +16,41 @@ export default function FAQItem({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const toggleExpand = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <View style={styles.wrapper}>
-      <TouchableOpacity 
-        onPress={() => setIsExpanded(!isExpanded)}
-        activeOpacity={0.8}
-      >
-        <RPGBorder 
-          width={345} 
-          height={isExpanded ? 'auto' : 123} 
-          tileSize={8} 
+      <TouchableOpacity onPress={toggleExpand} activeOpacity={0.8}>
+        <RPGBorder
+          width={345}
+          height={isExpanded ? 220 : 123}
+          tileSize={8}
           centerColor={centerColor}
           borderType={borderType}
+          contentJustify="flex-start"
+          contentAlign="flex-start"
         >
           <View style={styles.container}>
             {/* Pergunta */}
             <View style={styles.questionContainer}>
-              <Text style={styles.questionText}>{question}</Text>
-              <Icon 
-                name={isExpanded ? "chevron-up" : "chevron-down"} 
-                size={24} 
-                color="#FFFFFF" 
+              <Text
+                style={styles.questionText}
+                numberOfLines={isExpanded ? 0 : 3}
+                ellipsizeMode="tail"
+              >
+                {question}
+              </Text>
+              <Icon
+                name={isExpanded ? "chevron-up" : "chevron-down"}
+                size={24}
+                color="#FFFFFF"
               />
             </View>
 
-            {/* Resposta (expandida) */}
+            {/* Resposta */}
             {isExpanded && (
               <View style={styles.answerContainer}>
                 <Text style={styles.answerText}>{answer}</Text>
@@ -54,6 +69,9 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   container: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -62,13 +80,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+    width: '100%',
   },
   questionText: {
     flex: 1,
     color: "#FFFFFF",
     fontSize: 20,
     fontFamily: "VT323",
-    paddingVertical: 0,
   },
   answerContainer: {
     marginTop: 12,

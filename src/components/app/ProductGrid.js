@@ -40,6 +40,9 @@ export default function ProductGrid({
         tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
+        contentPadding={8}
+        contentJustify="flex-start"
+        contentAlign="stretch"
       >
         <ProductCard produto={item} onPress={null} />
       </RPGBorder>
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
     fontFamily: "VT323",
     fontSize: 24,
     color: COLORS.inactive,
-    
+    marginTop: 16,
   },
   searchIcon: {
     width: 72,

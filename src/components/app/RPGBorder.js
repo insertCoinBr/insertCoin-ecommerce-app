@@ -71,9 +71,12 @@ export default function RPGBorder({
   children,
   tileSize = 16,
   centerColor = "#4C38A4",
-  centerImage = null, // Nova prop para imagem de fundo
-  imageResizeMode = "cover", // Como a imagem deve se comportar
+  centerImage = null,
+  imageResizeMode = "cover",
   borderType = "black",
+  contentPadding = null, // Nova prop para controlar padding
+  contentJustify = "space-between", // Nova prop para justifyContent
+  contentAlign = "flex-start", // Nova prop para alignItems
 }) {
   const centerWidth = Math.max(0, width - tileSize * 2);
   const centerHeight = Math.max(0, height - tileSize * 2);
@@ -81,12 +84,16 @@ export default function RPGBorder({
   // Seleciona o conjunto de bordas baseado no borderType
   const borders = BORDER_IMAGES[borderType] || BORDER_IMAGES.black;
 
+  // Define o padding (usa contentPadding se fornecido, senão usa tileSize)
+  const padding = contentPadding !== null ? contentPadding : tileSize;
+
   // Renderiza o conteúdo central (com ou sem imagem)
   const renderCenterContent = () => {
     const contentStyle = {
       flex: 1,
-      padding: tileSize,
-      justifyContent: 'space-between',
+      padding: padding,
+      justifyContent: contentJustify,
+      alignItems: contentAlign,
     };
 
     if (centerImage) {

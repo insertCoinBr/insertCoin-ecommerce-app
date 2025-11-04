@@ -1,8 +1,15 @@
 import React, { useRef } from 'react';
-import { View, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, Platform } from 'react-native';
 import RPGBorder from './RPGBorder';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Calcula altura baseada no tamanho da tela, mas com limites
+const getSearchHeight = () => {
+  const calculatedHeight = screenHeight * 0.065;
+  // Garante que fique entre 48 e 64 pixels
+  return Math.max(48, Math.min(64, calculatedHeight));
+};
 
 const COLORS = {
   primary: '#4C38A4',
@@ -10,8 +17,9 @@ const COLORS = {
   cardBg: '#FFFFFF',
   textDark: '#333333',
   text: '#999',
-
 };
+
+const SEARCH_HEIGHT = getSearchHeight();
 
 export default function SearchHeader({ 
   searchText, 
@@ -23,25 +31,25 @@ export default function SearchHeader({
   style
 }) {
   const searchWidth = showProfile ? screenWidth - 100 : screenWidth - 32;
-
-   const inputRef = useRef(null);
+  const inputRef = useRef(null);
 
   return (
     <View style={[styles.header, style]}>
       {/* BARRA DE PESQUISA COM RPGBORDER */}
       <RPGBorder 
         width={searchWidth} 
-        height={50} 
+        height={SEARCH_HEIGHT} 
         tileSize={8}
         centerColor={COLORS.cardBg}
         borderType="white"
       >
         <View style={styles.searchContent}>
-            <Image 
-              source={require('../../../assets/IconsPixel/iconSearch.png')}
-              style={styles.searchIcon}
-            />
+          <Image 
+            source={require('../../../assets/IconsPixel/iconSearch.png')}
+            style={styles.searchIcon}
+          />
           <TextInput
+            ref={inputRef}
             style={styles.searchInput}
             placeholder={placeholder}
             placeholderTextColor={COLORS.text}
@@ -83,12 +91,11 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
   },
   searchIcon: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     marginRight: 8,
     resizeMode: 'contain',
   },

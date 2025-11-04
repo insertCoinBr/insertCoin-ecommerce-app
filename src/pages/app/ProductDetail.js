@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback } from "react";
 import { 
   View, 
   Text, 
@@ -10,13 +10,14 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
 import RPGBorder from "../../components/app/RPGBorder";
 import InfoRow from "../../components/app/InfoRow";
+import BottomTabBar from "../../components/app/BottomTabBar";
 
 // SERVICES
 import { getProdutoById } from "../../services/produtosService";
@@ -43,6 +44,7 @@ export default function ProductDetail({ route, navigation }) {
   const [loading, setLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
+  const [activeTab, setActiveTab] = useState('Home'); 
 
   useEffect(() => {
     if (produto.description) {
@@ -54,6 +56,12 @@ export default function ProductDetail({ route, navigation }) {
     }
   }, [produto]);
 
+  useFocusEffect(
+        useCallback(() => {
+          setActiveTab("Home");
+        }, [])
+      );
+
   async function fetchProduct() {
     setLoading(true);
     const response = await getProdutoById(produto.id);
@@ -63,7 +71,7 @@ export default function ProductDetail({ route, navigation }) {
     setLoading(false);
   }
 
-  // 🔍 Verifica se o produto está nos favoritos
+  // Verifica se o produto está nos favoritos
   const checkFavoriteStatus = async (productId) => {
     try {
       const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -91,6 +99,11 @@ export default function ProductDetail({ route, navigation }) {
     }
   };
 
+  const handleTabPress = (route, tabName) => {
+    setActiveTab(tabName);
+    navigation.navigate(route);
+  };
+
   // Toggle Favorito
   const handleToggleFavorite = async () => {
     try {
@@ -98,7 +111,6 @@ export default function ProductDetail({ route, navigation }) {
       let favorites = favoritesJson ? JSON.parse(favoritesJson) : [];
 
       if (isFavorite) {
-        // Remove dos favoritos
         favorites = favorites.filter(fav => fav.id !== product.id);
         setIsFavorite(false);
         Alert.alert(
@@ -106,7 +118,6 @@ export default function ProductDetail({ route, navigation }) {
           `${product.title} foi removido da sua lista de desejos.`
         );
       } else {
-        // Adiciona aos favoritos
         favorites.push({
           id: product.id,
           title: product.title,
@@ -133,14 +144,11 @@ export default function ProductDetail({ route, navigation }) {
       const cartJson = await AsyncStorage.getItem(CART_STORAGE_KEY);
       let cart = cartJson ? JSON.parse(cartJson) : [];
 
-      // Verifica se já existe no carrinho
       const existingItemIndex = cart.findIndex(item => item.id === product.id);
 
       if (existingItemIndex >= 0) {
-        // Se já existe, incrementa a quantidade
         cart[existingItemIndex].quantity += 1;
       } else {
-        // Se não existe, adiciona novo item
         cart.push({
           id: product.id,
           title: product.title,
@@ -164,7 +172,6 @@ export default function ProductDetail({ route, navigation }) {
     }
   };
 
-  //  Comprar Agora
   const handleBuyNow = () => {
     Alert.alert(
       "Comprar Agora",
@@ -212,8 +219,9 @@ export default function ProductDetail({ route, navigation }) {
             height={220} 
             tileSize={10}
             centerImage={{ uri: product.image }}
-            imageResizeMode="stretch"
+            imageResizeMode="contain"
             borderType="black"
+            contentPadding={0}
           />
         </View>
 
@@ -225,6 +233,8 @@ export default function ProductDetail({ route, navigation }) {
             tileSize={10}
             centerColor={COLORS.primary}
             borderType="black"
+            contentPadding={12}
+            contentJustify="space-between"
           >
             <View style={styles.mainInfo}>
               <Text style={styles.productTitle} numberOfLines={3}>
@@ -256,6 +266,9 @@ export default function ProductDetail({ route, navigation }) {
                 tileSize={8}
                 centerColor={COLORS.secondary}
                 borderType="blue"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <View style={styles.favoriteButton}>
                   <Image
@@ -264,7 +277,7 @@ export default function ProductDetail({ route, navigation }) {
                         ? require('../../../assets/IconsPixel/iconHeart.png')
                         : require('../../../assets/IconsPixel/iconHeartNull.png')
                     }
-                    style={styles.heartIcon}
+                    style={styles.icon}
                     resizeMode="contain"
                   />
                 </View>
@@ -281,11 +294,18 @@ export default function ProductDetail({ route, navigation }) {
                 width={235} 
                 height={55} 
                 tileSize={8}
-                centerColor={isInCart ? "#4CAF50" : COLORS.success}
+                centerColor={isInCart ? "#6ABE30" : COLORS.success}
                 borderType="green"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <View style={styles.addToCartButton}>
-                  <Icon name="cart-plus" size={20} color="#FFFFFF" />
+                  <Image 
+                    source={require('../../../assets/IconsPixel/iconMoney.png')} 
+                    style={styles.icon}
+                    resizeMode="contain"
+                  />
                   <Text style={styles.buttonText}>
                     {isInCart ? "NO CARRINHO" : "ADD CARRINHO"}
                   </Text>
@@ -306,9 +326,16 @@ export default function ProductDetail({ route, navigation }) {
               tileSize={8}
               centerColor={COLORS.secondary}
               borderType="blue"
+              contentPadding={4}
+              contentJustify="center"
+              contentAlign="center"
             >
               <View style={styles.buyNowButton}>
-                <Icon name="cash-fast" size={24} color="#FFD700" />
+                <Image 
+                  source={require('../../../assets/IconsPixel/iconCartWhite.png')} 
+                  style={styles.icon}
+                  resizeMode="contain"
+                />
                 <Text style={styles.buyNowButtonText}>COMPRAR AGORA</Text>
               </View>
             </RPGBorder>
@@ -324,6 +351,8 @@ export default function ProductDetail({ route, navigation }) {
             tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
+            contentPadding={12}
+            contentJustify="flex-start"
           >
             <View style={styles.aboutSection}>
               <InfoRow label="Categoria" value={product.category} />
@@ -343,6 +372,11 @@ export default function ProductDetail({ route, navigation }) {
           </RPGBorder>
         </View>
       </ScrollView>
+      {/* BOTTOM TAB BAR */}
+            <BottomTabBar  
+              activeTab={activeTab}
+              onTabPress={handleTabPress}
+            />
     </SafeAreaView>
   );
 }
@@ -365,7 +399,7 @@ const styles = StyleSheet.create({
     fontFamily: 'VT323',
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 120,
     paddingTop: 16,
   },
   imageWrapper: {
@@ -378,7 +412,6 @@ const styles = StyleSheet.create({
   },
   mainInfo: {
     flex: 1,
-    justifyContent: 'space-between',
   },
   productTitle: {
     color: "#FFFFFF",
@@ -422,11 +455,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   favoriteButton: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  heartIcon: {
+  icon: {
     width: 24,
     height: 24,
   },
@@ -434,7 +466,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addToCartButton: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -449,7 +480,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buyNowButton: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

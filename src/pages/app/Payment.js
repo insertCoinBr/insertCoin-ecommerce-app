@@ -87,6 +87,9 @@ export default function Payment({ navigation, route }) {
             tileSize={8} 
             centerColor={COLORS.secondary}
             borderType="blue"
+            contentPadding={4}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Total:</Text>
@@ -134,6 +137,9 @@ export default function Payment({ navigation, route }) {
                 tileSize={8} 
                 centerColor={COLORS.white}
                 borderType="white"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <TextInput
                   style={styles.input}
@@ -153,6 +159,9 @@ export default function Payment({ navigation, route }) {
                 tileSize={8} 
                 centerColor={COLORS.white}
                 borderType="white"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
               >
                 <TextInput
                   style={styles.input}
@@ -175,6 +184,9 @@ export default function Payment({ navigation, route }) {
                   tileSize={8} 
                   centerColor={COLORS.white}
                   borderType="white"
+                contentPadding={4}
+                contentJustify="center"
+                contentAlign="center"
                 >
                   <TextInput
                     style={styles.input}
@@ -195,6 +207,9 @@ export default function Payment({ navigation, route }) {
                   tileSize={8} 
                   centerColor={COLORS.white}
                   borderType="white"
+                  contentPadding={4}
+                  contentJustify="center"
+                  contentAlign="center"
                 >
                   <TextInput
                     style={styles.input}
@@ -224,6 +239,9 @@ export default function Payment({ navigation, route }) {
             tileSize={8} 
             centerColor={COLORS.secondary}
             borderType="blue"
+            contentPadding={4}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.submitButton}>
               <Text style={styles.submitButtonText}>Envio de Ordem</Text>

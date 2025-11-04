@@ -34,7 +34,7 @@ export default function CarouselDestaques({
     >
       <RPGBorder 
         width={CAROUSEL_ITEM_WIDTH - 61} 
-        height={240} 
+        height={241} 
         tileSize={10}
         centerImage={{ uri: item.image }}
         imageResizeMode="stretch"

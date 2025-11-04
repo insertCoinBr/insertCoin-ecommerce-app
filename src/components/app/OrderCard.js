@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet,Dimensions } from 'react-native';
 import RPGBorder from './RPGBorder';
 
 export default function OrderCard({ 
@@ -22,10 +22,12 @@ export default function OrderCard({
     }
   };
 
+  const { height, width } = Dimensions.get('window');
+
   return (
     <Pressable onPress={onPress} style={styles.wrapper}>
       <RPGBorder 
-        width={380} 
+        width={345} 
         height="auto"
         tileSize={10} 
         centerColor={"#1F41BB"}

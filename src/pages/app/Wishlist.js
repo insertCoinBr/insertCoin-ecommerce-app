@@ -165,6 +165,9 @@ export default function Wishlist({ navigation }) {
             tileSize={8} 
             centerColor={COLORS.primary}
             borderType="black"
+            contentPadding={4}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Total:</Text>
@@ -185,6 +188,9 @@ export default function Wishlist({ navigation }) {
             tileSize={8} 
             centerColor={COLORS.secondary}
             borderType="blue"
+            contentPadding={4}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.addAllButton}>
               <Text style={styles.addAllButtonText}>ADD IN CART</Text>
