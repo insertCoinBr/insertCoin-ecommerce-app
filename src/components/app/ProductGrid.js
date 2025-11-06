@@ -11,12 +11,13 @@ const COLORS = {
   inactive: "#EAEAEA",
 };
 
-export default function ProductGrid({ 
-  produtos, 
+export default function ProductGrid({
+  produtos,
   onItemPress,
   searchText = '',
   borderType = "black",
-  centerColor = COLORS.primary
+  centerColor = COLORS.primary,
+  activeFilters = {} // { category: 'Ação', platform: 'Steam' }
 }) {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -34,9 +35,9 @@ export default function ProductGrid({
       style={styles.productItemWrapper}
       activeOpacity={0.9}
     >
-      <RPGBorder 
-        width={(width / 2) - 24} 
-        height={221} 
+      <RPGBorder
+        widthPercent={0.44}
+        aspectRatio={1.25}
         tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
@@ -49,11 +50,40 @@ export default function ProductGrid({
     </TouchableOpacity>
   );
 
+  // Gera o texto dos filtros ativos
+  const getActiveFiltersText = () => {
+    const filters = [];
+
+    if (activeFilters.category) {
+      filters.push(`Categoria: ${activeFilters.category}`);
+    }
+
+    if (activeFilters.platform) {
+      filters.push(`Plataforma: ${activeFilters.platform}`);
+    }
+
+    if (filters.length === 0) {
+      return null;
+    }
+
+    return filters.join(' • ');
+  };
+
+  const activeFiltersText = getActiveFiltersText();
+
   return (
     <View style={styles.productsSection}>
       <Text style={styles.sectionTitle}>
         {searchText ? `Resultados (${produtos.length})` : 'Todos os Produtos'}
       </Text>
+
+      {/* Mostra filtros ativos */}
+      {activeFiltersText && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersLabel}>Filtros aplicados:</Text>
+          <Text style={styles.activeFiltersText}>{activeFiltersText}</Text>
+        </View>
+      )}
       {produtos.length === 0 ? (
         renderEmpty()
       ) : (
@@ -81,6 +111,28 @@ const styles = StyleSheet.create({
     color: COLORS.textColors,
     marginBottom: 10,
     paddingHorizontal: 16,
+  },
+  activeFiltersContainer: {
+    backgroundColor: 'rgba(76, 56, 164, 0.3)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#6ABE30',
+  },
+  activeFiltersLabel: {
+    fontFamily: "VT323",
+    fontSize: 18,
+    color: '#6ABE30',
+    marginBottom: 4,
+  },
+  activeFiltersText: {
+    fontFamily: "VT323",
+    fontSize: 22,
+    color: COLORS.textColors,
+    lineHeight: 24,
   },
   productItemWrapper: {
     marginBottom: 12,

@@ -9,6 +9,7 @@ import CarouselDestaques from '../../components/app/CarouselDestaques';
 import FilterBar from '../../components/app/FilterBar';
 import ProductGrid from '../../components/app/ProductGrid';
 import BottomTabBar from '../../components/app/BottomTabBar';
+import FilterModal from '../../components/app/FilterModal';
 
 // HOOKS
 import useFontLoader from '../../hooks/useFontLoader';
@@ -30,8 +31,14 @@ export default function ProductList({ navigation }) {
   const [filtroAtivo, setFiltroAtivo] = useState('Todos');
   const [precoOrdem, setPrecoOrdem] = useState('asc');
   const [searchText, setSearchText] = useState('');
-  const [activeTab, setActiveTab] = useState('Home'); 
+  const [activeTab, setActiveTab] = useState('Home');
   const [filterBarY, setFilterBarY] = useState(0);
+
+  // Estados para o modal de filtros
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filterModalType, setFilterModalType] = useState(''); // 'Categoria' ou 'Plataforma'
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
 
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);
@@ -46,17 +53,51 @@ export default function ProductList({ navigation }) {
       }, [])
     );
 
+  // Extrai categorias únicas dos produtos (separando as que estão juntas por vírgula)
+  const getUniqueCategories = () => {
+    const allCategories = [];
+    produtosList.forEach(item => {
+      // Separa as categorias por vírgula e remove espaços extras
+      const categories = item.category.split(',').map(cat => cat.trim());
+      allCategories.push(...categories);
+    });
+    // Remove duplicatas e ordena
+    return [...new Set(allCategories)].sort();
+  };
+
+  // Extrai plataformas únicas dos produtos
+  const getUniquePlatforms = () => {
+    const platforms = produtosList.map(item => item.platform);
+    return [...new Set(platforms)].sort();
+  };
+
+  // Aplica filtros de busca, categoria e plataforma
   useEffect(() => {
-    if (searchText.trim() === '') {
-      setFilteredList(produtosList);
-    } else {
-      const filtered = produtosList.filter(item =>
+    let filtered = [...produtosList];
+
+    // Filtro de busca
+    if (searchText.trim() !== '') {
+      filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(searchText.toLowerCase()) ||
         item.category.toLowerCase().includes(searchText.toLowerCase())
       );
-      setFilteredList(filtered);
     }
-  }, [searchText, produtosList]);
+
+    // Filtro de categoria - verifica se a categoria selecionada está contida no campo category
+    if (selectedCategory) {
+      filtered = filtered.filter(item => {
+        const categories = item.category.split(',').map(cat => cat.trim());
+        return categories.includes(selectedCategory);
+      });
+    }
+
+    // Filtro de plataforma
+    if (selectedPlatform) {
+      filtered = filtered.filter(item => item.platform === selectedPlatform);
+    }
+
+    setFilteredList(filtered);
+  }, [searchText, produtosList, selectedCategory, selectedPlatform]);
 
   async function fetchData() {
     setLoading(true);
@@ -68,37 +109,70 @@ export default function ProductList({ navigation }) {
   }
 
   const handleFiltro = (filtro) => {
+    // Se clicar em Categoria, sempre abre o modal
+    if (filtro === 'Categoria') {
+      setFilterModalType('Categoria');
+      setShowFilterModal(true);
+      return;
+    }
+
+    // Se clicar em Plataforma, sempre abre o modal
+    if (filtro === 'Plataforma') {
+      setFilterModalType('Plataforma');
+      setShowFilterModal(true);
+      return;
+    }
+
+    // Se clicar em Preço, ordena por preço
     if (filtro === 'Preco' && filtroAtivo === 'Preco') {
       const novaOrdem = precoOrdem === 'asc' ? 'desc' : 'asc';
       setPrecoOrdem(novaOrdem);
-      
-      let lista = [...produtosList];
+
+      let lista = [...filteredList];
       lista.sort((a, b) => novaOrdem === 'asc' ? a.price - b.price : b.price - a.price);
       setFilteredList(lista);
       return;
     }
-    
+
     setFiltroAtivo(filtro);
-    let lista = [...produtosList];
-    
-    switch(filtro) {
-      case 'Preco':
-        setPrecoOrdem('asc');
-        lista.sort((a, b) => a.price - b.price);
-        break;
-      case 'Categoria':
-        lista.sort((a, b) => a.category.localeCompare(b.category));
-        break;
-      case 'Plataforma':
-        lista.sort((a, b) => (b.rating?.rate || 0) - (a.rating?.rate || 0));
-        break;
-      case 'Todos':
-      default:
-        setPrecoOrdem('asc');
-        break;
+
+    // Se clicar em Todos, limpa todos os filtros
+    if (filtro === 'Todos') {
+      setSelectedCategory(null);
+      setSelectedPlatform(null);
+      setPrecoOrdem('asc');
+      return;
     }
-    
-    setFilteredList(lista);
+
+    // Se clicar em Preço pela primeira vez
+    if (filtro === 'Preco') {
+      setPrecoOrdem('asc');
+      let lista = [...filteredList];
+      lista.sort((a, b) => a.price - b.price);
+      setFilteredList(lista);
+    }
+  };
+
+  // Função para lidar com a seleção de categoria no modal
+  const handleSelectCategory = (category) => {
+    // Se clicar na categoria já selecionada, remove a seleção
+    if (category === selectedCategory) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(category);
+    }
+    setShowFilterModal(false);
+  };
+
+  // Função para lidar com a seleção de plataforma no modal
+  const handleSelectPlatform = (platform) => {
+    // Se clicar na plataforma já selecionada, remove a seleção
+    if (platform === selectedPlatform) {
+      setSelectedPlatform(null);
+    } else {
+      setSelectedPlatform(platform);
+    }
+    setShowFilterModal(false);
   };
 
   const handleProductPress = (produto) => {
@@ -169,26 +243,42 @@ export default function ProductList({ navigation }) {
         />
 
         <View onLayout={handleFilterBarLayout}>
-          <FilterBar 
+          <FilterBar
             filtroAtivo={filtroAtivo}
             onFiltroPress={handleFiltro}
             precoOrdem={precoOrdem}
+            selectedCategory={selectedCategory}
+            selectedPlatform={selectedPlatform}
           />
         </View>
 
-        <ProductGrid 
+        <ProductGrid
           produtos={filteredList}
           onItemPress={handleProductPress}
           searchText={searchText}
           borderType="black"
           centerColor={COLORS.primary}
+          activeFilters={{
+            category: selectedCategory,
+            platform: selectedPlatform
+          }}
         />
       </ScrollView>
 
       {/* BOTTOM TAB BAR */}
-      <BottomTabBar  
+      <BottomTabBar
         activeTab={activeTab}
         onTabPress={handleTabPress}
+      />
+
+      {/* MODAL DE FILTROS */}
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onSelectFilter={filterModalType === 'Categoria' ? handleSelectCategory : handleSelectPlatform}
+        filterType={filterModalType}
+        options={filterModalType === 'Categoria' ? getUniqueCategories() : getUniquePlatforms()}
+        selectedOption={filterModalType === 'Categoria' ? selectedCategory : selectedPlatform}
       />
     </SafeAreaView>
   );
@@ -212,6 +302,6 @@ const styles = StyleSheet.create({
     fontFamily: 'VT323',
   },
   scrollContent:{
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
 });

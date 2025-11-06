@@ -19,10 +19,10 @@ export default function NotificationCard({
 
   return (
     <View style={styles.wrapper}>
-      <RPGBorder 
-        width={345} 
-        height={115} 
-        tileSize={8} 
+      <RPGBorder
+        widthPercent={0.9}
+        aspectRatio={0.33}
+        tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
       >

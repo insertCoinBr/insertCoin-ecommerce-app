@@ -83,7 +83,6 @@ export default function PersonalData({ navigation }) {
       name: fullName,
       email: email,
     });
-    console.log("Dados atualizados com sucesso!");
     navigation.goBack();
   };
 

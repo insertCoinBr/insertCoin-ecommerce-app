@@ -1,10 +1,9 @@
-// screens/CriarConta/index.js
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-//Import de Componentes
 import Logo from '../../components/app/Logo';
 import CustomInput from '../../components/app/CustomInput';
 import CustomButton from '../../components/app/CustomButton';
@@ -23,26 +22,22 @@ export default function CriarConta({ route }) {
       return;
     }
 
-    //Validação básica de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Por favor, insira um email válido.");
       return;
     }
 
-    //Validação de nome (mínimo 3 caracteres)
     if (username.trim().length < 3) {
-  setError("O nome deve ter pelo menos 3 caracteres.");
-  return;
-}
+      setError("O nome deve ter pelo menos 3 caracteres.");
+      return;
+    }
 
-if (/\d/.test(username)) {
-  setError("O nome não deve conter números.");
-  return;
-}
+    if (/\d/.test(username)) {
+      setError("O nome não deve conter números.");
+      return;
+    }
 
-
-    //Simula loading e navega para criar senha
     setError("");
     setLoading(true);
     setTimeout(() => {
@@ -52,43 +47,48 @@ if (/\d/.test(username)) {
   };
 
   return (
-    <View style={styles.container}>
-      <Logo />
-      <Text style={styles.textTitle}>Criar Conta</Text>
-      <View style={styles.spacer} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Logo />
+        <Text style={styles.textTitle}>Criar Conta</Text>
+        <View style={styles.spacer} />
 
-      <CustomInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      <CustomInput
-        placeholder="Nome de Usuário"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="words"
-      />
+        <CustomInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
-      <ErrorMessage message={error} />
+        <CustomInput
+          placeholder="Nome de Usuário"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="words"
+        />
 
-      <CustomButton
-        title="Continue"
-        onPress={handleCreatePress}
-        loading={loading}
-        variant="primary"
-      />
+        <ErrorMessage message={error} />
 
-      <CustomButton
-        title="Já tenho uma conta"
-        onPress={() => navigation.navigate('Login')}
-        variant="secondary"
-      />
+        <CustomButton
+          title="Continue"
+          onPress={handleCreatePress}
+          loading={loading}
+          variant="primary"
+        />
 
+        <CustomButton
+          title="Já tenho uma conta"
+          onPress={() => navigation.navigate('Login')}
+          variant="secondary"
+        />
+      </ScrollView>
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -96,17 +96,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffffff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 50,
+    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
   },
-  spacer: { 
-    height: 30 
+  spacer: {
+    height: 20
   },
-  textTitle: { 
-    fontSize: 30, 
-    color: '#1F41BB', 
+  textTitle: {
+    fontSize: 30,
+    color: '#1F41BB',
     fontWeight: 'bold',
-    marginTop: 58,
+    marginTop: 20,
   },
 });

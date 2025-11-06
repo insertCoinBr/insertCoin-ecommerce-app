@@ -1,10 +1,15 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native";
+import React, { useState, useCallback, useContext, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// COMPONENTES
+//IMPORTAR O CARTCONTEXT
+import { CartContext } from "../../context/CartContext";
+import { CurrencyContext } from "../../context/CurrencyContext";
+import { useAlert } from "../../context/AlertContext";
+
+//COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
 import BottomTabBar from "../../components/app/BottomTabBar";
 import CartItemCard from "../../components/app/CartItemCard";
@@ -19,8 +24,6 @@ const COLORS = {
   white: "#ffffffff"
 };
 
-// Chave do AsyncStorage
-const CART_STORAGE_KEY = '@insertcoin:cart';
 const COUPONS_STORAGE_KEY = '@insertcoin:coupons';
 
 export default function Cart({ navigation }) {
@@ -29,44 +32,39 @@ export default function Cart({ navigation }) {
   const [cupom, setCupom] = useState("");
   const [discount, setDiscount] = useState(0);
   const [cupomAplicado, setCupomAplicado] = useState(null);
-  const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  //  Carrega o carrinho ao focar na tela
+  //USAR O CARTCONTEXT
+  const {
+    cartItems,
+    incrementQuantity,
+    decrementQuantity,
+    removeFromCart,
+    getCartTotal,
+    getCartCount,
+    loading
+  } = useContext(CartContext);
+
+  //USAR O ALERT CUSTOMIZADO
+  const { showSuccess, showError, showConfirm } = useAlert();
+
+  //USAR O CURRENCYCONTEXT
+  const { formatPrice } = useContext(CurrencyContext);
+
+  //Redireciona para EmptyCart se não houver itens
+  useEffect(() => {
+    if (!loading && cartItems.length === 0) {
+      navigation.replace("EmptyCart");
+    }
+  }, [cartItems.length, loading, navigation]);
+
   useFocusEffect(
     useCallback(() => {
       setActiveTab("Cart");
-      loadCart();
       loadAppliedCoupon();
     }, [])
   );
 
-  //  Carrega itens do carrinho do AsyncStorage
-  const loadCart = async () => {
-    try {
-      setLoading(true);
-      const cartJson = await AsyncStorage.getItem(CART_STORAGE_KEY);
-      if (cartJson) {
-        const cart = JSON.parse(cartJson);
-        setCartItems(cart);
-        
-        // Se o carrinho está vazio, redireciona para EmptyCart
-        if (cart.length === 0) {
-          navigation.replace("EmptyCart");
-        }
-      } else {
-        // Carrinho não existe ainda, vai para EmptyCart
-        navigation.replace("EmptyCart");
-      }
-    } catch (error) {
-      console.error('Erro ao carregar carrinho:', error);
-      Alert.alert('Erro', 'Não foi possível carregar o carrinho.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //  Carrega cupom aplicado anteriormente
+  //Carrega cupom aplicado anteriormente
   const loadAppliedCoupon = async () => {
     try {
       const couponJson = await AsyncStorage.getItem(COUPONS_STORAGE_KEY);
@@ -81,17 +79,7 @@ export default function Cart({ navigation }) {
     }
   };
 
-  //  Salva o carrinho no AsyncStorage
-  const saveCart = async (updatedCart) => {
-    try {
-      await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
-    } catch (error) {
-      console.error('Erro ao salvar carrinho:', error);
-      Alert.alert('Erro', 'Não foi possível salvar as alterações.');
-    }
-  };
-
-  //  Salva o cupom aplicado
+  //Salva o cupom aplicado
   const saveCoupon = async (code, discountValue) => {
     try {
       const couponData = {
@@ -104,7 +92,7 @@ export default function Cart({ navigation }) {
     }
   };
 
-  //  Remove o cupom salvo
+  //Remove o cupom salvo
   const removeSavedCoupon = async () => {
     try {
       await AsyncStorage.removeItem(COUPONS_STORAGE_KEY);
@@ -113,73 +101,52 @@ export default function Cart({ navigation }) {
     }
   };
 
-  //  Incrementa quantidade
+  //INCREMENTA QUANTIDADE - USA CONTEXT
   const handleIncrement = async (itemId) => {
-    const updatedCart = cartItems.map((item) =>
-      item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
-    );
-    setCartItems(updatedCart);
-    await saveCart(updatedCart);
+    await incrementQuantity(itemId);
   };
 
-  //  Decrementa quantidade
+  //DECREMENTA QUANTIDADE - USA CONTEXT
   const handleDecrement = async (itemId) => {
-    const updatedCart = cartItems.map((item) =>
-      item.id === itemId && item.quantity > 1
-        ? { ...item, quantity: item.quantity - 1 }
-        : item
-    );
-    setCartItems(updatedCart);
-    await saveCart(updatedCart);
+    await decrementQuantity(itemId);
   };
 
-  // Remove item do carrinho
+  //REMOVE ITEM - USA CONTEXT
   const handleRemove = async (itemId) => {
-    Alert.alert(
+    showConfirm(
       "Remover Item",
       "Deseja realmente remover este item do carrinho?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Remover",
-          style: "destructive",
-          onPress: async () => {
-            const updatedCart = cartItems.filter((item) => item.id !== itemId);
-            setCartItems(updatedCart);
-            await saveCart(updatedCart);
-
-            // Se o carrinho ficar vazio, redireciona
-            if (updatedCart.length === 0) {
-              navigation.replace("EmptyCart");
-            }
-          }
-        }
-      ]
+      async () => {
+        await removeFromCart(itemId);
+        showSuccess("Item Removido", "O item foi removido do carrinho.");
+      },
+      {
+        confirmText: "Remover",
+        cancelText: "Cancelar",
+        type: "error"
+      }
     );
   };
 
-  //  Calcula subtotal
-  const calculateSubtotal = () =>
-    cartItems.reduce((total, item) => total + parseFloat(item.price) * item.quantity, 0);
+  //CALCULA SUBTOTAL - USA CONTEXT
+  const calculateSubtotal = () => {
+    return getCartTotal();
+  };
 
-  //  Calcula total com desconto
+  //Calcula total com desconto
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
     return subtotal - discount;
   };
 
-  //  Formata preço
-  const formatPrice = (value) =>
-    `R$ ${parseFloat(value).toFixed(2).replace(".", ",")}`;
-
-  //  Aplica cupom
+  //Aplica cupom
   const handleApplyCupom = async () => {
     const normalized = cupom.trim().toUpperCase();
     const subtotal = calculateSubtotal();
     let newDiscount = 0;
 
     if (!normalized) {
-      Alert.alert("Erro", "Digite um código de cupom.");
+      showError("Erro", "Digite um código de cupom.");
       return;
     }
 
@@ -188,28 +155,28 @@ export default function Cart({ navigation }) {
       setDiscount(newDiscount);
       setCupomAplicado("PROMO10");
       await saveCoupon("PROMO10", newDiscount);
-      Alert.alert("Cupom aplicado!", "Você ganhou 10% de desconto.");
+      showSuccess("Cupom aplicado!", "Você ganhou 10% de desconto.");
     } else if (normalized === "FRETEGRATIS") {
       newDiscount = 20.0;
       setDiscount(newDiscount);
       setCupomAplicado("FRETEGRATIS");
       await saveCoupon("FRETEGRATIS", newDiscount);
-      Alert.alert("Cupom aplicado!", "R$ 20,00 de desconto concedido.");
+      showSuccess("Cupom aplicado!", `${formatPrice(20)} de desconto concedido.`);
     } else {
       setDiscount(0);
       setCupomAplicado(null);
       await removeSavedCoupon();
-      Alert.alert("Cupom inválido", "Verifique o código digitado e tente novamente.");
+      showError("Cupom inválido", "Verifique o código digitado e tente novamente.");
     }
   };
 
-  //  Remove cupom aplicado
+  //Remove cupom aplicado
   const handleRemoveCoupon = async () => {
     setDiscount(0);
     setCupomAplicado(null);
     setCupom("");
     await removeSavedCoupon();
-    Alert.alert("Cupom removido", "O desconto foi removido do seu carrinho.");
+    showSuccess("Cupom removido", "O desconto foi removido do seu carrinho.");
   };
 
   const handleTabPress = (route, tabName) => {
@@ -237,7 +204,7 @@ export default function Cart({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Lista de Itens */}
+        {/*LISTA DE ITENS DO CONTEXT */}
         {cartItems.map((item) => (
           <CartItemCard
             key={item.id}

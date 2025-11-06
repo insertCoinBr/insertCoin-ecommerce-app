@@ -66,12 +66,12 @@ export default function Notification({ navigation }) {
 
       if (result.action === Share.sharedAction) {
         if (result.activityType) {
-          console.log(`Compartilhado com: ${result.activityType} — id=${notification.id} title="${notification.title}"`);
+          // Compartilhado com sucesso
         } else {
-          console.log(`Compartilhado com sucesso — id=${notification.id} title="${notification.title}"`);
+          // Compartilhado com sucesso
         }
       } else if (result.action === Share.dismissedAction) {
-        console.log(`Compartilhamento cancelado — id=${notification.id} title="${notification.title}"`);
+        // Compartilhamento cancelado
       }
     } catch (error) {
       console.error("Erro ao compartilhar:", error);

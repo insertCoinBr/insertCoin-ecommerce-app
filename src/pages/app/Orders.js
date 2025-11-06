@@ -96,23 +96,25 @@ export default function Orders({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+
       <PageHeader 
         onBackPress={() => navigation.goBack()} 
         title="Meus Pedidos" 
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Barra de Filtros */}
+      {/* Barra de Filtros */}
         <FilterBar
           filtroAtivo={filtroAtivo}
           onFiltroPress={handleFiltro}
           filtros={["Todos", "Processando", "Entregue", "Cancelado"]}
         />
 
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        
         {/* Lista de Pedidos */}
         <View style={styles.cardsContainer}>
           {pedidosFiltrados.length > 0 ? (
@@ -148,6 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 120,
   },
   cardsContainer: {

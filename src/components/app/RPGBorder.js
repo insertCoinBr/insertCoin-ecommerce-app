@@ -1,5 +1,7 @@
 import React from "react";
-import { View, Image, StyleSheet, ImageBackground } from "react-native";
+import { View, Image, StyleSheet, ImageBackground, Dimensions } from "react-native";
+
+const { width: screenWidth } = Dimensions.get('window');
 
 // Mapeamento das bordas
 const BORDER_IMAGES = {
@@ -68,6 +70,9 @@ const BORDER_IMAGES = {
 export default function RPGBorder({
   width = 260,
   height = 120,
+  widthPercent = null, // Porcentagem da largura da tela (ex: 0.9 para 90%)
+  heightPercent = null, // Porcentagem baseada na largura calculada (mantém proporção)
+  aspectRatio = null, // Proporção altura/largura (ex: 0.5 para altura = 50% da largura)
   children,
   tileSize = 16,
   centerColor = "#4C38A4",
@@ -78,8 +83,19 @@ export default function RPGBorder({
   contentJustify = "space-between", // Nova prop para justifyContent
   contentAlign = "flex-start", // Nova prop para alignItems
 }) {
-  const centerWidth = Math.max(0, width - tileSize * 2);
-  const centerHeight = Math.max(0, height - tileSize * 2);
+  // Calcula a largura real (usa porcentagem se fornecida, senão usa width fixa)
+  const calculatedWidth = widthPercent ? Math.floor(screenWidth * widthPercent) : width;
+
+  // Calcula a altura real
+  let calculatedHeight = height;
+  if (heightPercent) {
+    calculatedHeight = Math.floor(calculatedWidth * heightPercent);
+  } else if (aspectRatio) {
+    calculatedHeight = Math.floor(calculatedWidth * aspectRatio);
+  }
+
+  const centerWidth = Math.max(0, calculatedWidth - tileSize * 2);
+  const centerHeight = Math.max(0, calculatedHeight - tileSize * 2);
 
   // Seleciona o conjunto de bordas baseado no borderType
   const borders = BORDER_IMAGES[borderType] || BORDER_IMAGES.black;
@@ -129,7 +145,7 @@ export default function RPGBorder({
   };
 
   return (
-    <View style={[styles.wrapper, { width, height }]}>
+    <View style={[styles.wrapper, { width: calculatedWidth, height: calculatedHeight }]}>
       {/* Top row */}
       <View style={[styles.row, { height: tileSize }]}>
         <Image

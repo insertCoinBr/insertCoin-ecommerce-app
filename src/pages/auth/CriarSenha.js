@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 //Import de Componentes
@@ -51,69 +52,74 @@ export default function CriarSenha({ route }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Logo />
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Logo />
 
-      <Text style={styles.textLogin}>Crie Sua Nova Senha</Text>
+        <Text style={styles.textLogin}>Crie Sua Nova Senha</Text>
 
-      <View style={styles.spacer} />
+        <View style={styles.spacer} />
 
-      <CustomInput 
-        placeholder="Senha" 
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry={true}
-        autoCapitalize="none"
-      />
-      
-      <CustomInput 
-        placeholder="Confirme sua Senha" 
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry={true}
-        autoCapitalize="none"
-      />
+        <CustomInput
+          placeholder="Senha"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={true}
+          autoCapitalize="none"
+        />
 
-      <ErrorMessage message={error} />
-      
-      <View style={styles.requirementsContainer}>
-        <PasswordRequirement 
-          text="Mínimo de 8 caracteres" 
-          isValid={hasMinLength} 
+        <CustomInput
+          placeholder="Confirme sua Senha"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={true}
+          autoCapitalize="none"
         />
-        <PasswordRequirement 
-          text="Pelo menos 1 letra maiúscula" 
-          isValid={hasUpperCase} 
-        />
-        <PasswordRequirement 
-          text="Pelo menos 1 letra minúscula" 
-          isValid={hasLowerCase} 
-        />
-        <PasswordRequirement 
-          text="Pelo menos 1 número" 
-          isValid={hasNumber} 
-        />
-        <PasswordRequirement 
-          text="Pelo menos 1 caractere especial" 
-          isValid={hasSpecialChar} 
-        />
-      </View>
-      
-      <CustomButton
-        title="Continue"
-        onPress={handleContinue}
-        loading={loading}
-        variant="primary"
-      />
 
-      <CustomButton
-              title="Teste Navegar Login"
-              onPress={() => navigation.navigate('Login')}
-              variant="secondary"
-            />
-    
+        <ErrorMessage message={error} />
+
+        <View style={styles.requirementsContainer}>
+          <PasswordRequirement
+            text="Mínimo de 8 caracteres"
+            isValid={hasMinLength}
+          />
+          <PasswordRequirement
+            text="Pelo menos 1 letra maiúscula"
+            isValid={hasUpperCase}
+          />
+          <PasswordRequirement
+            text="Pelo menos 1 letra minúscula"
+            isValid={hasLowerCase}
+          />
+          <PasswordRequirement
+            text="Pelo menos 1 número"
+            isValid={hasNumber}
+          />
+          <PasswordRequirement
+            text="Pelo menos 1 caractere especial"
+            isValid={hasSpecialChar}
+          />
+        </View>
+
+        <CustomButton
+          title="Continue"
+          onPress={handleContinue}
+          loading={loading}
+          variant="primary"
+        />
+
+        <CustomButton
+          title="Teste Navegar Login"
+          onPress={() => navigation.navigate('Login')}
+          variant="secondary"
+        />
+      </ScrollView>
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -121,18 +127,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffffff',
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 50,
+    padding: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
   },
-  spacer: { 
-    height: 30 
+  spacer: {
+    height: 20
   },
-  textLogin: { 
-    fontSize: 30, 
-    color: '#1F41BB', 
+  textLogin: {
+    fontSize: 30,
+    color: '#1F41BB',
     fontWeight: 'bold',
-    marginTop: 58,
+    marginTop: 20,
   },
   requirementsContainer: {
     width: '100%',

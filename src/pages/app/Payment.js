@@ -1,8 +1,11 @@
-// src/pages/app/Payment.js
 import React, { useState, useCallback, useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+
+// 🔴 IMPORTAR OS CONTEXTS
+import { CartContext } from "../../context/CartContext";
+import { CurrencyContext } from "../../context/CurrencyContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -10,11 +13,7 @@ import BottomTabBar from "../../components/app/BottomTabBar";
 import PaymentMethodCard from "../../components/app/PaymentMethodCard";
 import RPGBorder from "../../components/app/RPGBorder";
 
-// HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
-
-// CONTEXT
-import { CurrencyContext } from "../../context/CurrencyContext";
 
 const COLORS = {
   background: "#1A1027",
@@ -26,6 +25,10 @@ const COLORS = {
 export default function Payment({ navigation, route }) {
   const fontLoaded = useFontLoader();
   const { currency } = useContext(CurrencyContext);
+  
+  //USAR O CARTCONTEXT
+  const { getCartTotal, clearCart } = useContext(CartContext);
+  
   const [activeTab, setActiveTab] = useState('Cart');
   const [selectedPayment, setSelectedPayment] = useState('credit');
   
@@ -35,8 +38,9 @@ export default function Payment({ navigation, route }) {
   const [cardDate, setCardDate] = useState('');
   const [cardCVV, setCardCVV] = useState('');
 
-  // Total do carrinho (vindo da navegação)
-  const { total = 0.00 } = route.params || {};
+  //Total do carrinho vindo do CONTEXT ou da navegação
+  const { total: routeTotal } = route.params || {};
+  const total = routeTotal || getCartTotal();
 
   useFocusEffect(
     useCallback(() => {
@@ -56,11 +60,17 @@ export default function Payment({ navigation, route }) {
     return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
   };
 
-  const handleFinalizePurchase = () => {
+  //FINALIZAR COMPRA - LIMPA O CARRINHO
+  const handleFinalizePurchase = async () => {
     if (selectedPayment === 'credit' && (!cardName || !cardNumber || !cardDate || !cardCVV)) {
       alert('Por favor, preencha todos os dados do cartão');
       return;
     }
+    
+    //LIMPA O CARRINHO APÓS COMPRA
+    await clearCart();
+    
+    // Vai para tela de sucesso
     navigation.navigate('Success');
   };
 
@@ -111,7 +121,7 @@ export default function Payment({ navigation, route }) {
             centerColor={COLORS.secondary}
           />
 
-          {/* PIX so se a moeda for BRL */}
+          {/* PIX só se a moeda for BRL */}
           {currency === 'BRL' && (
             <PaymentMethodCard
               title="Pix"
@@ -175,7 +185,7 @@ export default function Payment({ navigation, route }) {
               </RPGBorder>
             </View>
 
-            {/* Data */}
+            {/* Data e CVV */}
             <View style={styles.rowInputs}>
               <View style={styles.halfInputWrapper}>
                 <RPGBorder 
@@ -184,9 +194,9 @@ export default function Payment({ navigation, route }) {
                   tileSize={8} 
                   centerColor={COLORS.white}
                   borderType="white"
-                contentPadding={4}
-                contentJustify="center"
-                contentAlign="center"
+                  contentPadding={4}
+                  contentJustify="center"
+                  contentAlign="center"
                 >
                   <TextInput
                     style={styles.input}
@@ -199,7 +209,7 @@ export default function Payment({ navigation, route }) {
                   />
                 </RPGBorder>
               </View>
-              {/* CVV */}
+              
               <View style={styles.halfInputWrapper}>
                 <RPGBorder 
                   width={165} 

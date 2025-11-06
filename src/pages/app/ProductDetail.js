@@ -1,17 +1,21 @@
-import React, { useEffect, useState,useCallback } from "react";
-import { 
-  View, 
-  Text, 
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import {
+  View,
+  Text,
   Image,
-  StyleSheet, 
-  ActivityIndicator, 
+  StyleSheet,
+  ActivityIndicator,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from "@react-navigation/native";
+
+// IMPORTAR OS CONTEXTS
+import { CartContext } from "../../context/CartContext";
+import { FavoritesContext } from "../../context/FavoritesContext";
+import { CurrencyContext } from "../../context/CurrencyContext";
+import { useAlert } from "../../context/AlertContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -33,157 +37,114 @@ const COLORS = {
   warning: "#FFD700",
 };
 
-// Chaves do AsyncStorage
-const CART_STORAGE_KEY = '@insertcoin:cart';
-const FAVORITES_STORAGE_KEY = '@insertcoin:favorites';
-
 export default function ProductDetail({ route, navigation }) {
   const fontLoaded = useFontLoader();
   const { produto } = route.params;
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isInCart, setIsInCart] = useState(false);
-  const [activeTab, setActiveTab] = useState('Home'); 
+  const [activeTab, setActiveTab] = useState('Home');
+
+  //USAR O CARTCONTEXT
+  const {
+    addToCart,
+    isInCart,
+    getItemQuantity,
+    loading: cartLoading
+  } = useContext(CartContext);
+
+  //USAR O FAVORITESCONTEXT
+  const {
+    toggleFavorite,
+    isFavorite
+  } = useContext(FavoritesContext);
+
+  //USAR O ALERT CUSTOMIZADO
+  const { showSuccess, showError, showConfirm } = useAlert();
+
+  //USAR O CURRENCYCONTEXT
+  const { formatPrice } = useContext(CurrencyContext);
 
   useEffect(() => {
     if (produto.description) {
       setProduct(produto);
-      checkFavoriteStatus(produto.id);
-      checkCartStatus(produto.id);
     } else {
       fetchProduct();
     }
   }, [produto]);
 
   useFocusEffect(
-        useCallback(() => {
-          setActiveTab("Home");
-        }, [])
-      );
+    useCallback(() => {
+      setActiveTab("Home");
+    }, [])
+  );
 
   async function fetchProduct() {
     setLoading(true);
     const response = await getProdutoById(produto.id);
     setProduct(response);
-    checkFavoriteStatus(response.id);
-    checkCartStatus(response.id);
     setLoading(false);
   }
-
-  // Verifica se o produto está nos favoritos
-  const checkFavoriteStatus = async (productId) => {
-    try {
-      const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (favoritesJson) {
-        const favorites = JSON.parse(favoritesJson);
-        const isFav = favorites.some(fav => fav.id === productId);
-        setIsFavorite(isFav);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar favoritos:', error);
-    }
-  };
-
-  // Verifica se o produto está no carrinho
-  const checkCartStatus = async (productId) => {
-    try {
-      const cartJson = await AsyncStorage.getItem(CART_STORAGE_KEY);
-      if (cartJson) {
-        const cart = JSON.parse(cartJson);
-        const inCart = cart.some(item => item.id === productId);
-        setIsInCart(inCart);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar carrinho:', error);
-    }
-  };
 
   const handleTabPress = (route, tabName) => {
     setActiveTab(tabName);
     navigation.navigate(route);
   };
 
-  // Toggle Favorito
+  //TOGGLE FAVORITO USANDO CONTEXT
   const handleToggleFavorite = async () => {
-    try {
-      const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      let favorites = favoritesJson ? JSON.parse(favoritesJson) : [];
+    // Verifica o estado ANTES de fazer o toggle
+    const wasFavorite = isFavorite(product.id);
+    const success = await toggleFavorite(product);
 
-      if (isFavorite) {
-        favorites = favorites.filter(fav => fav.id !== product.id);
-        setIsFavorite(false);
-        Alert.alert(
+    if (success) {
+      // Se estava nos favoritos, foi REMOVIDO
+      // Se não estava nos favoritos, foi ADICIONADO
+      if (wasFavorite) {
+        showSuccess(
           "Removido dos Favoritos",
           `${product.title} foi removido da sua lista de desejos.`
         );
       } else {
-        favorites.push({
-          id: product.id,
-          title: product.title,
-          image: product.image,
-          price: product.price
-        });
-        setIsFavorite(true);
-        Alert.alert(
+        showSuccess(
           "Adicionado aos Favoritos",
           `${product.title} foi adicionado à sua lista de desejos!`
         );
       }
-
-      await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-    } catch (error) {
-      console.error('Erro ao salvar favorito:', error);
-      Alert.alert('Erro', 'Não foi possível atualizar os favoritos.');
+    } else {
+      showError('Erro', 'Não foi possível atualizar os favoritos.');
     }
   };
 
-  // Adicionar ao Carrinho
+  //ADICIONAR AO CARRINHO USANDO CONTEXT
   const handleAddToCart = async () => {
-    try {
-      const cartJson = await AsyncStorage.getItem(CART_STORAGE_KEY);
-      let cart = cartJson ? JSON.parse(cartJson) : [];
+    const success = await addToCart(product);
 
-      const existingItemIndex = cart.findIndex(item => item.id === product.id);
-
-      if (existingItemIndex >= 0) {
-        cart[existingItemIndex].quantity += 1;
-      } else {
-        cart.push({
-          id: product.id,
-          title: product.title,
-          image: product.image,
-          price: product.price,
-          quantity: 1
-        });
-      }
-
-      await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-      setIsInCart(true);
-
-      Alert.alert(
+    if (success) {
+      showConfirm(
         "Adicionado ao Carrinho",
         `${product.title} foi adicionado ao seu carrinho!`,
-        [{ text: "OK" }]
+        () => navigation.navigate('carts'), // Ir para carrinho
+        {
+          confirmText: "Ir para Carrinho",
+          cancelText: "Continuar Comprando",
+          type: "success",
+          onCancel: () => navigation.navigate('ProductList') // Voltar para home
+        }
       );
-    } catch (error) {
-      console.error('Erro ao adicionar ao carrinho:', error);
-      Alert.alert('Erro', 'Não foi possível adicionar ao carrinho.');
+    } else {
+      showError('Erro', 'Não foi possível adicionar ao carrinho.');
     }
   };
 
-  const handleBuyNow = () => {
-    Alert.alert(
-      "Comprar Agora",
-      "Você será redirecionado para o checkout.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Continuar", 
-          onPress: () => navigation.navigate('Payment', { total: product.price })
-        }
-      ]
-    );
+  // COMPRAR AGORA - Adiciona ao carrinho e vai para pagamento
+  const handleBuyNow = async () => {
+    // Adiciona ao carrinho se ainda não estiver
+    if (!isInCart(product.id)) {
+      await addToCart(product);
+    }
+    
+    // Vai direto para o pagamento
+    navigation.navigate('Payment', { total: product.price });
   };
 
   if (!fontLoaded || loading || !product) {
@@ -201,6 +162,10 @@ export default function ProductDetail({ route, navigation }) {
     );
   }
 
+  // VERIFICAR SE ESTÁ NO CARRINHO
+  const productInCart = isInCart(product.id);
+  const quantity = getItemQuantity(product.id);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <PageHeader 
@@ -214,12 +179,12 @@ export default function ProductDetail({ route, navigation }) {
       >
         {/* Imagem do Produto */}
         <View style={styles.imageWrapper}>
-          <RPGBorder 
-            width={345} 
-            height={220} 
+          <RPGBorder
+            widthPercent={0.9}
+            aspectRatio={0.64}
             tileSize={10}
             centerImage={{ uri: product.image }}
-            imageResizeMode="contain"
+            imageResizeMode="stretch"
             borderType="black"
             contentPadding={0}
           />
@@ -227,9 +192,9 @@ export default function ProductDetail({ route, navigation }) {
 
         {/* Card Título e Preço */}
         <View style={styles.mainInfoWrapper}>
-          <RPGBorder 
-            width={345} 
-            height={140} 
+          <RPGBorder
+            widthPercent={0.9}
+            aspectRatio={0.41}
             tileSize={10}
             centerColor={COLORS.primary}
             borderType="black"
@@ -244,7 +209,7 @@ export default function ProductDetail({ route, navigation }) {
               <View style={styles.priceContainer}>
                 <Text style={styles.priceLabel}>Preço:</Text>
                 <Text style={styles.priceValue}>
-                  R$ {Number(product.price || 0).toFixed(2)}
+                  {formatPrice(product.price)}
                 </Text>
               </View>
             </View>
@@ -255,14 +220,13 @@ export default function ProductDetail({ route, navigation }) {
         <View style={styles.actionsWrapper}>
           <View style={styles.actionRow}>
             {/* Favoritar */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleToggleFavorite}
               activeOpacity={0.8}
-              style={styles.favoriteButtonWrapper}
             >
-              <RPGBorder 
-                width={100} 
-                height={55} 
+              <RPGBorder
+                widthPercent={0.25}
+                aspectRatio={0.55}
                 tileSize={8}
                 centerColor={COLORS.secondary}
                 borderType="blue"
@@ -273,7 +237,7 @@ export default function ProductDetail({ route, navigation }) {
                 <View style={styles.favoriteButton}>
                   <Image
                     source={
-                      isFavorite 
+                      isFavorite(product.id)
                         ? require('../../../assets/IconsPixel/iconHeart.png')
                         : require('../../../assets/IconsPixel/iconHeartNull.png')
                     }
@@ -284,30 +248,30 @@ export default function ProductDetail({ route, navigation }) {
               </RPGBorder>
             </TouchableOpacity>
 
-            {/* Adicionar ao Carrinho */}
-            <TouchableOpacity 
+            {/* ADICIONAR AO CARRINHO - VISUAL ATUALIZADO */}
+            <TouchableOpacity
               onPress={handleAddToCart}
               activeOpacity={0.8}
-              style={styles.addToCartButtonWrapper}
+              disabled={cartLoading}
             >
-              <RPGBorder 
-                width={235} 
-                height={55} 
+              <RPGBorder
+                widthPercent={0.62}
+                aspectRatio={0.24}
                 tileSize={8}
-                centerColor={isInCart ? "#6ABE30" : COLORS.success}
+                centerColor={productInCart ? "#6ABE30" : COLORS.success}
                 borderType="green"
                 contentPadding={4}
                 contentJustify="center"
                 contentAlign="center"
               >
                 <View style={styles.addToCartButton}>
-                  <Image 
-                    source={require('../../../assets/IconsPixel/iconMoney.png')} 
+                  <Image
+                    source={require('../../../assets/IconsPixel/iconMoney.png')}
                     style={styles.icon}
                     resizeMode="contain"
                   />
                   <Text style={styles.buttonText}>
-                    {isInCart ? "NO CARRINHO" : "ADD CARRINHO"}
+                    {productInCart ? `NO CARRINHO (${quantity})` : "ADD CARRINHO"}
                   </Text>
                 </View>
               </RPGBorder>
@@ -315,14 +279,14 @@ export default function ProductDetail({ route, navigation }) {
           </View>
 
           {/* Comprar Agora */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleBuyNow}
             activeOpacity={0.8}
-            style={styles.buyNowButtonWrapper}
+            disabled={cartLoading}
           >
-            <RPGBorder 
-              width={345} 
-              height={64} 
+            <RPGBorder
+              widthPercent={0.9}
+              aspectRatio={0.19}
               tileSize={8}
               centerColor={COLORS.secondary}
               borderType="blue"
@@ -331,8 +295,8 @@ export default function ProductDetail({ route, navigation }) {
               contentAlign="center"
             >
               <View style={styles.buyNowButton}>
-                <Image 
-                  source={require('../../../assets/IconsPixel/iconCartWhite.png')} 
+                <Image
+                  source={require('../../../assets/IconsPixel/iconCartWhite.png')}
                   style={styles.icon}
                   resizeMode="contain"
                 />
@@ -345,9 +309,9 @@ export default function ProductDetail({ route, navigation }) {
         {/* Seção Sobre */}
         <View style={styles.sectionWrapper}>
           <Text style={styles.sectionTitle}>SOBRE O PRODUTO</Text>
-          <RPGBorder 
-            width={345} 
-            height={240} 
+          <RPGBorder
+            widthPercent={0.9}
+            aspectRatio={0.7}
             tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
@@ -356,7 +320,7 @@ export default function ProductDetail({ route, navigation }) {
           >
             <View style={styles.aboutSection}>
               <InfoRow label="Categoria" value={product.category} />
-              <InfoRow label="Plataforma" value="Steam" />
+              <InfoRow label="Plataforma" value={product.platform || "Steam"} />
               
               <View style={styles.descriptionContainer}>
                 <Text style={styles.descriptionLabel}>Descrição:</Text>
@@ -372,11 +336,11 @@ export default function ProductDetail({ route, navigation }) {
           </RPGBorder>
         </View>
       </ScrollView>
-      {/* BOTTOM TAB BAR */}
-            <BottomTabBar  
-              activeTab={activeTab}
-              onTabPress={handleTabPress}
-            />
+
+      <BottomTabBar  
+        activeTab={activeTab}
+        onTabPress={handleTabPress}
+      />
     </SafeAreaView>
   );
 }
@@ -443,16 +407,15 @@ const styles = StyleSheet.create({
   actionsWrapper: {
     alignItems: 'center',
     marginBottom: 24,
-    paddingHorizontal: 16,
+    width: '100%',
   },
   actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 345,
-    marginBottom: 12,
-  },
-  favoriteButtonWrapper: {
     alignItems: 'center',
+    width: '90%',
+    marginBottom: 12,
+    gap: 8,
   },
   favoriteButton: {
     justifyContent: 'center',
@@ -461,9 +424,6 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,
     height: 24,
-  },
-  addToCartButtonWrapper: {
-    alignItems: 'center',
   },
   addToCartButton: {
     flexDirection: 'row',
@@ -475,9 +435,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontFamily: "VT323",
-  },
-  buyNowButtonWrapper: {
-    alignItems: 'center',
   },
   buyNowButton: {
     flexDirection: 'row',

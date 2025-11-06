@@ -32,9 +32,9 @@ export default function CarouselDestaques({
       activeOpacity={0.9}
       style={styles.carouselItemWrapper}
     >
-      <RPGBorder 
-        width={CAROUSEL_ITEM_WIDTH - 61} 
-        height={241} 
+      <RPGBorder
+        width={CAROUSEL_ITEM_WIDTH - 61}
+        height={241}
         tileSize={10}
         centerImage={{ uri: item.image }}
         imageResizeMode="stretch"

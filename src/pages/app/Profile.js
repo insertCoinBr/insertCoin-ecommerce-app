@@ -1,8 +1,10 @@
-// src/pages/app/Profile.js
-import React, { useState, useCallback } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useCallback, useContext } from "react";
+import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+
+//IMPORTAR O FAVORITESCONTEXT
+import { FavoritesContext } from "../../context/FavoritesContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -23,7 +25,7 @@ const COLORS = {
   red: "#ff4444",
 };
 
-export default function Profile({ navigation,onLogout }) {
+export default function Profile({ navigation, onLogout }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState('Notification');
   const [currency, setCurrency] = useState('BRL');
@@ -31,6 +33,9 @@ export default function Profile({ navigation,onLogout }) {
   // Estados dos modais
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisibleLogout, setModalVisibleLogout] = useState(false);
+
+  //USAR O FAVORITESCONTEXT
+  const { getFavoritesCount } = useContext(FavoritesContext);
   
   // Dados do usuário (normalmente viriam de um contexto/API)
   const [userData, setUserData] = useState({
@@ -52,28 +57,25 @@ export default function Profile({ navigation,onLogout }) {
   };
 
   const handleDelete = () => {
-    console.log("Conta excluída");
     setModalVisible(false);
-    // Lógica de exclusão aqui
-    // Após excluir, fazer logout
     if (onLogout) {
       onLogout();
     }
   };
 
   const handleLogout = () => {
-    console.log("Usuário deslogado");
     setModalVisibleLogout(false);
-    // Chama a função de logout passada como prop
     if (onLogout) {
       onLogout();
     }
   };
-  
 
   if (!fontLoaded) {
     return null;
   }
+
+  //  QUANTIDADE DE FAVORITOS
+  const favoritesCount = getFavoritesCount();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -144,10 +146,12 @@ export default function Profile({ navigation,onLogout }) {
           centerColor={COLORS.secondary}
         />
 
-        {/* Seção Favoritos */}
-        <SectionTitle style={styles.sectionTitle}>Favoritos</SectionTitle>
+        {/* Seção Favoritos -  COM CONTADOR */}
+        <SectionTitle style={styles.sectionTitle}>
+          Favoritos {favoritesCount > 0 && `(${favoritesCount})`}
+        </SectionTitle>
         <MenuButton
-          title="Lista de Desejos"
+          title={`Lista de Desejos${favoritesCount > 0 ? ` · ${favoritesCount}` : ''}`}
           img={require("../../../assets/IconsPixel/iconHeartNull.png")}
           onPress={() => navigation.navigate('Wishlist')}
           borderType="blue"

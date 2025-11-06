@@ -1,35 +1,33 @@
-// src/constants/storageKeys.js
-
 /**
  * Chaves de armazenamento do AsyncStorage
  * Centralizadas para evitar duplicação e erros de digitação
  */
 
-// 🛒 Carrinho de Compras
+//  Carrinho de Compras
 export const CART_STORAGE_KEY = '@insertcoin:cart';
 
-// ❤️ Favoritos / Lista de Desejos
+//  Favoritos / Lista de Desejos
 export const FAVORITES_STORAGE_KEY = '@insertcoin:favorites';
 
-// 🎟️ Cupons Aplicados
+//  Cupons Aplicados
 export const COUPONS_STORAGE_KEY = '@insertcoin:coupons';
 
-// 💰 Moeda Selecionada
+//  Moeda Selecionada
 export const CURRENCY_STORAGE_KEY = '@currency';
 
-// 👤 Dados do Usuário
+//  Dados do Usuário
 export const USER_DATA_KEY = '@insertcoin:user';
 
-// 🔐 Token de Autenticação
+//  Token de Autenticação
 export const AUTH_TOKEN_KEY = '@insertcoin:auth_token';
 
-// 📦 Pedidos
+//  Pedidos
 export const ORDERS_STORAGE_KEY = '@insertcoin:orders';
 
-// ⚙️ Configurações do App
+//  Configurações do App
 export const APP_SETTINGS_KEY = '@insertcoin:settings';
 
-// 🔔 Notificações Lidas
+//  Notificações Lidas
 export const NOTIFICATIONS_READ_KEY = '@insertcoin:notifications_read';
 
 /**

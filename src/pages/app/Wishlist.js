@@ -1,7 +1,13 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+
+//IMPORTAR OS CONTEXTS
+import { CartContext } from "../../context/CartContext";
+import { FavoritesContext } from "../../context/FavoritesContext";
+import { CurrencyContext } from "../../context/CurrencyContext";
+import { useAlert } from "../../context/AlertContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -10,7 +16,6 @@ import WishlistItemCard from "../../components/app/WishlistItemCard";
 import RPGBorder from "../../components/app/RPGBorder";
 import MenuButton from "../../components/app/MenuButton";
 
-// HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
 
 const COLORS = {
@@ -23,39 +28,24 @@ export default function Wishlist({ navigation }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState('Notification');
 
-  // Dados da lista de desejos (normalmente viriam de um contexto/estado global)
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      title: "HI Gamepad Pro",
-      image: "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg",
-      price: 550.00
-    },
-    {
-      id: 2,
-      title: "HI Gamepad Standard",
-      image: "https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg",
-      price: 550.00
-    },
-    {
-      id: 3,
-      title: "HI Mouse Gamer",
-      image: "https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg",
-      price: 550.00
-    },
-    {
-      id: 4,
-      title: "HI Teclado Mecânico",
-      image: "https://fakestoreapi.com/img/71YXzeOuslL._AC_UY879_.jpg",
-      price: 550.00
-    },
-    {
-      id: 5,
-      title: "HI Headset Pro",
-      image: "https://fakestoreapi.com/img/71pWzhdJNwL._AC_UL640_QL65_ML3_.jpg",
-      price: 550.00
-    },
-  ]);
+  //USAR O CARTCONTEXT
+  const { addToCart, addMultipleToCart } = useContext(CartContext);
+
+  //USAR O FAVORITESCONTEXT
+  const {
+    favorites,
+    removeFromFavorites,
+    clearFavorites,
+    getFavoritesCount,
+    getTotalFavoritesValue,
+    loading
+  } = useContext(FavoritesContext);
+
+  //USAR O ALERT CUSTOMIZADO
+  const { showSuccess, showError, showConfirm } = useAlert();
+
+  //USAR O CURRENCYCONTEXT
+  const { formatPrice } = useContext(CurrencyContext);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,37 +58,103 @@ export default function Wishlist({ navigation }) {
     navigation.navigate(route);
   };
 
-  const handleRemoveItem = (itemId) => {
-    setWishlistItems(wishlistItems.filter(item => item.id !== itemId));
+  //REMOVER DOS FAVORITOS USANDO CONTEXT
+  const handleRemoveItem = async (itemId) => {
+    const success = await removeFromFavorites(itemId);
+
+    if (!success) {
+      showError('Erro', 'Não foi possível remover o item dos favoritos.');
+    }
   };
 
-  const handleAddToCart = (product) => {
-    console.log('Adicionar ao carrinho:', product.title);
-    // Implementar lógica de adicionar ao carrinho
-    // Pode remover da wishlist após adicionar
-    handleRemoveItem(product.id);
+  //ADICIONAR AO CARRINHO USANDO CONTEXT
+  const handleAddToCart = async (product) => {
+    const success = await addToCart(product);
+
+    if (success) {
+      showConfirm(
+        "Adicionado ao Carrinho",
+        `${product.title} foi adicionado ao carrinho!`,
+        () => navigation.navigate('carts'), // Ir para carrinho
+        {
+          confirmText: "Ir para Carrinho",
+          cancelText: "Continuar Comprando",
+          type: "success",
+          onCancel: () => {} // Apenas fecha o modal e continua na wishlist
+        }
+      );
+    } else {
+      showError('Erro', 'Não foi possível adicionar ao carrinho.');
+    }
   };
 
-  const handleAddAllToCart = () => {
-    console.log('Adicionar todos ao carrinho');
-    // Implementar lógica para adicionar todos ao carrinho
-    navigation.navigate('Cart');
+  //ADICIONAR TODOS AO CARRINHO
+  const handleAddAllToCart = async () => {
+    if (favorites.length === 0) {
+      showError('Lista Vazia', 'Não há itens nos favoritos para adicionar.');
+      return;
+    }
+
+    const { success, addedCount } = await addMultipleToCart(favorites);
+
+    if (success && addedCount > 0) {
+      showConfirm(
+        "Itens Adicionados!",
+        `${addedCount} ${addedCount === 1 ? 'item foi adicionado' : 'itens foram adicionados'} ao carrinho com sucesso!`,
+        () => navigation.navigate('carts'), // Ir para carrinho
+        {
+          confirmText: "Ir para Carrinho",
+          cancelText: "Continuar Comprando",
+          type: "success",
+          onCancel: () => {} // Apenas fecha o modal e continua na wishlist
+        }
+      );
+    } else {
+      showError('Erro', 'Não foi possível adicionar os itens ao carrinho.');
+    }
   };
 
-  const calculateTotal = () => {
-    return wishlistItems.reduce((total, item) => total + item.price, 0);
+  //LIMPAR TODOS OS FAVORITOS
+  const handleClearAllFavorites = async () => {
+    showConfirm(
+      "Limpar Favoritos",
+      "Deseja realmente remover todos os itens da sua lista de desejos?",
+      async () => {
+        const success = await clearFavorites();
+        if (success) {
+          showSuccess("Favoritos Limpos", "Todos os itens foram removidos dos favoritos.");
+        } else {
+          showError("Erro", "Não foi possível limpar os favoritos.");
+        }
+      },
+      {
+        confirmText: "Sim, Limpar",
+        cancelText: "Cancelar",
+        type: "warning"
+      }
+    );
   };
 
-  const formatPrice = (value) => {
-    return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
-  };
-
-  if (!fontLoaded) {
-    return null;
+  if (!fontLoaded || loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <PageHeader 
+          onBackPress={() => navigation.goBack()} 
+          title="Lista de Desejos" 
+        />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Carregando favoritos...</Text>
+        </View>
+        <BottomTabBar 
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+        />
+      </SafeAreaView>
+    );
   }
 
-  // Se a lista está vazia
-  if (wishlistItems.length === 0) {
+  // SE A LISTA ESTÁ VAZIA (USA CONTEXT)
+  if (getFavoritesCount() === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <PageHeader 
@@ -145,8 +201,8 @@ export default function Wishlist({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Lista de Itens */}
-        {wishlistItems.map((item) => (
+        {/* LISTA DE ITENS DO CONTEXT */}
+        {favorites.map((item) => (
           <WishlistItemCard
             key={item.id}
             product={item}
@@ -157,12 +213,12 @@ export default function Wishlist({ navigation }) {
           />
         ))}
 
-        {/* Total */}
+        {/*  TOTAL USANDO CONTEXT */}
         <View style={styles.totalWrapper}>
-          <RPGBorder 
-            width={345} 
-            height={70} 
-            tileSize={8} 
+          <RPGBorder
+            widthPercent={0.9}
+            aspectRatio={0.2}
+            tileSize={8}
             centerColor={COLORS.primary}
             borderType="black"
             contentPadding={4}
@@ -171,32 +227,57 @@ export default function Wishlist({ navigation }) {
           >
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>{formatPrice(calculateTotal())}</Text>
+              <Text style={styles.totalValue}>{formatPrice(getTotalFavoritesValue())}</Text>
             </View>
           </RPGBorder>
         </View>
 
-        {/* Botão Adicionar Todos ao Carrinho */}
-        <TouchableOpacity 
-          onPress={handleAddAllToCart}
-          activeOpacity={0.8}
-          style={styles.addAllButtonWrapper}
-        >
-          <RPGBorder 
-            width={345} 
-            height={70} 
-            tileSize={8} 
-            centerColor={COLORS.secondary}
-            borderType="blue"
-            contentPadding={4}
-            contentJustify="center"
-            contentAlign="center"
+        {/* Botões de Ação */}
+        <View style={styles.actionsContainer}>
+          {/* Botão Adicionar Todos ao Carrinho */}
+          <TouchableOpacity
+            onPress={handleAddAllToCart}
+            activeOpacity={0.8}
+            style={styles.addAllButtonWrapper}
           >
-            <View style={styles.addAllButton}>
-              <Text style={styles.addAllButtonText}>ADD IN CART</Text>
-            </View>
-          </RPGBorder>
-        </TouchableOpacity>
+            <RPGBorder
+              widthPercent={0.9}
+              aspectRatio={0.2}
+              tileSize={8}
+              centerColor={COLORS.secondary}
+              borderType="blue"
+              contentPadding={4}
+              contentJustify="center"
+              contentAlign="center"
+            >
+              <View style={styles.addAllButton}>
+                <Text style={styles.addAllButtonText}>ADD IN CART</Text>
+              </View>
+            </RPGBorder>
+          </TouchableOpacity>
+
+          {/* Botão Limpar Todos os Favoritos */}
+          <TouchableOpacity
+            onPress={handleClearAllFavorites}
+            activeOpacity={0.8}
+            style={styles.clearAllButtonWrapper}
+          >
+            <RPGBorder
+              widthPercent={0.9}
+              aspectRatio={0.2}
+              tileSize={8}
+              centerColor="#FF4444"
+              borderType="red"
+              contentPadding={4}
+              contentJustify="center"
+              contentAlign="center"
+            >
+              <View style={styles.clearAllButton}>
+                <Text style={styles.clearAllButtonText}>LIMPAR FAVORITOS</Text>
+              </View>
+            </RPGBorder>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       <BottomTabBar 
@@ -212,11 +293,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontFamily: "VT323",
+  },
   scrollContent: {
     paddingBottom: 140,
     paddingTop: 16,
   },
-  // Estilos para lista vazia
   emptyContent: {
     flex: 1,
     justifyContent: 'center',
@@ -239,7 +329,6 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 48,
   },
-  // Estilos para lista com itens
   totalWrapper: {
     alignItems: 'center',
     marginVertical: 20,
@@ -251,25 +340,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 0,
-    
   },
   totalLabel: {
     color: "#FFFFFF",
     fontSize: 26,
     fontFamily: "VT323",
     paddingVertical: 0,
-    
   },
   totalValue: {
     color: "#FFD700",
     fontSize: 26,
     fontFamily: "VT323",
     paddingVertical: 0,
-    
+  },
+  actionsContainer: {
+    marginTop: 16,
+    gap: 12,
   },
   addAllButtonWrapper: {
     alignItems: 'center',
-    marginTop: 16,
   },
   addAllButton: {
     flex: 1,
@@ -278,6 +367,21 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   addAllButtonText: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontFamily: "VT323",
+    paddingVertical: 0,
+  },
+  clearAllButtonWrapper: {
+    alignItems: 'center',
+  },
+  clearAllButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 0,
+  },
+  clearAllButtonText: {
     color: "#FFFFFF",
     fontSize: 26,
     fontFamily: "VT323",

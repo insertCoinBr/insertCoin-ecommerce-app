@@ -17,10 +17,10 @@ export default function MenuButton({
       activeOpacity={0.8}
       disabled={disabled}
     >
-      <RPGBorder 
-        width={345} 
-        height={55} 
-        tileSize={8} 
+      <RPGBorder
+        widthPercent={0.9}
+        aspectRatio={0.16}
+        tileSize={8}
         centerColor={disabled ? "#666666" : centerColor}
         borderType={borderType}
         contentPadding={4}

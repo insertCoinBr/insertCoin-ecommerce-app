@@ -1,4 +1,3 @@
-// src/components/ConfirmModal.js
 import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import RPGBorder from './RPGBorder';
@@ -25,10 +24,10 @@ export default function ConfirmModal({
     >
       <View style={styles.overlay}>
         <View style={styles.modalWrapper}>
-          <RPGBorder 
-            width={320} 
-            height={305} 
-            tileSize={8} 
+          <RPGBorder
+            widthPercent={0.83}
+            aspectRatio={0.95}
+            tileSize={8}
             centerColor="#4C38A4"
             borderType="black"
             contentPadding={12}
@@ -59,10 +58,10 @@ export default function ConfirmModal({
                   style={styles.buttonWrapper}
                   activeOpacity={0.8}
                 >
-                  <RPGBorder 
-                    width={135} 
-                    height={55} 
-                    tileSize={8} 
+                  <RPGBorder
+                    widthPercent={0.35}
+                    aspectRatio={0.41}
+                    tileSize={8}
                     centerColor={centerColorButton1}
                     borderType={borderTypeButton1}
                     contentPadding={4}
@@ -81,10 +80,10 @@ export default function ConfirmModal({
                   style={styles.buttonWrapper}
                   activeOpacity={0.8}
                 >
-                  <RPGBorder 
-                    width={135} 
-                    height={55} 
-                    tileSize={8} 
+                  <RPGBorder
+                    widthPercent={0.35}
+                    aspectRatio={0.41}
+                    tileSize={8}
                     centerColor={centerColorButton2}
                     borderType={borderTypeButton2}
                     contentPadding={4}

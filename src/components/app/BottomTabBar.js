@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useContext } from 'react';
 import { View, TouchableOpacity, Image, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 
 // COMPONENTES
 import RPGBorder from '../app/RPGBorder';
+
+// CONTEXT
+import { CartContext } from '../../context/CartContext';
 
 const { width } = Dimensions.get('window');
 
@@ -39,8 +42,9 @@ const tabs = [
   },
 ];
 
-function TabButton({ tab, isActive, onPress }) {
+function TabButton({ tab, isActive, onPress, badgeCount }) {
   const scaleAnim = useRef(new Animated.Value(isActive ? 1.2 : 1)).current;
+  const badgeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -50,6 +54,25 @@ function TabButton({ tab, isActive, onPress }) {
       useNativeDriver: true,
     }).start();
   }, [isActive]);
+
+  useEffect(() => {
+    if (badgeCount > 0) {
+      Animated.sequence([
+        Animated.spring(badgeAnim, {
+          toValue: 1.2,
+          friction: 3,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(badgeAnim, {
+          toValue: 1,
+          friction: 3,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [badgeCount]);
 
   return (
     <TouchableOpacity
@@ -66,6 +89,19 @@ function TabButton({ tab, isActive, onPress }) {
           style={[styles.icon, isActive && styles.iconActive]}
           resizeMode="contain"
         />
+        {/* Badge do Carrinho */}
+        {badgeCount > 0 && tab.name === 'Cart' && (
+          <Animated.View
+            style={[
+              styles.badge,
+              { transform: [{ scale: badgeAnim }] }
+            ]}
+          >
+            <Text style={styles.badgeText}>
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </Text>
+          </Animated.View>
+        )}
       </Animated.View>
       <Text style={[styles.label, isActive && styles.labelActive]}>
         {tab.label}
@@ -75,10 +111,14 @@ function TabButton({ tab, isActive, onPress }) {
 }
 
 export default function BottomTabBar({ activeTab, onTabPress }) {
+  // Obter quantidade de itens no carrinho
+  const { getCartCount } = useContext(CartContext);
+  const cartCount = getCartCount();
+
   return (
     <View style={styles.wrapper}>
       <RPGBorder
-        width={width * 0.95}
+        widthPercent={0.95}
         height={101}
         borderType="black"
         centerColor={COLORS.primary}
@@ -91,6 +131,7 @@ export default function BottomTabBar({ activeTab, onTabPress }) {
               tab={tab}
               isActive={activeTab === tab.name}
               onPress={() => onTabPress(tab.route, tab.name)}
+              badgeCount={tab.name === 'Cart' ? cartCount : 0}
             />
           ))}
         </View>
@@ -105,7 +146,8 @@ const styles = StyleSheet.create({
     bottom: '4%',
     alignSelf: 'center',
     alignItems: 'center',
-    
+    zIndex: 1000,
+    elevation: 10,
   },
   container: {
     flexDirection: 'row',
@@ -127,10 +169,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
+    position: 'relative',
   },
   icon: {
     width: 32,
     height: 32,
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    backgroundColor: '#FF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'VT323',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   label: {
     fontSize: 16,

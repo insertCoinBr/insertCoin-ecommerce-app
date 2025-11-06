@@ -14,8 +14,8 @@ export default function PageHeader({ onBackPress, title }) {
     <View style={styles.header}>
       {/* Botão Voltar */}
       <RPGBorder
-        width={100}
-        height={55}
+        widthPercent={0.26}
+        aspectRatio={0.55}
         centerColor={COLORS.primary}
         borderType="blue"
         tileSize={8}

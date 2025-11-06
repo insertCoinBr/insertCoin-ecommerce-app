@@ -15,7 +15,6 @@ export default function IntegranteCard({
   const handleCopyRA = async (ra) => {
     try {
       await Clipboard.setStringAsync(ra);
-      console.log("RA copiado:", ra);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível copiar o RA");
     }

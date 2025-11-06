@@ -1,24 +1,22 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet,Dimensions } from 'react-native';
 import RPGBorder from './RPGBorder';
+import { CurrencyContext } from '../../context/CurrencyContext';
 
-export default function TotalCard({ 
+export default function TotalCard({
   total,
   borderType = "blue",
   centerColor = "#1F41BB"
 }) {
-  const formatPrice = (value) => {
-    return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
-  };
-
+  const { formatPrice } = useContext(CurrencyContext);
   const { height, width } = Dimensions.get('window');
 
   return (
     <View style={styles.wrapper}>
-      <RPGBorder 
-        width={width * 0.9} 
-        height= {height * 0.1} 
-        tileSize={8} 
+      <RPGBorder
+        widthPercent={0.9}
+        heightPercent={0.1}
+        tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
         contentPadding={4}

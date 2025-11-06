@@ -80,7 +80,6 @@ export default function ChangePassword({ navigation }) {
 
     setError("");
     // Aqui você faria a chamada à API para alterar a senha
-    console.log("Senha alterada com sucesso!");
     navigation.goBack();
   };
 

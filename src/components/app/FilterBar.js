@@ -12,10 +12,12 @@ const COLORS = {
   inactive: "#FFFFFF",
 };
 
-export default function FilterBar({ 
-  filtroAtivo, 
-  onFiltroPress, 
+export default function FilterBar({
+  filtroAtivo,
+  onFiltroPress,
   precoOrdem,
+  selectedCategory,
+  selectedPlatform,
   filtros = ['Todos', 'Preco', 'Categoria', 'Plataforma']
 }) {
   return (
@@ -27,7 +29,16 @@ export default function FilterBar({
         contentContainerStyle={styles.filterContainer}
       >
         {filtros.map((filtro) => {
-          const isActive = filtroAtivo === filtro;
+          // Define se o botão está ativo baseado em suas condições específicas
+          let isActive = false;
+
+          if (filtro === 'Categoria') {
+            isActive = selectedCategory !== null && selectedCategory !== undefined;
+          } else if (filtro === 'Plataforma') {
+            isActive = selectedPlatform !== null && selectedPlatform !== undefined;
+          } else {
+            isActive = filtroAtivo === filtro;
+          }
           
           // Define largura baseada no tamanho do texto
           let buttonWidth = 110;

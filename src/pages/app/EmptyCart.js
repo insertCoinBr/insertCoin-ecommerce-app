@@ -1,7 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useContext, useEffect } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+
+//IMPORTAR O CARTCONTEXT
+import { CartContext } from "../../context/CartContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -19,6 +22,16 @@ const COLORS = {
 export default function EmptyCart({ navigation }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState('Cart');
+
+  //USAR O CARTCONTEXT
+  const { cartItems, loading } = useContext(CartContext);
+
+  //Se tiver itens, redireciona para Cart
+  useEffect(() => {
+    if (!loading && cartItems.length > 0) {
+      navigation.replace("carts");
+    }
+  }, [cartItems.length, loading, navigation]);
 
   useFocusEffect(
     useCallback(() => {

@@ -1,4 +1,3 @@
-// src/components/PaymentMethodCard.js
 import React from 'react';
 import { TouchableOpacity, Text, Image, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -18,10 +17,10 @@ export default function PaymentMethodCard({
       style={styles.wrapper}
       activeOpacity={0.8}
     >
-      <RPGBorder 
-        width={345} 
-        height={75} 
-        tileSize={8} 
+      <RPGBorder
+        widthPercent={0.9}
+        aspectRatio={0.22}
+        tileSize={8}
         centerColor={isSelected ? centerColor : "#1F41BB"}
         borderType={isSelected ? borderType : "blue"}
         contentPadding={4}

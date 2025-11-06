@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
+import { CurrencyContext } from "../../context/CurrencyContext";
 
 // Paleta de cores para consistência com tema RPG
 const COLORS = {
@@ -12,27 +13,26 @@ const COLORS = {
 };
 
 export default function ProductCard({ produto}) {
+  const { formatPrice } = useContext(CurrencyContext);
   return (
     <View style={styles.card}>
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: produto.image }} 
-          style={styles.image} 
-          //resizeMode="contain" //Mantém a proporção da imagem nao corta a imagem
-          //resizeMode="cover" //Ocupa todo o espaço porem corta a imagem
-          resizeMode="stretch" //Ocupa todo o espaço porem distorce a imagem
+        <Image
+          source={{ uri: produto.image }}
+          style={styles.image}
+          resizeMode="stretch"
         />
       </View>
       
       <View style={styles.divider} />
       
       <View style={styles.contentContainer}>
-        <Text style={styles.name} numberOfLines={2}> 
+        <Text style={styles.name} numberOfLines={2}>
           {produto.title}
         </Text>
         <Text style={styles.price}>
-  R$ {Number(produto.price || 0).toFixed(2)}
-</Text>
+          {formatPrice(produto.price)}
+        </Text>
       </View>
     </View>
   );
@@ -48,11 +48,12 @@ const styles = StyleSheet.create({
     height: '50%',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    borderRadius: 8,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
     backgroundColor: COLORS.white,
   },
   divider: {

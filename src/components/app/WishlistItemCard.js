@@ -1,35 +1,37 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RPGBorder from './RPGBorder';
+import { CurrencyContext } from '../../context/CurrencyContext';
 
-export default function WishlistItemCard({ 
+export default function WishlistItemCard({
   product,
   onRemove,
   onAddToCart,
   borderType = "blue",
   centerColor = "#1F41BB"
 }) {
-  const formatPrice = (value) => {
-    return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
-  };
+  const { formatPrice } = useContext(CurrencyContext);
 
   return (
     <View style={styles.wrapper}>
-      <RPGBorder 
-        width={345} 
-        height={80} 
-        tileSize={8} 
+      <RPGBorder
+        widthPercent={0.9}
+        aspectRatio={0.32}
+        tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
+        contentPadding={8}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.container}>
           {/* Imagem do Produto */}
-          <View style={styles.imageContainer}>
+          <View style={styles.imageWrapper}>
             <Image
               source={{ uri: product.image }}
               style={styles.productImage}
-              resizeMode="contain"
+              resizeMode="stretch"
             />
           </View>
 
@@ -44,7 +46,7 @@ export default function WishlistItemCard({
           {/* Ações */}
           <View style={styles.actionsContainer}>
             {/* Botão Adicionar ao Carrinho */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => onAddToCart(product)}
               style={styles.actionButton}
               activeOpacity={0.7}
@@ -53,7 +55,7 @@ export default function WishlistItemCard({
             </TouchableOpacity>
 
             {/* Botão Remover */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => onRemove(product.id)}
               style={styles.actionButton}
               activeOpacity={0.7}
@@ -76,21 +78,18 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
     gap: 12,
   },
-  imageContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+  imageWrapper: {
+    width: 75,
+    height: 75,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 4,
+    overflow: 'hidden',
   },
   productImage: {
-    width: '100%',
-    height: '100%',
+    width: 75,
+    height: 75,
   },
   infoContainer: {
     flex: 1,
@@ -98,24 +97,22 @@ const styles = StyleSheet.create({
   },
   productName: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "VT323",
     marginBottom: 4,
+    lineHeight: 18,
   },
   price: {
     color: "#FFD700",
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: "VT323",
   },
   actionsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 4,
   },
 });

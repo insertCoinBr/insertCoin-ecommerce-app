@@ -13,10 +13,10 @@ export default function ProfileHeader({
 }) {
   return (
     <View style={styles.wrapper}>
-      <RPGBorder 
-        width={340} 
-        height={140} 
-        tileSize={10} 
+      <RPGBorder
+        widthPercent={0.88}
+        aspectRatio={0.41}
+        tileSize={10}
         centerColor={centerColor}
         borderType={borderType}
       >

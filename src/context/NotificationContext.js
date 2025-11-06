@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NOTIFICATIONS_READ_KEY } from '../constants/storageKeys';
+import { NOTIFICATIONS_READ_KEY } from './storageKeys';
 
 export const NotificationsContext = createContext({
   notifications: [],
@@ -76,12 +76,10 @@ export function NotificationsProvider({ children }) {
   const [favoriteNotifications, setFavoriteNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 📦 Carrega notificações lidas e favoritas ao iniciar
   useEffect(() => {
     loadNotificationsData();
   }, []);
 
-  // 📦 Carrega dados das notificações do AsyncStorage
   const loadNotificationsData = async () => {
     try {
       setLoading(true);
@@ -90,8 +88,7 @@ export function NotificationsProvider({ children }) {
         const data = JSON.parse(dataJson);
         setReadNotifications(data.read || []);
         setFavoriteNotifications(data.favorites || []);
-        
-        // Atualiza o estado das notificações
+
         const updatedNotifications = MOCK_NOTIFICATIONS.map(notif => ({
           ...notif,
           isRead: data.read?.includes(notif.id) || false,
@@ -99,17 +96,16 @@ export function NotificationsProvider({ children }) {
         }));
         setNotifications(updatedNotifications);
         
-        console.log(`✅ ${data.read?.length || 0} notificações lidas carregadas`);
-        console.log(`❤️ ${data.favorites?.length || 0} notificações favoritadas carregadas`);
+        console.log(`${data.read?.length || 0} notificações lidas carregadas`);
+        console.log(`${data.favorites?.length || 0} notificações favoritadas carregadas`);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar dados das notificações:', error);
+      console.error('Erro ao carregar dados das notificações:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 💾 Salva dados das notificações no AsyncStorage
   const saveNotificationsData = async (read, favorites) => {
     try {
       const data = {
@@ -117,40 +113,37 @@ export function NotificationsProvider({ children }) {
         favorites: favorites,
       };
       await AsyncStorage.setItem(NOTIFICATIONS_READ_KEY, JSON.stringify(data));
-      console.log(`💾 Dados salvos: ${read.length} lidas, ${favorites.length} favoritas`);
+      console.log(`Dados salvos: ${read.length} lidas, ${favorites.length} favoritas`);
     } catch (error) {
-      console.error('❌ Erro ao salvar dados das notificações:', error);
+      console.error('Erro ao salvar dados das notificações:', error);
       throw error;
     }
   };
 
-  // 📖 Marca notificação como lida
   const markAsRead = async (notificationId) => {
     try {
       if (readNotifications.includes(notificationId)) {
-        console.log('⚠️ Notificação já está marcada como lida');
+        console.log('Notificação já está marcada como lida');
         return false;
       }
 
       const updatedRead = [...readNotifications, notificationId];
       setReadNotifications(updatedRead);
 
-      // Atualiza o estado das notificações
       const updatedNotifications = notifications.map(notif =>
         notif.id === notificationId ? { ...notif, isRead: true } : notif
       );
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(updatedRead, favoriteNotifications);
-      console.log(`📖 Notificação ${notificationId} marcada como lida`);
+      console.log(`Notificação ${notificationId} marcada como lida`);
       return true;
     } catch (error) {
-      console.error('❌ Erro ao marcar como lida:', error);
+      console.error('Erro ao marcar como lida:', error);
       return false;
     }
   };
 
-  // 📖📖 Marca todas as notificações como lidas
   const markAllAsRead = async () => {
     try {
       const allIds = notifications.map(notif => notif.id);
@@ -163,33 +156,29 @@ export function NotificationsProvider({ children }) {
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(allIds, favoriteNotifications);
-      console.log(`📖📖 Todas as ${allIds.length} notificações marcadas como lidas`);
+      console.log(`Todas as ${allIds.length} notificações marcadas como lidas`);
       return true;
     } catch (error) {
-      console.error('❌ Erro ao marcar todas como lidas:', error);
+      console.error('Erro ao marcar todas como lidas:', error);
       return false;
     }
   };
 
-  // ❤️ Toggle favorito de notificação
   const toggleFavorite = async (notificationId) => {
     try {
       let updatedFavorites;
       const isFav = favoriteNotifications.includes(notificationId);
 
       if (isFav) {
-        // Remove dos favoritos
         updatedFavorites = favoriteNotifications.filter(id => id !== notificationId);
-        console.log(`💔 Notificação ${notificationId} removida dos favoritos`);
+        console.log(`Notificação ${notificationId} removida dos favoritos`);
       } else {
-        // Adiciona aos favoritos
         updatedFavorites = [...favoriteNotifications, notificationId];
-        console.log(`❤️ Notificação ${notificationId} adicionada aos favoritos`);
+        console.log(`Notificação ${notificationId} adicionada aos favoritos`);
       }
 
       setFavoriteNotifications(updatedFavorites);
 
-      // Atualiza o estado das notificações
       const updatedNotifications = notifications.map(notif =>
         notif.id === notificationId ? { ...notif, isFavorite: !isFav } : notif
       );
@@ -198,68 +187,59 @@ export function NotificationsProvider({ children }) {
       await saveNotificationsData(readNotifications, updatedFavorites);
       return true;
     } catch (error) {
-      console.error('❌ Erro ao alternar favorito:', error);
+      console.error('Erro ao alternar favorito:', error);
       return false;
     }
   };
 
-  // 🔍 Verifica se notificação é favorita
   const isFavorite = (notificationId) => {
     return favoriteNotifications.includes(notificationId);
   };
 
-  // 🗑️ Deleta uma notificação (apenas remove da visualização, não do mock)
   const deleteNotification = async (notificationId) => {
     try {
-      // Remove das listas
       const updatedRead = readNotifications.filter(id => id !== notificationId);
       const updatedFavorites = favoriteNotifications.filter(id => id !== notificationId);
-      
+
       setReadNotifications(updatedRead);
       setFavoriteNotifications(updatedFavorites);
 
-      // Remove da lista de notificações
       const updatedNotifications = notifications.filter(notif => notif.id !== notificationId);
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(updatedRead, updatedFavorites);
-      console.log(`🗑️ Notificação ${notificationId} deletada`);
+      console.log(`Notificação ${notificationId} deletada`);
       return true;
     } catch (error) {
-      console.error('❌ Erro ao deletar notificação:', error);
+      console.error('Erro ao deletar notificação:', error);
       return false;
     }
   };
 
-  // 🧹 Limpa todas as notificações
   const clearAllNotifications = async () => {
     try {
       setNotifications([]);
       setReadNotifications([]);
       setFavoriteNotifications([]);
       await AsyncStorage.removeItem(NOTIFICATIONS_READ_KEY);
-      console.log('🧹 Todas as notificações foram removidas');
+      console.log('Todas as notificações foram removidas');
       return true;
     } catch (error) {
-      console.error('❌ Erro ao limpar notificações:', error);
+      console.error('Erro ao limpar notificações:', error);
       return false;
     }
   };
 
-  // 🔢 Conta notificações não lidas
   const unreadCount = notifications.filter(notif => !notif.isRead).length;
 
-  // 📋 Obtém apenas notificações não lidas
   const getUnreadNotifications = () => {
     return notifications.filter(notif => !notif.isRead);
   };
 
-  // ❤️ Obtém apenas notificações favoritas
   const getFavoriteNotifications = () => {
     return notifications.filter(notif => notif.isFavorite);
   };
 
-  // 📊 Ordena notificações por data (mais recentes primeiro)
   const getNotificationsSortedByDate = () => {
     return [...notifications].sort((a, b) => {
       const dateA = new Date(a.createdAt);
@@ -268,13 +248,11 @@ export function NotificationsProvider({ children }) {
     });
   };
 
-  // 🏷️ Filtra notificações por tipo
   const getNotificationsByType = (type) => {
     if (!type) return notifications;
     return notifications.filter(notif => notif.type === type);
   };
 
-  // 🔍 Busca notificações por texto
   const searchNotifications = (searchTerm) => {
     if (!searchTerm) return notifications;
     const term = searchTerm.toLowerCase();
@@ -284,7 +262,6 @@ export function NotificationsProvider({ children }) {
     );
   };
 
-  // 📅 Obtém notificações de hoje
   const getTodayNotifications = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -296,7 +273,6 @@ export function NotificationsProvider({ children }) {
     });
   };
 
-  // 📅 Obtém notificações desta semana
   const getWeekNotifications = () => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -307,18 +283,16 @@ export function NotificationsProvider({ children }) {
     });
   };
 
-  // 🎨 Obtém cor do badge baseado no tipo
   const getNotificationTypeColor = (type) => {
     const colors = {
-      update: '#4CAF50',      // Verde
-      promotion: '#FF9800',   // Laranja
-      news: '#2196F3',        // Azul
-      system: '#9E9E9E',      // Cinza
+      update: '#4CAF50',
+      promotion: '#FF9800',
+      news: '#2196F3',
+      system: '#9E9E9E',
     };
     return colors[type] || colors.system;
   };
 
-  // 📝 Obtém texto do tipo de notificação
   const getNotificationTypeLabel = (type) => {
     const labels = {
       update: 'Atualização',

@@ -5,6 +5,7 @@ import * as NavigationBar from "expo-navigation-bar";
 //Import de Context
 import { AuthProvider } from "./context/AuthContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { AlertProvider } from "./context/AlertContext";
 
 //Import de Rotas
 import Routes from "./routes/routes";
@@ -17,9 +18,11 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <CurrencyProvider>  
-      <StatusBar hidden /> 
-      <Routes />
+      <CurrencyProvider>
+        <AlertProvider>
+          <StatusBar hidden />
+          <Routes />
+        </AlertProvider>
       </CurrencyProvider>
     </AuthProvider>
   );
