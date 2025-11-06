@@ -150,23 +150,36 @@ export default function Cart({ navigation }) {
       return;
     }
 
+    if (subtotal <= 0) {
+      showError("Erro", "Não é possível aplicar o cupom.");
+      return;
+    }
+
     if (normalized === "PROMO10") {
       newDiscount = subtotal * 0.1;
-      setDiscount(newDiscount);
-      setCupomAplicado("PROMO10");
-      await saveCoupon("PROMO10", newDiscount);
-      showSuccess("Cupom aplicado!", "Você ganhou 10% de desconto.");
     } else if (normalized === "FRETEGRATIS") {
       newDiscount = 20.0;
-      setDiscount(newDiscount);
-      setCupomAplicado("FRETEGRATIS");
-      await saveCoupon("FRETEGRATIS", newDiscount);
-      showSuccess("Cupom aplicado!", `${formatPrice(20)} de desconto concedido.`);
     } else {
       setDiscount(0);
       setCupomAplicado(null);
       await removeSavedCoupon();
       showError("Cupom inválido", "Verifique o código digitado e tente novamente.");
+      return;
+    }
+
+    if (newDiscount >= subtotal) {
+      showError("Cupom inválido", "O valor do cupom não pode ser maior ou igual ao total da compra.");
+      return;
+    }
+
+    setDiscount(newDiscount);
+    setCupomAplicado(normalized);
+    await saveCoupon(normalized, newDiscount);
+
+    if (normalized === "PROMO10") {
+      showSuccess("Cupom aplicado!", "Você ganhou 10% de desconto.");
+    } else if (normalized === "FRETEGRATIS") {
+      showSuccess("Cupom aplicado!", `${formatPrice(20)} de desconto concedido.`);
     }
   };
 
@@ -243,11 +256,11 @@ export default function Cart({ navigation }) {
             <TouchableOpacity activeOpacity={0.8} onPress={handleRemoveCoupon}>
               <RPGBorder
                 width={90}
-                height={50}
+                height={55}
                 tileSize={8}
                 centerColor="#ff4444"
                 borderType="red"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -260,11 +273,11 @@ export default function Cart({ navigation }) {
             <TouchableOpacity activeOpacity={0.8} onPress={handleApplyCupom}>
               <RPGBorder
                 width={90}
-                height="auto"
+                height={55}
                 tileSize={8}
                 centerColor={COLORS.secondary}
                 borderType="blue"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -310,11 +323,11 @@ export default function Cart({ navigation }) {
         >
           <RPGBorder
             width={345}
-            height="auto"
+            height={61}
             tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
-            contentPadding={4}
+            contentPadding={8}
             contentJustify="center"
             contentAlign="center"
           >

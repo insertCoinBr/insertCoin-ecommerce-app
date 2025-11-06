@@ -190,7 +190,7 @@ export default function RPGAlert({
         >
           <RPGBorder
             widthPercent={0.92}
-            height={autoClose ? 320 : (showCancel ? 480 : 450)}
+            height={autoClose ? 321 : (showCancel ? 481 : 451)}
             tileSize={10}
             centerColor="#4C38A4"
             borderType="black"
@@ -260,7 +260,7 @@ export default function RPGAlert({
                     >
                       <RPGBorder
                         width={135}
-                        height={70}
+                        height={78}
                         tileSize={8}
                         centerColor="#1F41BB"
                         borderType="blue"
@@ -282,7 +282,7 @@ export default function RPGAlert({
                   >
                     <RPGBorder
                       width={showCancel ? 135 : 280}
-                      height={70}
+                      height={78}
                       tileSize={8}
                       centerColor={alertConfig.centerColor}
                       borderType={alertConfig.borderType}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
-// 🔴 IMPORTAR OS CONTEXTS
+//  IMPORTAR OS CONTEXTS
 import { CartContext } from "../../context/CartContext";
 import { CurrencyContext } from "../../context/CurrencyContext";
 
@@ -91,13 +91,13 @@ export default function Payment({ navigation, route }) {
       >
         {/* Total */}
         <View style={styles.totalWrapper}>
-          <RPGBorder 
-            width={345} 
-            height={65} 
-            tileSize={8} 
+          <RPGBorder
+            width={345}
+            height={66}
+            tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
-            contentPadding={4}
+            contentPadding={8}
             contentJustify="center"
             contentAlign="center"
           >
@@ -141,13 +141,13 @@ export default function Payment({ navigation, route }) {
 
             {/* Nome */}
             <View style={styles.inputWrapper}>
-              <RPGBorder 
-                width={345} 
-                height={50} 
-                tileSize={8} 
+              <RPGBorder
+                width={345}
+                height={54}
+                tileSize={8}
                 centerColor={COLORS.white}
                 borderType="white"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -163,13 +163,13 @@ export default function Payment({ navigation, route }) {
 
             {/* Número do Cartão */}
             <View style={styles.inputWrapper}>
-              <RPGBorder 
-                width={345} 
-                height={50} 
-                tileSize={8} 
+              <RPGBorder
+                width={345}
+                height={54}
+                tileSize={8}
                 centerColor={COLORS.white}
                 borderType="white"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -188,13 +188,13 @@ export default function Payment({ navigation, route }) {
             {/* Data e CVV */}
             <View style={styles.rowInputs}>
               <View style={styles.halfInputWrapper}>
-                <RPGBorder 
-                  width={171} 
-                  height={50} 
-                  tileSize={8} 
+                <RPGBorder
+                  width={171}
+                  height={54}
+                  tileSize={8}
                   centerColor={COLORS.white}
                   borderType="white"
-                  contentPadding={4}
+                  contentPadding={8}
                   contentJustify="center"
                   contentAlign="center"
                 >
@@ -211,13 +211,13 @@ export default function Payment({ navigation, route }) {
               </View>
               
               <View style={styles.halfInputWrapper}>
-                <RPGBorder 
-                  width={165} 
-                  height={50} 
-                  tileSize={8} 
+                <RPGBorder
+                  width={165}
+                  height={54}
+                  tileSize={8}
                   centerColor={COLORS.white}
                   borderType="white"
-                  contentPadding={4}
+                  contentPadding={8}
                   contentJustify="center"
                   contentAlign="center"
                 >
@@ -243,13 +243,13 @@ export default function Payment({ navigation, route }) {
           activeOpacity={0.8}
           style={styles.submitButtonWrapper}
         >
-          <RPGBorder 
-            width={345} 
-            height={64} 
-            tileSize={8} 
+          <RPGBorder
+            width={345}
+            height={66}
+            tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
-            contentPadding={4}
+            contentPadding={8}
             contentJustify="center"
             contentAlign="center"
           >

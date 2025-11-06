@@ -27,32 +27,35 @@ export default function OrderCard({
   return (
     <Pressable onPress={onPress} style={styles.wrapper}>
       <RPGBorder
-        widthPercent={0.9}
-        height={120}
+        widthPercent={0.91}
+        height={140}
         tileSize={10}
         centerColor={"#1F41BB"}
         borderType={"blue"}
+        contentPadding={12}
+        contentJustify="center"
+        contentAlign="center"
       >
         <View style={styles.cardContent}>
           {/* Coluna Esquerda - Informações */}
           <View style={styles.leftColumn}>
             <Text style={styles.orderNumber}>N Pedido</Text>
-            <Text style={styles.orderNumberValue}>{orderNumber}</Text>
-            
+            <Text style={styles.orderNumberValue} numberOfLines={1}>{orderNumber}</Text>
+
             <View style={styles.statusRow}>
               <Text style={styles.label}>Status: </Text>
-              <Text style={[styles.status, { color: getStatusColor() }]}>
+              <Text style={[styles.status, { color: getStatusColor() }]} numberOfLines={1}>
                 {status}
               </Text>
             </View>
-            
-            <Text style={styles.date}>Data Pedido {date}</Text>
+
+            <Text style={styles.date} numberOfLines={1}>Data Pedido {date}</Text>
           </View>
 
           {/* Coluna Direita - Total */}
           <View style={styles.rightColumn}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>{total}</Text>
+            <Text style={styles.totalValue} numberOfLines={1}>{total}</Text>
           </View>
         </View>
       </RPGBorder>
@@ -70,10 +73,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    width: '100%',
   },
   leftColumn: {
     flex: 1,
+    paddingRight: 8,
   },
   orderNumber: {
     color: "#FFFFFF",
@@ -111,6 +115,8 @@ const styles = StyleSheet.create({
   rightColumn: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+    flexShrink: 0,
+    maxWidth: '40%',
   },
   totalLabel: {
     color: "#FFFFFF",

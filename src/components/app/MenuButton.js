@@ -19,11 +19,11 @@ export default function MenuButton({
     >
       <RPGBorder
         widthPercent={0.9}
-        aspectRatio={0.16}
+        aspectRatio={0.18}
         tileSize={8}
         centerColor={disabled ? "#666666" : centerColor}
         borderType={borderType}
-        contentPadding={4}
+        contentPadding={8}
         contentJustify="center"
         contentAlign="center"
       >

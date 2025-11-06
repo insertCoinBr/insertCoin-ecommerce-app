@@ -15,11 +15,11 @@ export default function PageHeader({ onBackPress, title }) {
       {/* Botão Voltar */}
       <RPGBorder
         widthPercent={0.26}
-        aspectRatio={0.55}
+        aspectRatio={0.6}
         centerColor={COLORS.primary}
         borderType="blue"
         tileSize={8}
-        contentPadding={4}
+        contentPadding={8}
         contentJustify="center"
         contentAlign="center"
       >
@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.primary,
   },
 
   backButtonText: {

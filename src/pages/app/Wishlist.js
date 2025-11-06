@@ -217,11 +217,11 @@ export default function Wishlist({ navigation }) {
         <View style={styles.totalWrapper}>
           <RPGBorder
             widthPercent={0.9}
-            aspectRatio={0.2}
+            aspectRatio={0.24}
             tileSize={8}
             centerColor={COLORS.primary}
             borderType="black"
-            contentPadding={4}
+            contentPadding={8}
             contentJustify="center"
             contentAlign="center"
           >
@@ -242,11 +242,11 @@ export default function Wishlist({ navigation }) {
           >
             <RPGBorder
               widthPercent={0.9}
-              aspectRatio={0.2}
+              aspectRatio={0.24}
               tileSize={8}
               centerColor={COLORS.secondary}
               borderType="blue"
-              contentPadding={4}
+              contentPadding={8}
               contentJustify="center"
               contentAlign="center"
             >
@@ -264,11 +264,11 @@ export default function Wishlist({ navigation }) {
           >
             <RPGBorder
               widthPercent={0.9}
-              aspectRatio={0.2}
+              aspectRatio={0.24}
               tileSize={8}
               centerColor="#FF4444"
               borderType="red"
-              contentPadding={4}
+              contentPadding={8}
               contentJustify="center"
               contentAlign="center"
             >

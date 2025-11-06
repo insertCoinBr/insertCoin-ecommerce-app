@@ -19,11 +19,11 @@ export default function PaymentMethodCard({
     >
       <RPGBorder
         widthPercent={0.9}
-        aspectRatio={0.22}
+        aspectRatio={0.28}
         tileSize={8}
         centerColor={isSelected ? centerColor : "#1F41BB"}
         borderType={isSelected ? borderType : "blue"}
-        contentPadding={4}
+        contentPadding={8}
         contentJustify="center"
         contentAlign="center"
       >
@@ -61,7 +61,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     gap: 16,
   },
   icon: {

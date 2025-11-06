@@ -16,8 +16,8 @@ export default function WishlistItemCard({
   return (
     <View style={styles.wrapper}>
       <RPGBorder
-        widthPercent={0.9}
-        aspectRatio={0.32}
+        widthPercent={0.91}
+        aspectRatio={0.35}
         tileSize={8}
         centerColor={centerColor}
         borderType={borderType}
@@ -85,11 +85,10 @@ const styles = StyleSheet.create({
     height: 75,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
   },
   productImage: {
-    width: 75,
-    height: 75,
+    width: '100%',
+    height: '100%',
   },
   infoContainer: {
     flex: 1,

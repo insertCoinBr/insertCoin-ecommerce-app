@@ -26,7 +26,7 @@ export default function FAQItem({
       <TouchableOpacity onPress={toggleExpand} activeOpacity={0.8}>
         <RPGBorder
           width={345}
-          height={isExpanded ? 220 : 123}
+          height={isExpanded ? 221 : 123}
           tileSize={8}
           centerColor={centerColor}
           borderType={borderType}

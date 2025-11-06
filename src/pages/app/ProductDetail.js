@@ -194,11 +194,11 @@ export default function ProductDetail({ route, navigation }) {
         <View style={styles.mainInfoWrapper}>
           <RPGBorder
             widthPercent={0.9}
-            aspectRatio={0.41}
+            aspectRatio={0.43}
             tileSize={10}
             centerColor={COLORS.primary}
             borderType="black"
-            contentPadding={12}
+            contentPadding={8}
             contentJustify="space-between"
           >
             <View style={styles.mainInfo}>
@@ -226,11 +226,11 @@ export default function ProductDetail({ route, navigation }) {
             >
               <RPGBorder
                 widthPercent={0.25}
-                aspectRatio={0.55}
+                aspectRatio={0.6}
                 tileSize={8}
                 centerColor={COLORS.secondary}
                 borderType="blue"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -256,11 +256,11 @@ export default function ProductDetail({ route, navigation }) {
             >
               <RPGBorder
                 widthPercent={0.62}
-                aspectRatio={0.24}
+                aspectRatio={0.3}
                 tileSize={8}
                 centerColor={productInCart ? "#6ABE30" : COLORS.success}
                 borderType="green"
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >
@@ -286,11 +286,11 @@ export default function ProductDetail({ route, navigation }) {
           >
             <RPGBorder
               widthPercent={0.9}
-              aspectRatio={0.19}
+              aspectRatio={0.24}
               tileSize={8}
               centerColor={COLORS.secondary}
               borderType="blue"
-              contentPadding={4}
+              contentPadding={8}
               contentJustify="center"
               contentAlign="center"
             >
@@ -315,7 +315,7 @@ export default function ProductDetail({ route, navigation }) {
             tileSize={8}
             centerColor={COLORS.secondary}
             borderType="blue"
-            contentPadding={12}
+            contentPadding={8}
             contentJustify="flex-start"
           >
             <View style={styles.aboutSection}>

@@ -57,11 +57,11 @@ export default function FilterBar({
             >
               <RPGBorder
                 width={buttonWidth}
-                height={50}
+                height={56}
                 tileSize={8}
                 centerColor={isActive ? COLORS.secondary : COLORS.inactive}
                 borderType={isActive ? "blue" : "white"}
-                contentPadding={4}
+                contentPadding={8}
                 contentJustify="center"
                 contentAlign="center"
               >

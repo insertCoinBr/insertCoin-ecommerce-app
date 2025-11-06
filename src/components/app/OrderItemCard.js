@@ -29,7 +29,7 @@ export default function OrderItemCard({
             <Image
               source={{ uri: productImage }}
               style={styles.productImage}
-               resizeMode="stretch"
+              resizeMode="stretch"
             />
           </View>
 

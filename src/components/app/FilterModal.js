@@ -139,7 +139,7 @@ export default function FilterModal({
                   >
                     <RPGBorder
                       widthPercent={0.85}
-                      aspectRatio={0.18}
+                      aspectRatio={0.24}
                       tileSize={8}
                       centerColor={selectedOption === option ? COLORS.success : COLORS.secondary}
                       borderType={selectedOption === option ? "green" : "blue"}
@@ -163,7 +163,7 @@ export default function FilterModal({
               >
                 <RPGBorder
                   widthPercent={0.85}
-                  aspectRatio={0.18}
+                  aspectRatio={0.24}
                   tileSize={8}
                   centerColor="#FF4444"
                   borderType="red"

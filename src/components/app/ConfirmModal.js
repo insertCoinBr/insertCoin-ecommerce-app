@@ -60,11 +60,11 @@ export default function ConfirmModal({
                 >
                   <RPGBorder
                     widthPercent={0.35}
-                    aspectRatio={0.41}
+                    aspectRatio={0.45}
                     tileSize={8}
                     centerColor={centerColorButton1}
                     borderType={borderTypeButton1}
-                    contentPadding={4}
+                    contentPadding={8}
                     contentJustify="center"
                     contentAlign="center"
                   >
@@ -82,11 +82,11 @@ export default function ConfirmModal({
                 >
                   <RPGBorder
                     widthPercent={0.35}
-                    aspectRatio={0.41}
+                    aspectRatio={0.45}
                     tileSize={8}
                     centerColor={centerColorButton2}
                     borderType={borderTypeButton2}
-                    contentPadding={4}
+                    contentPadding={8}
                     contentJustify="center"
                     contentAlign="center"
                   >

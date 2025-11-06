@@ -70,18 +70,19 @@ const BORDER_IMAGES = {
 export default function RPGBorder({
   width = 260,
   height = 120,
-  widthPercent = null, // Porcentagem da largura da tela (ex: 0.9 para 90%)
-  heightPercent = null, // Porcentagem baseada na largura calculada (mantém proporção)
-  aspectRatio = null, // Proporção altura/largura (ex: 0.5 para altura = 50% da largura)
+  widthPercent = null,
+  heightPercent = null,
+  aspectRatio = null,
   children,
   tileSize = 16,
   centerColor = "#4C38A4",
   centerImage = null,
   imageResizeMode = "cover",
   borderType = "black",
-  contentPadding = null, // Nova prop para controlar padding
-  contentJustify = "space-between", // Nova prop para justifyContent
-  contentAlign = "flex-start", // Nova prop para alignItems
+  contentPadding = null,
+  contentJustify = "space-between",
+  contentAlign = "flex-start",
+  overflow = "visible",
 }) {
   // Calcula a largura real (usa porcentagem se fornecida, senão usa width fixa)
   const calculatedWidth = widthPercent ? Math.floor(screenWidth * widthPercent) : width;
@@ -145,7 +146,7 @@ export default function RPGBorder({
   };
 
   return (
-    <View style={[styles.wrapper, { width: calculatedWidth, height: calculatedHeight }]}>
+    <View style={[styles.wrapper, { width: calculatedWidth, height: calculatedHeight, overflow }]}>
       {/* Top row */}
       <View style={[styles.row, { height: tileSize }]}>
         <Image
@@ -210,7 +211,6 @@ export default function RPGBorder({
 
 const styles = StyleSheet.create({
   wrapper: {
-    overflow: "hidden",
     backgroundColor: "transparent",
   },
   row: {
