@@ -1,14 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView,Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import CustomAlert from "../../components/admin/CustomAlert";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 export default function RemoveProduct() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const [products, setProducts] = useState([
     { id: 1, code: "ACT-PC-0001", name: "Red Dead Redemption 2" },
@@ -27,15 +33,50 @@ export default function RemoveProduct() {
     product.code.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev =>
+      prev.includes(itemId)
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.length === filteredProducts.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredProducts.map(item => item.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedItems.length === 0) {
+      setAlertConfig({ type: 'error', message: 'Please select at least one item to delete' });
+      setShowAlert(true);
+      return;
+    }
+    setShowModal(true);
+    setSelectedProduct({ count: selectedItems.length });
+  };
+
   const handleSelectProduct = (product) => {
     setSelectedProduct(product);
     setShowModal(true);
   };
 
   const handleConfirmDelete = () => {
-    setProducts(products.filter(product => product.id !== selectedProduct.id));
+    if (selectedProduct?.count) {
+      // Delete multiple
+      setProducts(products.filter(product => !selectedItems.includes(product.id)));
+      setAlertConfig({ type: 'success', message: `${selectedItems.length} product(s) removed successfully` });
+      setSelectedItems([]);
+    } else {
+      // Delete single
+      setProducts(products.filter(product => product.id !== selectedProduct.id));
+      setAlertConfig({ type: 'success', message: 'Product removed successfully' });
+    }
     setShowModal(false);
-    Alert.alert("Success", "Product removed successfully");
+    setShowAlert(true);
   };
 
   const handleCancelDelete = () => {
@@ -45,8 +86,9 @@ export default function RemoveProduct() {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <View style={styles.backButton}>
               <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -72,71 +114,102 @@ export default function RemoveProduct() {
           />
         </View>
 
-        <View style={styles.tableHeader}>
-          <Text style={[styles.headerText, styles.codeColumn]}>Code</Text>
-          <Text style={[styles.headerText, styles.nameColumn]}>Name</Text>
-        </View>
+        {selectedItems.length > 0 && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity style={styles.selectAllButton} onPress={toggleSelectAll}>
+              <Ionicons
+                name={selectedItems.length === filteredProducts.length ? "checkbox" : "square-outline"}
+                size={20}
+                color="#A855F7"
+              />
+              <Text style={styles.selectAllText}>
+                {selectedItems.length === filteredProducts.length ? 'Deselect All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteSelected}>
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.deleteButtonText}>Delete ({selectedItems.length})</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <ScrollView style={styles.list}>
           {filteredProducts.map((product) => (
             <TouchableOpacity
               key={product.id}
-              style={styles.productItem}
-              onPress={() => handleSelectProduct(product)}
+              style={styles.itemCard}
+              onPress={() => toggleItemSelection(product.id)}
             >
-              <Text style={styles.productCode}>{product.code}</Text>
-              <Text style={styles.productName}>{product.name}</Text>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => toggleItemSelection(product.id)}
+              >
+                <Ionicons
+                  name={selectedItems.includes(product.id) ? "checkbox" : "square-outline"}
+                  size={24}
+                  color="#A855F7"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.itemInfo}>
+                <Text style={styles.productCode}>{product.code}</Text>
+                <Text style={styles.productName}>{product.name}</Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleSelectProduct(product);
+                }}
+              >
+                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
-
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelDelete}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Deletion</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to remove this product?
-            </Text>
-            <Text style={styles.modalProduct}>{selectedProduct?.name}</Text>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={handleCancelDelete}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleConfirmDelete}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
-      </Modal>
+      </SafeAreaView>
+
+      <ConfirmModal
+        visible={showModal}
+        title="Confirm Deletion"
+        message={
+          selectedProduct?.count
+            ? `Are you sure you want to remove ${selectedProduct.count} products?`
+            : "Are you sure you want to remove this product?"
+        }
+        highlightText={selectedProduct?.count ? null : selectedProduct?.name}
+        confirmText="Delete"
+        confirmColor="#EF4444"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <CustomAlert
+        visible={showAlert}
+        type={alertConfig.type}
+        message={alertConfig.message}
+        onClose={() => setShowAlert(false)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -178,6 +251,55 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginLeft: 8,
   },
+  list: {
+    flex: 1,
+  },
+  actionBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+  },
+  selectAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  selectAllText: {
+    color: "#A855F7",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  itemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0D1429",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    gap: 12,
+  },
+  checkboxContainer: {
+    padding: 5,
+  },
+  itemInfo: {
+    flex: 1,
+  },
   tableHeader: {
     flexDirection: "row",
     paddingVertical: 10,
@@ -196,9 +318,6 @@ const styles = StyleSheet.create({
   nameColumn: {
     flex: 1,
   },
-  list: {
-    flex: 1,
-  },
   productItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -209,73 +328,12 @@ const styles = StyleSheet.create({
   productCode: {
     color: "#fff",
     fontSize: 14,
-    width: 120,
+    fontWeight: "600",
   },
   productName: {
-    color: "#fff",
-    fontSize: 15,
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-  modalContent: {
-    backgroundColor: "#141B3A",
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalText: {
-    color: "#ccc",
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalProduct: {
-    color: "#ff0000ff",
-    fontSize: 14,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#666",
-  },
-  cancelButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    color: "#aaa",
+    fontSize: 13,
+    marginTop: 4,
   },
   logo: {
     width: 24,

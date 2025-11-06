@@ -1,14 +1,20 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Image } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import InfoRow from "../../components/admin/InfoRow";
+import CustomAlert from "../../components/admin/CustomAlert";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 export default function OrderDetails() {
   const navigation = useNavigation();
   const route = useRoute();
   const { order } = route.params;
+  const [showModal, setShowModal] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
 
   // Mock data - substitua com dados reais da sua API
   const orderDetails = {
@@ -22,35 +28,35 @@ export default function OrderDetails() {
   };
 
   const handleDeleteOrder = () => {
-    Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to delete this Order?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            // Aqui você faria a chamada à API para deletar o carrinho
-            Alert.alert("Success", "Order deleted successfully", [
-              { text: "OK", onPress: () => navigation.goBack() }
-            ]);
-          },
-        },
-      ]
-    );
+    setShowModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    // Aqui você faria a chamada à API para deletar o carrinho
+    setShowModal(false);
+    setAlertConfig({ type: 'success', message: 'Order deleted successfully' });
+    setShowAlert(true);
+  };
+
+  const handleCancelDelete = () => {
+    setShowModal(false);
+  };
+
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.goBack();
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -95,21 +101,44 @@ export default function OrderDetails() {
           <Text style={styles.deleteButtonText}>Cancel Order</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+
+      <ConfirmModal
+        visible={showModal}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this Order?"
+        highlightText={orderDetails.id}
+        confirmText="Delete"
+        confirmColor="#EF4444"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <CustomAlert
+        visible={showAlert}
+        type={alertConfig.type}
+        message={alertConfig.message}
+        onClose={handleAlertClose}
+      />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

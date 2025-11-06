@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, Modal } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -12,66 +13,69 @@ export default function EditClientForm() {
 
   const [fullName, setFullName] = useState(client.name);
   const [email, setEmail] = useState(client.email);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [points, setPoints] = useState("300");
+  const [isActive, setIsActive] = useState(client.isActive !== undefined ? client.isActive : true);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '', onClose: null });
 
-  const validatePassword = (pass) => {
-    if (!pass) return { hasUpperCase: false, hasLowerCase: false, hasNumber: false, hasSpecial: false, hasMinLength: false };
-    
-    const hasUpperCase = /[A-Z]/.test(pass);
-    const hasLowerCase = /[a-z]/.test(pass);
-    const hasNumber = /[0-9]/.test(pass);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pass);
-    const hasMinLength = pass.length >= 8;
-
-    return { hasUpperCase, hasLowerCase, hasNumber, hasSpecial, hasMinLength };
+  const showAlert = (type, message, onClose = null) => {
+    setAlertConfig({ type, message, onClose });
+    setShowAlertModal(true);
   };
 
-  const validation = validatePassword(password);
+  const closeAlert = () => {
+    setShowAlertModal(false);
+    if (alertConfig.onClose) {
+      alertConfig.onClose();
+    }
+  };
+
+  const handleStatusChange = () => {
+    const newStatus = !isActive;
+    setPendingStatus(newStatus);
+    setShowStatusModal(true);
+  };
+
+  const handleConfirmStatusChange = () => {
+    setIsActive(pendingStatus);
+    setShowStatusModal(false);
+    showAlert('success', `Client ${pendingStatus ? 'activated' : 'inactivated'} successfully`);
+  };
+
+  const handleCancelStatusChange = () => {
+    setShowStatusModal(false);
+    setPendingStatus(null);
+  };
 
   const handleUpdateClient = () => {
     if (!fullName || !email) {
-      Alert.alert("Error", "Please fill all required fields");
-      return;
-    }
-
-    if (password && password !== confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
-      return;
-    }
-
-    if (password && !Object.values(validation).every(v => v)) {
-      Alert.alert("Error", "Password doesn't meet requirements");
+      showAlert('error', 'Please fill all required fields');
       return;
     }
 
     // Validar pontos
     if (points && isNaN(points)) {
-      Alert.alert("Error", "Points must be a valid number");
+      showAlert('error', 'Points must be a valid number');
       return;
     }
 
-    // CORREÇÃO: Usar goBack() ou popToTop() ao invés de navigate
-    Alert.alert("Success", "Client updated successfully", [
-      { 
-        text: "OK", 
-        onPress: () => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'HomeAdm' }],
-          });
-        }
-      }
-    ]);
+    showAlert('success', 'Client updated successfully', () => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'HomeAdm' }],
+      });
+    });
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -100,9 +104,9 @@ export default function EditClientForm() {
 
         <Text style={styles.label}>Email:</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.inputReadOnly]}
           value={email}
-          onChangeText={setEmail}
+          editable={false}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -114,6 +118,18 @@ export default function EditClientForm() {
           <Text style={styles.ordersButtonText}>Orders of Client</Text>
         </TouchableOpacity>
 
+        <View style={styles.statusContainer}>
+          <Text style={styles.label}>Client Status</Text>
+          <TouchableOpacity
+            style={[styles.statusButton, isActive ? styles.statusActive : styles.statusInactive]}
+            onPress={handleStatusChange}
+          >
+            <Text style={styles.statusButtonText}>
+              {isActive ? "Active" : "Inactive"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.label}>Points</Text>
         <TextInput
           style={styles.inputPoints}
@@ -123,44 +139,6 @@ export default function EditClientForm() {
           placeholder="0"
           placeholderTextColor="#666"
         />
-
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Leave blank to keep current password"
-          placeholderTextColor="#666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <Text style={styles.label}>Confirm Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Leave blank to keep current password"
-          placeholderTextColor="#666"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-
-        <View style={styles.requirements}>
-          <Text style={[styles.requirement, validation.hasMinLength && styles.valid]}>
-            Minimum of 8 characters
-          </Text>
-          <Text style={[styles.requirement, validation.hasUpperCase && styles.valid]}>
-            At least 1 uppercase letter
-          </Text>
-          <Text style={[styles.requirement, validation.hasLowerCase && styles.valid]}>
-            At least 1 lowercase letter
-          </Text>
-          <Text style={[styles.requirement, validation.hasNumber && styles.valid]}>
-            At least 1 number
-          </Text>
-          <Text style={[styles.requirement, validation.hasSpecial && styles.valid]}>
-            At least 1 special character
-          </Text>
-        </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>
@@ -169,21 +147,90 @@ export default function EditClientForm() {
           onPress={handleUpdateClient}
         />
       </View>
-    </KeyboardAvoidingView>
+
+      <Modal
+        visible={showStatusModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelStatusChange}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Status Change</Text>
+            <Text style={styles.modalText}>
+              Are you sure you want to {pendingStatus ? 'activate' : 'inactivate'} this client?
+            </Text>
+            <Text style={styles.modalClient}>{email}</Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={handleCancelStatusChange}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, pendingStatus ? styles.activateButton : styles.inactivateButton]}
+                onPress={handleConfirmStatusChange}
+              >
+                <Text style={styles.confirmButtonText}>
+                  {pendingStatus ? 'Activate' : 'Inactivate'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showAlertModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closeAlert}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={[styles.alertIconContainer, alertConfig.type === 'error' ? styles.errorIcon : styles.successIcon]}>
+              <Ionicons
+                name={alertConfig.type === 'error' ? 'close-circle' : 'checkmark-circle'}
+                size={50}
+                color="#fff"
+              />
+            </View>
+            <Text style={styles.modalTitle}>
+              {alertConfig.type === 'error' ? 'Error' : 'Success'}
+            </Text>
+            <Text style={styles.modalText}>{alertConfig.message}</Text>
+
+            <TouchableOpacity
+              style={[styles.alertButton, alertConfig.type === 'error' ? styles.errorButton : styles.successButton]}
+              onPress={closeAlert}
+            >
+              <Text style={styles.alertButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -233,6 +280,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
   },
+  inputReadOnly: {
+    backgroundColor: "#1B254F",
+    opacity: 0.6,
+  },
   inputPoints: {
     backgroundColor: "#0D1429",
     borderRadius: 8,
@@ -259,16 +310,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  requirements: {
+  statusContainer: {
     marginBottom: 20,
   },
-  requirement: {
-    color: "#A855F7",
-    fontSize: 12,
-    marginBottom: 4,
+  statusButton: {
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 2,
   },
-  valid: {
-    color: "#22C55E",
+  statusActive: {
+    backgroundColor: "#22C55E",
+    borderColor: "#22C55E",
+  },
+  statusInactive: {
+    backgroundColor: "#6B7280",
+    borderColor: "#6B7280",
+  },
+  statusButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
   buttonContainer: {
     paddingVertical: 10,
@@ -280,5 +342,98 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
+  },
+  modalContent: {
+    backgroundColor: "#141B3A",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  modalText: {
+    color: "#ccc",
+    fontSize: 16,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalClient: {
+    color: "#A855F7",
+    fontSize: 14,
+    marginBottom: 24,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#666",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  activateButton: {
+    backgroundColor: "#22C55E",
+  },
+  inactivateButton: {
+    backgroundColor: "#F59E0B",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  alertIconContainer: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  errorIcon: {
+    color: "#EF4444",
+  },
+  successIcon: {
+    color: "#22C55E",
+  },
+  alertButton: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  errorButton: {
+    backgroundColor: "#EF4444",
+  },
+  successButton: {
+    backgroundColor: "#22C55E",
+  },
+  alertButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

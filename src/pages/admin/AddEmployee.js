@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import PermissionDropdown from "../../components/admin/PermissionDropdown";
 import PrimaryButton from "../../components/admin/PrimaryButton";
+import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function AddEmployee() {
   const navigation = useNavigation();
@@ -13,6 +15,8 @@ export default function AddEmployee() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedPermission, setSelectedPermission] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
 
   const validatePassword = (pass) => {
     const hasUpperCase = /[A-Z]/.test(pass);
@@ -28,32 +32,42 @@ export default function AddEmployee() {
 
   const handleCreateEmployee = () => {
     if (!fullName || !email || !password || !confirmPassword || !selectedPermission) {
-      Alert.alert("Error", "Please fill all fields");
+      setAlertConfig({ type: 'error', message: 'Please fill all fields' });
+      setShowAlert(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
+      setAlertConfig({ type: 'error', message: "Passwords don't match" });
+      setShowAlert(true);
       return;
     }
 
     if (!Object.values(validation).every(v => v)) {
-      Alert.alert("Error", "Password doesn't meet requirements");
+      setAlertConfig({ type: 'error', message: "Password doesn't meet requirements" });
+      setShowAlert(true);
       return;
     }
 
-    Alert.alert("Success", "Employee created successfully", [
-      { text: "OK", onPress: () => navigation.goBack() }
-    ]);
+    setAlertConfig({ type: 'success', message: 'Employee created successfully' });
+    setShowAlert(true);
+  };
+
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.goBack();
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -144,21 +158,33 @@ export default function AddEmployee() {
           onPress={handleCreateEmployee}
         />
       </View>
-    </KeyboardAvoidingView>
+
+        <CustomAlert
+          visible={showAlert}
+          type={alertConfig.type}
+          message={alertConfig.message}
+          onClose={handleAlertClose}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

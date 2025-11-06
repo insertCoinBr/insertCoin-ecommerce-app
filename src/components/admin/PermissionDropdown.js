@@ -13,10 +13,7 @@ export default function PermissionDropdown({
     <View style={styles.container}>
       {/* Botão Principal */}
       <TouchableOpacity
-        style={[
-          styles.dropdownButton,
-          showPermissions && styles.dropdownButtonOpen
-        ]}
+        style={styles.dropdownButton}
         onPress={() => setShowPermissions(!showPermissions)}
       >
         <Text style={styles.dropdownButtonText}>
@@ -35,10 +32,7 @@ export default function PermissionDropdown({
           {permissions.map((permission, index) => (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.dropdownItem,
-                index === permissions.length - 1 && styles.lastItem
-              ]}
+              style={styles.dropdownItem}
               onPress={() => {
                 onSelectPermission(permission);
                 setShowPermissions(false);
@@ -72,11 +66,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  dropdownButtonOpen: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderBottomWidth: 0,
-  },
   dropdownButtonText: {
     color: "#fff",
     fontSize: 16,
@@ -98,9 +87,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#1E3A8A",
-  },
-  lastItem: {
-    borderBottomWidth: 0,
   },
   dropdownItemText: {
     color: "#fff",

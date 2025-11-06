@@ -12,10 +12,7 @@ export default function PlatformSelector({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[
-          styles.selectorButton,
-          showPlatforms && styles.selectorButtonOpen
-        ]}
+        style={styles.selectorButton}
         onPress={() => setShowPlatforms(!showPlatforms)}
       >
         <Text style={styles.selectorButtonText}>
@@ -33,10 +30,7 @@ export default function PlatformSelector({
           {platforms.map((platform, index) => (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.optionItem,
-                index === platforms.length - 1 && styles.lastItem
-              ]}
+              style={styles.optionItem}
               onPress={() => {
                 onSelectPlatform(platform);
                 setShowPlatforms(false);
@@ -70,11 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  selectorButtonOpen: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderBottomWidth: 0,
-  },
   selectorButtonText: {
     color: "#fff",
     fontSize: 16,
@@ -96,9 +85,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#1E3A8A",
-  },
-  lastItem: {
-    borderBottomWidth: 0,
   },
   optionText: {
     color: "#fff",

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import { NotificationStorage } from "../../services/NotificationStorage";
+import CustomAlert from "../../components/admin/CustomAlert";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 export default function RemoveNotification() {
   const navigation = useNavigation();
@@ -11,6 +14,9 @@ export default function RemoveNotification() {
   const [showModal, setShowModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [selectedItems, setSelectedItems] = useState([]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -27,6 +33,32 @@ export default function RemoveNotification() {
     notif.title.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev =>
+      prev.includes(itemId)
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.length === filteredNotifications.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredNotifications.map(item => item.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedItems.length === 0) {
+      setAlertConfig({ type: 'error', message: 'Please select at least one item to delete' });
+      setShowAlert(true);
+      return;
+    }
+    setShowModal(true);
+    setSelectedNotification({ count: selectedItems.length });
+  };
+
   const handleSelectNotification = (notification) => {
     setSelectedNotification(notification);
     setShowModal(true);
@@ -34,12 +66,25 @@ export default function RemoveNotification() {
 
   const handleConfirmDelete = async () => {
     try {
-      await NotificationStorage.delete(selectedNotification.id);
+      if (selectedNotification?.count) {
+        // Delete multiple
+        for (const id of selectedItems) {
+          await NotificationStorage.delete(id);
+        }
+        setAlertConfig({ type: 'success', message: `${selectedItems.length} notification(s) removed successfully` });
+        setSelectedItems([]);
+      } else {
+        // Delete single
+        await NotificationStorage.delete(selectedNotification.id);
+        setAlertConfig({ type: 'success', message: 'Notification removed successfully' });
+      }
       setShowModal(false);
       await loadNotifications();
-      Alert.alert("Success", "Notification removed successfully");
+      setShowAlert(true);
     } catch (error) {
-      Alert.alert("Error", "Failed to remove notification");
+      setShowModal(false);
+      setAlertConfig({ type: 'error', message: 'Failed to remove notification' });
+      setShowAlert(true);
     }
   };
 
@@ -50,8 +95,9 @@ export default function RemoveNotification() {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <View style={styles.backButton}>
               <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -77,20 +123,58 @@ export default function RemoveNotification() {
           />
         </View>
 
+        {selectedItems.length > 0 && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity style={styles.selectAllButton} onPress={toggleSelectAll}>
+              <Ionicons
+                name={selectedItems.length === filteredNotifications.length ? "checkbox" : "square-outline"}
+                size={20}
+                color="#A855F7"
+              />
+              <Text style={styles.selectAllText}>
+                {selectedItems.length === filteredNotifications.length ? 'Deselect All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteSelected}>
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.deleteButtonText}>Delete ({selectedItems.length})</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <ScrollView style={styles.list}>
           {filteredNotifications.map((notification) => (
             <TouchableOpacity
               key={notification.id}
-              style={styles.notificationItem}
-              onPress={() => handleSelectNotification(notification)}
+              style={styles.itemCard}
+              onPress={() => toggleItemSelection(notification.id)}
             >
-              <View style={styles.notificationInfo}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => toggleItemSelection(notification.id)}
+              >
+                <Ionicons
+                  name={selectedItems.includes(notification.id) ? "checkbox" : "square-outline"}
+                  size={24}
+                  color="#A855F7"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.itemInfo}>
                 <Text style={styles.notificationTitle}>{notification.title}</Text>
                 <Text style={styles.notificationSubtitle} numberOfLines={2}>
                   {notification.description}
                 </Text>
               </View>
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleSelectNotification(notification);
+                }}
+              >
+                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
 
@@ -101,54 +185,49 @@ export default function RemoveNotification() {
             </View>
           )}
         </ScrollView>
-      </View>
-
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelDelete}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Deletion</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to remove this notification?
-            </Text>
-            <Text style={styles.modalNotification}>{selectedNotification?.title}</Text>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={handleCancelDelete}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleConfirmDelete}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
-      </Modal>
+      </SafeAreaView>
+
+      <ConfirmModal
+        visible={showModal}
+        title="Confirm Deletion"
+        message={
+          selectedNotification?.count
+            ? `Are you sure you want to remove ${selectedNotification.count} notifications?`
+            : "Are you sure you want to remove this notification?"
+        }
+        highlightText={selectedNotification?.count ? null : selectedNotification?.title}
+        confirmText="Delete"
+        confirmColor="#EF4444"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <CustomAlert
+        visible={showAlert}
+        type={alertConfig.type}
+        message={alertConfig.message}
+        onClose={() => setShowAlert(false)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -193,6 +272,52 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
+  actionBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+  },
+  selectAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  selectAllText: {
+    color: "#A855F7",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  itemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0D1429",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    gap: 12,
+  },
+  checkboxContainer: {
+    padding: 5,
+  },
+  itemInfo: {
+    flex: 1,
+  },
   notificationItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -225,67 +350,6 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 16,
     marginTop: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-  modalContent: {
-    backgroundColor: "#141B3A",
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalText: {
-    color: "#ccc",
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalNotification: {
-    color: "#ff0000ff",
-    fontSize: 14,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#666",
-  },
-  cancelButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
   },
   logo: {
     width: 24,

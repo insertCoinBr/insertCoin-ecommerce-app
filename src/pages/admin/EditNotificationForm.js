@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
@@ -7,6 +8,7 @@ import { colors } from "../../styles/adminStyles";
 import PrimaryButton from "../../components/admin/PrimaryButton";
 import SwitchButton from "../../components/admin/SwitchButton";
 import { NotificationStorage } from "../../services/NotificationStorage";
+import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function EditNotificationForm() {
   const navigation = useNavigation();
@@ -20,6 +22,8 @@ export default function EditNotificationForm() {
   const [selectedPromotion, setSelectedPromotion] = useState(
     notification.promotionId ? { id: notification.promotionId } : null
   );
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
 
   useEffect(() => {
     if (route.params?.selectedPromotion) {
@@ -32,9 +36,10 @@ export default function EditNotificationForm() {
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'We need camera roll permissions to select an image.');
+      setAlertConfig({ type: 'error', message: 'We need camera roll permissions to select an image.' });
+      setShowAlert(true);
       return;
     }
 
@@ -59,7 +64,8 @@ export default function EditNotificationForm() {
 
   const handleUpdateNotification = async () => {
     if (!title || !subtitle || !image) {
-      Alert.alert("Error", "Please fill all fields and select an image");
+      setAlertConfig({ type: 'error', message: 'Please fill all fields and select an image' });
+      setShowAlert(true);
       return;
     }
 
@@ -73,29 +79,32 @@ export default function EditNotificationForm() {
       };
 
       await NotificationStorage.update(notification.id, updatedNotification);
-      
-      Alert.alert("Success", "Notification updated successfully", [
-        { 
-          text: "OK", 
-          onPress: () => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'HomeAdm' }],
-            });
-          }
-        }
-      ]);
+
+      setAlertConfig({ type: 'success', message: 'Notification updated successfully' });
+      setShowAlert(true);
     } catch (error) {
-      Alert.alert("Error", "Failed to update notification");
+      setAlertConfig({ type: 'error', message: 'Failed to update notification' });
+      setShowAlert(true);
+    }
+  };
+
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'HomeAdm' }],
+      });
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -176,21 +185,33 @@ export default function EditNotificationForm() {
           onPress={handleUpdateNotification}
         />
       </View>
-    </KeyboardAvoidingView>
+
+        <CustomAlert
+          visible={showAlert}
+          type={alertConfig.type}
+          message={alertConfig.message}
+          onClose={handleAlertClose}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

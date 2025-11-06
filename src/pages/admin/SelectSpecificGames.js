@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -9,9 +10,11 @@ export default function SelectSpecificGames() {
   const navigation = useNavigation();
   const route = useRoute();
   const [searchText, setSearchText] = useState("");
-  const [selectedGames, setSelectedGames] = useState(route.params?.selectedGames || []);
+  const initialGames = route.params?.selectedGames || [];
+  const [selectedGames, setSelectedGames] = useState(initialGames);
   const [expandedGame, setExpandedGame] = useState(null);
   const returnRoute = route.params?.returnRoute || "AddPromotion";
+  const promotion = route.params?.promotion;
 
   const games = [
     { id: 1, name: "Red Dead Redemption 2", platforms: ["PC", "PlayStation", "Xbox"] },
@@ -51,13 +54,24 @@ export default function SelectSpecificGames() {
   };
 
   const handleSave = () => {
-    navigation.navigate(returnRoute, { selectedSpecificGames: selectedGames });
+    const params = { selectedSpecificGames: selectedGames };
+    if (promotion) {
+      params.promotion = promotion;
+    }
+    navigation.navigate(returnRoute, params);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate(returnRoute, { selectedSpecificGames: selectedGames })}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+        <TouchableOpacity onPress={() => {
+          const params = { selectedSpecificGames: initialGames };
+          if (promotion) {
+            params.promotion = promotion;
+          }
+          navigation.navigate(returnRoute, params);
+        }}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
             <Text style={styles.backText}>Back</Text>
@@ -133,21 +147,26 @@ export default function SelectSpecificGames() {
           />
         </View>
       )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

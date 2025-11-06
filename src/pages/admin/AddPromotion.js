@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -8,6 +9,7 @@ import SwitchButton from "../../components/admin/SwitchButton";
 import CategorySelector from "../../components/admin/CategorySelector";
 import PlatformSelectorUnlimited from "../../components/admin/PlatformSelectorUnlimited";
 import DatePickerButton from "../../components/admin/DatePickerButton";
+import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function AddPromotion() {
   const navigation = useNavigation();
@@ -23,8 +25,8 @@ export default function AddPromotion() {
   const [discountPercentage, setDiscountPercentage] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [quantity, setQuantity] = useState("");
-  const [untilEndDate, setUntilEndDate] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
 
   useEffect(() => {
     if (route.params?.selectedSpecificGames) {
@@ -61,12 +63,14 @@ export default function AddPromotion() {
     today.setHours(0, 0, 0, 0);
 
     if (start && start < today) {
-      Alert.alert("Error", "Start date cannot be earlier than today");
+      setAlertConfig({ type: 'error', message: 'Start date cannot be earlier than today' });
+      setShowAlert(true);
       return false;
     }
 
     if (start && end && end < start) {
-      Alert.alert("Error", "End date cannot be earlier than start date");
+      setAlertConfig({ type: 'error', message: 'End date cannot be earlier than start date' });
+      setShowAlert(true);
       return false;
     }
 
@@ -87,44 +91,44 @@ export default function AddPromotion() {
 
   const handleCreatePromotion = () => {
     if (!promotionName || !discountPercentage || !startDate || !endDate) {
-      Alert.alert("Error", "Please fill all required fields");
+      setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
+      setShowAlert(true);
       return;
     }
 
     if (discountType === "Coupon Discount" && !couponName) {
-      Alert.alert("Error", "Please enter coupon name");
+      setAlertConfig({ type: 'error', message: 'Please enter coupon name' });
+      setShowAlert(true);
       return;
     }
 
     // Validação baseada no tipo de seleção
     if (productSelectionType === "Specific Products") {
       if (selectedSpecificGames.length === 0) {
-        Alert.alert("Error", "Please select at least one specific game");
+        setAlertConfig({ type: 'error', message: 'Please select at least one specific game' });
+        setShowAlert(true);
         return;
       }
     } else {
       if (selectedCategories.length === 0 && selectedPlatforms.length === 0) {
-        Alert.alert("Error", "Please select at least one category or platform");
+        setAlertConfig({ type: 'error', message: 'Please select at least one category or platform' });
+        setShowAlert(true);
         return;
       }
     }
 
-    if (!untilEndDate && (!quantity || parseInt(quantity) <= 0)) {
-      Alert.alert("Error", "Please enter a valid quantity");
-      return;
-    }
+    setAlertConfig({ type: 'success', message: 'Promotion created successfully' });
+    setShowAlert(true);
+  };
 
-    Alert.alert("Success", "Promotion created successfully", [
-      { 
-        text: "OK", 
-        onPress: () => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'HomeAdm' }],
-          });
-        }
-      }
-    ]);
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'HomeAdm' }],
+      });
+    }
   };
 
   const handleGoBack = () => {
@@ -136,11 +140,12 @@ export default function AddPromotion() {
   
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -277,28 +282,6 @@ export default function AddPromotion() {
           date={endDate}
           onDateChange={handleEndDateChange}
         />
-
-        <Text style={styles.label}>Quantity</Text>
-        <View style={styles.quantityContainer}>
-          <TextInput
-            style={[styles.input, styles.quantityInput, untilEndDate && styles.disabledInput]}
-            value={quantity}
-            onChangeText={setQuantity}
-            placeholder="0"
-            placeholderTextColor="#666"
-            keyboardType="numeric"
-            editable={!untilEndDate}
-          />
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setUntilEndDate(!untilEndDate)}
-          >
-            <View style={[styles.checkbox, untilEndDate && styles.checkboxSelected]}>
-              {untilEndDate && <Ionicons name="checkmark" size={16} color="#fff" />}
-            </View>
-            <Text style={styles.checkboxLabel}>Until end date</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>
@@ -307,21 +290,33 @@ export default function AddPromotion() {
           onPress={handleCreatePromotion}
         />
       </View>
-    </KeyboardAvoidingView>
+
+        <CustomAlert
+          visible={showAlert}
+          type={alertConfig.type}
+          message={alertConfig.message}
+          onClose={handleAlertClose}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -416,33 +411,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     marginBottom: 4,
-  },
-  quantityContainer: {
-    marginBottom: 15,
-  },
-  quantityInput: {
-    marginBottom: 10,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#A855F7",
-    marginRight: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxSelected: {
-    backgroundColor: "#A855F7",
-  },
-  checkboxLabel: {
-    color: "#fff",
-    fontSize: 14,
   },
   buttonContainer: {
     paddingVertical: 10,

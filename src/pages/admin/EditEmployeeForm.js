@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import PermissionDropdown from "../../components/admin/PermissionDropdown";
 import PrimaryButton from "../../components/admin/PrimaryButton";
+import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function EditEmployeeForm() {
   const navigation = useNavigation();
@@ -17,12 +19,14 @@ export default function EditEmployeeForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedPermission, setSelectedPermission] = useState("Gerente"); // Mock - buscar da API
   const [showPermissions, setShowPermissions] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
 
   const permissions = ["Gerente", "Super Admin"];
 
   const validatePassword = (pass) => {
     if (!pass) return { hasUpperCase: true, hasLowerCase: true, hasNumber: true, hasSpecial: true, hasMinLength: true };
-    
+
     const hasUpperCase = /[A-Z]/.test(pass);
     const hasLowerCase = /[a-z]/.test(pass);
     const hasNumber = /[0-9]/.test(pass);
@@ -36,30 +40,40 @@ export default function EditEmployeeForm() {
 
   const handleUpdateEmployee = () => {
     if (!fullName || !email || !selectedPermission) {
-      Alert.alert("Error", "Please fill all required fields");
+      setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
+      setShowAlert(true);
       return;
     }
 
     if (password && password !== confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
+      setAlertConfig({ type: 'error', message: "Passwords don't match" });
+      setShowAlert(true);
       return;
     }
 
     if (password && !Object.values(validation).every(v=> v)) {
-      Alert.alert("Error", "Password doesn't meet requirements");
+      setAlertConfig({ type: 'error', message: "Password doesn't meet requirements" });
+      setShowAlert(true);
       return;
     }
 
     // Aqui você faria a chamada à API para atualizar o funcionário
-    Alert.alert("Success", "Employee updated successfully", [
-      { text: "OK", onPress: () => navigation.navigate("HomeAdm") }
-    ]);
+    setAlertConfig({ type: 'success', message: 'Employee updated successfully' });
+    setShowAlert(true);
+  };
+
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.navigate("HomeAdm");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -146,21 +160,33 @@ export default function EditEmployeeForm() {
           onPress={handleUpdateEmployee}
         />
       </ScrollView>
-    </View>
+
+        <CustomAlert
+          visible={showAlert}
+          type={alertConfig.type}
+          message={alertConfig.message}
+          onClose={handleAlertClose}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -9,16 +10,16 @@ export default function ViewEditClient() {
   const [searchText, setSearchText] = useState("");
 
   const clients = [
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem" },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat" },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
-    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles" },
-    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos" },
-    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva" },
-    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra" },
-    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda" },
-    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima" },
+    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem", isActive: true },
+    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat", isActive: true },
+    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari", isActive: true },
+    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel", isActive: true },
+    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles", isActive: true },
+    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos", isActive: true },
+    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva", isActive: true },
+    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra", isActive: true },
+    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda", isActive: true },
+    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima", isActive: true },
   ];
 
   const filteredClients = clients.filter(client =>
@@ -31,8 +32,9 @@ export default function ViewEditClient() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -65,25 +67,37 @@ export default function ViewEditClient() {
             style={styles.clientItem}
             onPress={() => handleSelectClient(client)}
           >
-            <Text style={styles.clientEmail}>{client.email}</Text>
+            <View style={styles.clientInfo}>
+              <Text style={styles.clientEmail}>{client.email}</Text>
+              {!client.isActive && (
+                <View style={styles.inactiveBadge}>
+                  <Text style={styles.inactiveBadgeText}>Inactive</Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -133,9 +147,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#1B254F",
   },
+  clientInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flex: 1,
+  },
   clientEmail: {
     color: "#fff",
     fontSize: 15,
+    flex: 1,
+  },
+  inactiveBadge: {
+    backgroundColor: "#6B7280",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  inactiveBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
   },
   logo: {
     width: 24,

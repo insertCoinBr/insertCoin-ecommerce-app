@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/LogoInsetCoin1.png"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.InsertCoinEcommerce"
     },
     "web": {
       "favicon": "./assets/LogoInsetCoin1.png"

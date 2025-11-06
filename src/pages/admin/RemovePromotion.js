@@ -1,14 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import CustomAlert from "../../components/admin/CustomAlert";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 export default function RemovePromotion() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const [promotions, setPromotions] = useState([
     { id: 1, name: "Black Friday 2024", discount: "50%", type: "Products Discount", status: "Active" },
@@ -32,15 +38,50 @@ export default function RemovePromotion() {
     }
   };
 
+  const toggleItemSelection = (itemId) => {
+    setSelectedItems(prev =>
+      prev.includes(itemId)
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.length === filteredPromotions.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredPromotions.map(item => item.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedItems.length === 0) {
+      setAlertConfig({ type: 'error', message: 'Please select at least one item to delete' });
+      setShowAlert(true);
+      return;
+    }
+    setShowModal(true);
+    setSelectedPromotion({ count: selectedItems.length });
+  };
+
   const handleSelectPromotion = (promotion) => {
     setSelectedPromotion(promotion);
     setShowModal(true);
   };
 
   const handleConfirmDelete = () => {
-    setPromotions(promotions.filter(promo => promo.id !== selectedPromotion.id));
+    if (selectedPromotion?.count) {
+      // Delete multiple
+      setPromotions(promotions.filter(promo => !selectedItems.includes(promo.id)));
+      setAlertConfig({ type: 'success', message: `${selectedItems.length} promotion(s) removed successfully` });
+      setSelectedItems([]);
+    } else {
+      // Delete single
+      setPromotions(promotions.filter(promo => promo.id !== selectedPromotion.id));
+      setAlertConfig({ type: 'success', message: 'Promotion removed successfully' });
+    }
     setShowModal(false);
-    Alert.alert("Success", "Promotion removed successfully");
+    setShowAlert(true);
   };
 
   const handleCancelDelete = () => {
@@ -50,8 +91,9 @@ export default function RemovePromotion() {
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <View style={styles.backButton}>
               <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -77,76 +119,109 @@ export default function RemovePromotion() {
           />
         </View>
 
+        {selectedItems.length > 0 && (
+          <View style={styles.actionBar}>
+            <TouchableOpacity style={styles.selectAllButton} onPress={toggleSelectAll}>
+              <Ionicons
+                name={selectedItems.length === filteredPromotions.length ? "checkbox" : "square-outline"}
+                size={20}
+                color="#A855F7"
+              />
+              <Text style={styles.selectAllText}>
+                {selectedItems.length === filteredPromotions.length ? 'Deselect All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteSelected}>
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.deleteButtonText}>Delete ({selectedItems.length})</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <ScrollView style={styles.list}>
           {filteredPromotions.map((promotion) => (
             <TouchableOpacity
               key={promotion.id}
-              style={styles.promotionItem}
-              onPress={() => handleSelectPromotion(promotion)}
+              style={styles.itemCard}
+              onPress={() => toggleItemSelection(promotion.id)}
             >
-              <View style={styles.promotionInfo}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => toggleItemSelection(promotion.id)}
+              >
+                <Ionicons
+                  name={selectedItems.includes(promotion.id) ? "checkbox" : "square-outline"}
+                  size={24}
+                  color="#A855F7"
+                />
+              </TouchableOpacity>
+
+              <View style={styles.itemInfo}>
                 <Text style={styles.promotionName}>{promotion.name}</Text>
                 <Text style={styles.promotionDetails}>
                   {promotion.discount} - {promotion.type}
                 </Text>
               </View>
+
               <View style={styles.rightSection}>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(promotion.status) }]}>
                   <Text style={styles.statusText}>{promotion.status}</Text>
                 </View>
-                <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.trashIcon} />
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleSelectPromotion(promotion);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" style={styles.trashIcon} />
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
-
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelDelete}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Deletion</Text>
-            <Text style={styles.modalText}>
-              Are you sure you want to remove this promotion?
-            </Text>
-            <Text style={styles.modalPromotion}>{selectedPromotion?.name}</Text>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={handleCancelDelete}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleConfirmDelete}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
-      </Modal>
+      </SafeAreaView>
+
+      <ConfirmModal
+        visible={showModal}
+        title="Confirm Deletion"
+        message={
+          selectedPromotion?.count
+            ? `Are you sure you want to remove ${selectedPromotion.count} promotions?`
+            : "Are you sure you want to remove this promotion?"
+        }
+        highlightText={selectedPromotion?.count ? null : selectedPromotion?.name}
+        confirmText="Delete"
+        confirmColor="#EF4444"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <CustomAlert
+        visible={showAlert}
+        type={alertConfig.type}
+        message={alertConfig.message}
+        onClose={() => setShowAlert(false)}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -191,6 +266,52 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
+  actionBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+    paddingHorizontal: 5,
+  },
+  selectAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  selectAllText: {
+    color: "#A855F7",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  itemCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0D1429",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    gap: 12,
+  },
+  checkboxContainer: {
+    padding: 5,
+  },
+  itemInfo: {
+    flex: 1,
+  },
   promotionItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -230,67 +351,6 @@ const styles = StyleSheet.create({
   },
   trashIcon: {
     marginLeft: 5,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-  modalContent: {
-    backgroundColor: "#141B3A",
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  modalText: {
-    color: "#ccc",
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  modalPromotion: {
-    color: "#ff0000ff",
-    fontSize: 14,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#666",
-  },
-  cancelButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
   },
   logo: {
     width: 24,

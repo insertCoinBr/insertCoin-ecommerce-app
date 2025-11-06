@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -21,56 +22,62 @@ export default function OrderDetails() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <View style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#A855F7" />
-            <Text style={styles.backText}>Back</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.headerRight}>
-          <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
-          <Text style={styles.headerTitle}>InsertCoin</Text>
-        </View>
-      </View>
-
-      <Text style={styles.title}>Order</Text>
-
-      <ScrollView 
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.idCard}>
-          <Text style={styles.idText}>{orderDetails.id}</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <View style={styles.backButton}>
+              <Ionicons name="chevron-back" size={20} color="#A855F7" />
+              <Text style={styles.backText}>Back</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
+            <Text style={styles.headerTitle}>InsertCoin</Text>
+          </View>
         </View>
 
-        <InfoRow label="Order Status:" value={orderDetails.status} />
-        <InfoRow label="Date and time:" value={orderDetails.dateTime} />
-        <InfoRow label="Full Name:" value={orderDetails.fullName} />
-        <InfoRow label="Email:" value={orderDetails.email} />
-        <InfoRow label="Total price:" value={orderDetails.totalPrice} />
-        <InfoRow label="Purchase details:" value={orderDetails.purchaseDetails} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={styles.title}>Order</Text>
+
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.idCard}>
+            <Text style={styles.idText}>{orderDetails.id}</Text>
+          </View>
+
+          <InfoRow label="Order Status:" value={orderDetails.status} />
+          <InfoRow label="Date and time:" value={orderDetails.dateTime} />
+          <InfoRow label="Full Name:" value={orderDetails.fullName} />
+          <InfoRow label="Email:" value={orderDetails.email} />
+          <InfoRow label="Total price:" value={orderDetails.totalPrice} />
+          <InfoRow label="Purchase details:" value={orderDetails.purchaseDetails} />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {

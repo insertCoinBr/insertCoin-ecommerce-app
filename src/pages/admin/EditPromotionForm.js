@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
@@ -9,24 +10,32 @@ import CategorySelector from "../../components/admin/CategorySelector";
 import PlatformSelectorUnlimited from "../../components/admin/PlatformSelectorUnlimited";
 import DatePickerButton from "../../components/admin/DatePickerButton";
 import PermissionDropdown from "../../components/admin/PermissionDropdown";
+import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function EditPromotionForm() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { promotion } = route.params;
-  
-  const [discountType, setDiscountType] = useState(promotion.type);
+  const { promotion } = route.params || {};
+
+  const [discountType, setDiscountType] = useState(promotion?.type || "Products Discount");
   const [selectedCategories, setSelectedCategories] = useState(["Action"]);
   const [selectedPlatforms, setSelectedPlatforms] = useState(["PC"]);
   const [selectedSpecificGames, setSelectedSpecificGames] = useState([]);
-  const [promotionName, setPromotionName] = useState(promotion.name);
+  const [promotionName, setPromotionName] = useState(promotion?.name || "");
   const [couponName, setCouponName] = useState("BLACKFRIDAY50");
-  const [discountPercentage, setDiscountPercentage] = useState(promotion.discount);
-  const [startDate, setStartDate] = useState(new Date(promotion.startDate));
-  const [endDate, setEndDate] = useState(new Date(promotion.endDate));
-  const [quantity, setQuantity] = useState("1000");
-  const [untilEndDate, setUntilEndDate] = useState(false);
-  const [status, setStatus] = useState(promotion.status);
+  const [discountPercentage, setDiscountPercentage] = useState(promotion?.discount || "");
+  const [startDate, setStartDate] = useState(promotion?.startDate ? new Date(promotion.startDate) : new Date());
+  const [endDate, setEndDate] = useState(promotion?.endDate ? new Date(promotion.endDate) : new Date());
+  const [status, setStatus] = useState(promotion?.status || "Active");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+
+  useEffect(() => {
+    if (!promotion) {
+      setAlertConfig({ type: 'error', message: 'Promotion data not found' });
+      setShowAlert(true);
+    }
+  }, [promotion, navigation]);
 
   useEffect(() => {
     if (route.params?.selectedSpecificGames) {
@@ -50,12 +59,14 @@ export default function EditPromotionForm() {
     today.setHours(0, 0, 0, 0);
 
     if (start && start < today) {
-      Alert.alert("Error", "Start date cannot be earlier than today");
+      setAlertConfig({ type: 'error', message: 'Start date cannot be earlier than today' });
+      setShowAlert(true);
       return false;
     }
 
     if (start && end && end < start) {
-      Alert.alert("Error", "End date cannot be earlier than start date");
+      setAlertConfig({ type: 'error', message: 'End date cannot be earlier than start date' });
+      setShowAlert(true);
       return false;
     }
 
@@ -78,44 +89,47 @@ export default function EditPromotionForm() {
 
   const handleUpdatePromotion = () => {
     if (!promotionName || !discountPercentage || !startDate || !endDate) {
-      Alert.alert("Error", "Please fill all required fields");
+      setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
+      setShowAlert(true);
       return;
     }
 
     if (discountType === "Coupon Discount" && !couponName) {
-      Alert.alert("Error", "Please enter coupon name");
+      setAlertConfig({ type: 'error', message: 'Please enter coupon name' });
+      setShowAlert(true);
       return;
     }
 
     if (selectedCategories.length === 0 && selectedPlatforms.length === 0 && selectedSpecificGames.length === 0) {
-      Alert.alert("Error", "Please select at least one option: categories, platforms, or specific games");
+      setAlertConfig({ type: 'error', message: 'Please select at least one option: categories, platforms, or specific games' });
+      setShowAlert(true);
       return;
     }
 
-    if (!untilEndDate && (!quantity || parseInt(quantity) <= 0)) {
-      Alert.alert("Error", "Please enter a valid quantity");
-      return;
-    }
+    setAlertConfig({ type: 'success', message: 'Promotion updated successfully' });
+    setShowAlert(true);
+  };
 
-    Alert.alert("Success", "Promotion updated successfully", [
-      { 
-        text: "OK", 
-        onPress: () => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'HomeAdm' }],
-          });
-        }
-      }
-    ]);
+  const handleAlertClose = () => {
+    setShowAlert(false);
+    if (alertConfig.type === 'success') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'HomeAdm' }],
+      });
+    }
+    if (alertConfig.message === 'Promotion data not found') {
+      navigation.goBack();
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <View style={styles.backButton}>
             <Ionicons name="chevron-back" size={20} color="#A855F7" />
@@ -154,9 +168,10 @@ export default function EditPromotionForm() {
 
         <TouchableOpacity
           style={styles.specificGamesButton}
-          onPress={() => navigation.navigate("SelectSpecificGames", { 
+          onPress={() => navigation.navigate("SelectSpecificGames", {
             selectedGames: selectedSpecificGames,
-            returnRoute: "EditPromotionForm"
+            returnRoute: "EditPromotionForm",
+            promotion: promotion
           })}
         >
           <Text style={styles.specificGamesButtonText}>
@@ -214,26 +229,6 @@ export default function EditPromotionForm() {
           onDateChange={handleEndDateChange}
         />
 
-        <Text style={styles.label}>Quantity</Text>
-        <View style={styles.quantityContainer}>
-          <TextInput
-            style={[styles.input, styles.quantityInput, untilEndDate && styles.disabledInput]}
-            value={quantity}
-            onChangeText={setQuantity}
-            keyboardType="numeric"
-            editable={!untilEndDate}
-          />
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setUntilEndDate(!untilEndDate)}
-          >
-            <View style={[styles.checkbox, untilEndDate && styles.checkboxSelected]}>
-              {untilEndDate && <Ionicons name="checkmark" size={16} color="#fff" />}
-            </View>
-            <Text style={styles.checkboxLabel}>Until end date</Text>
-          </TouchableOpacity>
-        </View>
-
         <Text style={styles.label}>Status</Text>
         <PermissionDropdown
           selectedPermission={status}
@@ -248,21 +243,33 @@ export default function EditPromotionForm() {
           onPress={handleUpdatePromotion}
         />
       </View>
-    </KeyboardAvoidingView>
+
+        <CustomAlert
+          visible={showAlert}
+          type={alertConfig.type}
+          message={alertConfig.message}
+          onClose={handleAlertClose}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 30,
   },
   backButton: {
@@ -347,33 +354,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     marginBottom: 4,
-  },
-  quantityContainer: {
-    marginBottom: 15,
-  },
-  quantityInput: {
-    marginBottom: 10,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#ffffffff",
-    marginRight: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxSelected: {
-    backgroundColor: "#A855F7",
-  },
-  checkboxLabel: {
-    color: "#fff",
-    fontSize: 14,
   },
   buttonContainer: {
     paddingVertical: 10,

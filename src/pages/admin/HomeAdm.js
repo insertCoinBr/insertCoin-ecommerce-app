@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -21,8 +22,7 @@ export default function HomeAdm({ route, onLogout }) {
     { title: "View & Cancel Order", route: "Order" },
   ];
   const ClientsOptions = [
-    { title: "Add Client", route: "AddClient" },
-    { title: "Remove Client", route: "RemoveClient" },
+    { title: "Inative Client", route: "RemoveClient" },
     { title: "View & Edit Client", route: "ViewEditClient" },
   ];
   const ProductOptions = [
@@ -42,9 +42,10 @@ export default function HomeAdm({ route, onLogout }) {
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
           <Text style={styles.title}>InsertCoin</Text>
@@ -217,21 +218,27 @@ export default function HomeAdm({ route, onLogout }) {
                 </View>
               )}
             </ScrollView>
-          </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#0A0F24",
+  },
   container: {
     flex: 1,
     backgroundColor: "#0A0F24",
     paddingHorizontal: 20,
-    paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
+    marginBottom: 30,
   },
   headerLeft: {
     flexDirection: "row",
