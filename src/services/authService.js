@@ -21,7 +21,11 @@ const STORAGE_KEYS = {
   TOKEN: '@auth_token',
   USER_DATA: '@user_data',
   API_BASE_URL: '@api_base_url', // Persistir URL configurada
+  TOKEN_EXPIRY: '@token_expiry', // Data de expiração do token
 };
+
+// Duração do token em milissegundos (24 horas)
+const TOKEN_DURATION = 24 * 60 * 60 * 1000;
 
 // Criar instância do axios com configuração base
 const api = axios.create({
@@ -48,7 +52,11 @@ api.interceptors.request.use(
 // Funções auxiliares para gerenciar token com AsyncStorage
 export const setStoredToken = async (token) => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    const expiryDate = new Date().getTime() + TOKEN_DURATION;
+    await AsyncStorage.multiSet([
+      [STORAGE_KEYS.TOKEN, token],
+      [STORAGE_KEYS.TOKEN_EXPIRY, expiryDate.toString()]
+    ]);
   } catch (error) {
     console.error('Erro ao salvar token:', error);
   }
@@ -57,10 +65,55 @@ export const setStoredToken = async (token) => {
 export const getStoredToken = async () => {
   try {
     const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+    const expiry = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY);
+
+    // Verificar se o token existe
+    if (!token) {
+      return null;
+    }
+
+    // Verificar se o token expirou
+    if (expiry) {
+      const expiryTime = parseInt(expiry, 10);
+      const currentTime = new Date().getTime();
+
+      if (currentTime > expiryTime) {
+        // Token expirado, limpar dados
+        await clearAllAuthData();
+        return null;
+      }
+    }
+
     return token;
   } catch (error) {
     console.error('Erro ao buscar token:', error);
     return null;
+  }
+};
+
+// Verificar se o token expirou (retorna objeto com informações detalhadas)
+export const checkTokenExpiry = async () => {
+  try {
+    const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+    const expiry = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY);
+
+    if (!token) {
+      return { isValid: false, isExpired: false, token: null };
+    }
+
+    if (expiry) {
+      const expiryTime = parseInt(expiry, 10);
+      const currentTime = new Date().getTime();
+
+      if (currentTime > expiryTime) {
+        return { isValid: false, isExpired: true, token };
+      }
+    }
+
+    return { isValid: true, isExpired: false, token };
+  } catch (error) {
+    console.error('Erro ao verificar expiração do token:', error);
+    return { isValid: false, isExpired: false, token: null };
   }
 };
 
@@ -102,7 +155,11 @@ export const clearStoredUserData = async () => {
 // Limpar todos os dados de autenticação
 export const clearAllAuthData = async () => {
   try {
-    await AsyncStorage.multiRemove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER_DATA]);
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.TOKEN,
+      STORAGE_KEYS.USER_DATA,
+      STORAGE_KEYS.TOKEN_EXPIRY
+    ]);
   } catch (error) {
     console.error('Erro ao limpar dados de autenticação:', error);
   }

@@ -1,11 +1,13 @@
 import React, { createContext, useState, useEffect } from "react";
+import { Alert } from "react-native";
 import {
   getStoredToken,
   getStoredUserData,
   setStoredUserData,
   clearAllAuthData,
   getMe,
-  loadApiBaseUrl
+  loadApiBaseUrl,
+  checkTokenExpiry
 } from "../services/authService";
 
 export const AuthContext = createContext();
@@ -38,6 +40,21 @@ export function AuthProvider({ children }) {
 
       // Carregar URL da API salva (se houver)
       await loadApiBaseUrl();
+
+      // Verificar se o token expirou
+      const tokenStatus = await checkTokenExpiry();
+
+      if (tokenStatus.isExpired) {
+        // Token expirado, mostrar alerta e limpar dados
+        await clearAllAuthData();
+        Alert.alert(
+          "Sessão Expirada",
+          "Sua sessão expirou após 24 horas. Por favor, faça login novamente para continuar.",
+          [{ text: "OK" }]
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const storedToken = await getStoredToken();
       const storedUser = await getStoredUserData();
