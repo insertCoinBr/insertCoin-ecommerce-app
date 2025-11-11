@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from "../../context/AuthContext";
+import { forgotPassword } from '../../services/authService';
 
 import Logo from '../../components/app/Logo';
 import CustomInput from '../../components/app/CustomInput';
@@ -12,11 +13,12 @@ import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function EsqueceuSenha() {
   const navigation = useNavigation();
-  const { email, setEmail } = useContext(AuthContext);
+  const { tempUserData, setTempUserData } = useContext(AuthContext);
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!email) {
       setError("Por favor, preencha o email.");
       return;
@@ -31,10 +33,26 @@ export default function EsqueceuSenha() {
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Envia o email para recuperação de senha
+      await forgotPassword(email);
+
+      // Salva os dados temporários no contexto
+      setTempUserData({
+        ...tempUserData,
+        email: email,
+        verificationType: 'FORGOT_PASSWORD',
+        isVerified: false,
+      });
+
+      // Navega para a tela de código de segurança
       navigation.navigate('CodigoDeSeguranca');
-    }, 2000);
+    } catch (apiError) {
+      console.error("Erro ao enviar email:", apiError);
+      setError(apiError.message || "Erro ao enviar código. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

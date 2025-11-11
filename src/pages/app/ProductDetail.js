@@ -15,6 +15,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { CartContext } from "../../context/CartContext";
 import { FavoritesContext } from "../../context/FavoritesContext";
 import { CurrencyContext } from "../../context/CurrencyContext";
+import { RatingsContext } from "../../context/RatingsContext";
 import { useAlert } from "../../context/AlertContext";
 
 // COMPONENTES
@@ -22,6 +23,7 @@ import PageHeader from "../../components/app/PageHeader";
 import RPGBorder from "../../components/app/RPGBorder";
 import InfoRow from "../../components/app/InfoRow";
 import BottomTabBar from "../../components/app/BottomTabBar";
+import StarRating from "../../components/app/StarRating";
 
 // SERVICES
 import { getProdutoById } from "../../services/produtosService";
@@ -43,6 +45,7 @@ export default function ProductDetail({ route, navigation }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
+  const [rating, setRating] = useState({ averageRating: 0, totalRatings: 0 });
 
   //USAR O CARTCONTEXT
   const {
@@ -64,9 +67,13 @@ export default function ProductDetail({ route, navigation }) {
   //USAR O CURRENCYCONTEXT
   const { formatPrice } = useContext(CurrencyContext);
 
+  //USAR O RATINGSCONTEXT
+  const { getProductRatingData } = useContext(RatingsContext);
+
   useEffect(() => {
     if (produto.description) {
       setProduct(produto);
+      loadRating();
     } else {
       fetchProduct();
     }
@@ -83,6 +90,21 @@ export default function ProductDetail({ route, navigation }) {
     const response = await getProdutoById(produto.id);
     setProduct(response);
     setLoading(false);
+    loadRating();
+  }
+
+  async function loadRating() {
+    const ratingData = await getProductRatingData(produto.id);
+
+    // Se não houver avaliações no AsyncStorage, usa o campo avaliation do produto
+    if (ratingData.totalRatings === 0 && produto.avaliation !== undefined) {
+      setRating({
+        averageRating: produto.avaliation,
+        totalRatings: 1 // Simula que tem pelo menos 1 avaliação
+      });
+    } else {
+      setRating(ratingData);
+    }
   }
 
   const handleTabPress = (route, tabName) => {
@@ -180,7 +202,7 @@ export default function ProductDetail({ route, navigation }) {
         {/* Imagem do Produto */}
         <View style={styles.imageWrapper}>
           <RPGBorder
-            widthPercent={0.9}
+            widthPercent={0.91}
             aspectRatio={0.64}
             tileSize={10}
             centerImage={{ uri: product.image }}
@@ -193,16 +215,17 @@ export default function ProductDetail({ route, navigation }) {
         {/* Card Título e Preço */}
         <View style={styles.mainInfoWrapper}>
           <RPGBorder
-            widthPercent={0.9}
-            aspectRatio={0.43}
+            widthPercent={0.91}
+            height={180}
             tileSize={10}
             centerColor={COLORS.primary}
             borderType="black"
-            contentPadding={8}
-            contentJustify="space-between"
+            contentPadding={12}
+            contentJustify="center"
+            contentAlign="center"
           >
             <View style={styles.mainInfo}>
-              <Text style={styles.productTitle} numberOfLines={3}>
+              <Text style={styles.productTitle} numberOfLines={2}>
                 {product.title}
               </Text>
 
@@ -211,6 +234,16 @@ export default function ProductDetail({ route, navigation }) {
                 <Text style={styles.priceValue}>
                   {formatPrice(product.price)}
                 </Text>
+              </View>
+
+              <View style={styles.ratingContainer}>
+                <StarRating
+                  rating={rating.averageRating}
+                  totalRatings={rating.totalRatings}
+                  size={16}
+                  showNumber={true}
+                  showTotal={true}
+                />
               </View>
             </View>
           </RPGBorder>
@@ -256,7 +289,7 @@ export default function ProductDetail({ route, navigation }) {
             >
               <RPGBorder
                 widthPercent={0.62}
-                aspectRatio={0.3}
+                aspectRatio={0.26}
                 tileSize={8}
                 centerColor={productInCart ? "#6ABE30" : COLORS.success}
                 borderType="green"
@@ -324,13 +357,8 @@ export default function ProductDetail({ route, navigation }) {
               
               <View style={styles.descriptionContainer}>
                 <Text style={styles.descriptionLabel}>Descrição:</Text>
-                <ScrollView 
-                  style={styles.descriptionScroll}
-                  nestedScrollEnabled={true}
-                  showsVerticalScrollIndicator={true}
-                >
                   <Text style={styles.descriptionText}>{product.description}</Text>
-                </ScrollView>
+                
               </View>
             </View>
           </RPGBorder>
@@ -375,34 +403,47 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   mainInfo: {
-    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
   },
   productTitle: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: "VT323",
-    lineHeight: 24,
+    lineHeight: 22,
+    textAlign: 'center',
   },
   priceContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
     paddingTop: 8,
+    paddingBottom: 6,
     borderTopWidth: 2,
     borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    width: '100%',
   },
   priceLabel: {
     color: "#CCCCCC",
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "VT323",
   },
   priceValue: {
     color: "#3cff00ff",
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: "VT323",
     textShadowColor: '#000',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  ratingContainer: {
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    width: '100%',
+    alignItems: 'center',
   },
   actionsWrapper: {
     alignItems: 'center',
@@ -466,8 +507,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 8,
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   descriptionLabel: {
     color: "#CCCCCC",

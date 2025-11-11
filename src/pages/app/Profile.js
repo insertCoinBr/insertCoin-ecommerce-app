@@ -3,8 +3,9 @@ import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
-//IMPORTAR O FAVORITESCONTEXT
+//IMPORTAR OS CONTEXTS
 import { FavoritesContext } from "../../context/FavoritesContext";
+import { AuthContext } from "../../context/AuthContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -29,21 +30,22 @@ export default function Profile({ navigation, onLogout }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState('Notification');
   const [currency, setCurrency] = useState('BRL');
-  
+
   // Estados dos modais
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisibleLogout, setModalVisibleLogout] = useState(false);
 
-  //USAR O FAVORITESCONTEXT
+  //USAR OS CONTEXTS
   const { getFavoritesCount } = useContext(FavoritesContext);
-  
-  // Dados do usuário (normalmente viriam de um contexto/API)
-  const [userData, setUserData] = useState({
-    name: "Tio do Claudio",
-    email: "email@email.com",
+  const { user } = useContext(AuthContext);
+
+  // Dados do usuário vindos da API /auth/me
+  const userData = {
+    name: user?.name || "Usuário",
+    email: user?.email || "email@email.com",
     avatar: null,
-    coins: 150,
-  });
+    coins: user?.point || 0, // A API retorna "point" não "coins"
+  };
 
   useFocusEffect(
     useCallback(() => {

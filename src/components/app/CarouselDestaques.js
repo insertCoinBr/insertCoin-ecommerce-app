@@ -39,8 +39,9 @@ export default function CarouselDestaques({
         centerImage={{ uri: item.image }}
         imageResizeMode="stretch"
         borderType={borderType}
+        imageBackgroundColor="#4C38A4"
       >
-    
+
       </RPGBorder>
     </TouchableOpacity>
   );

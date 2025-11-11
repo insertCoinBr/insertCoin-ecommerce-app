@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(done)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm install:*)",
+      "Bash(ipconfig:*)",
+      "Bash(findstr:*)",
+      "Bash(npm start -- --clear)",
+      "Bash(netstat:*)",
+      "Bash(nul)",
+      "Bash(temp_output.txt)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

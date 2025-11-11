@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
+import { signin, getMe } from '../../services/authService';
+import { isAdminRole } from '../../utils/roleHelper';
 
 import Logo from '../../components/app/Logo';
 import CustomInput from '../../components/app/CustomInput';
@@ -18,29 +20,55 @@ import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function Login({ onLogin, onAdminLogin }) {
   const navigation = useNavigation();
-  const [username, setUsername] = useState("");
+  const { setToken, setIsAuthenticated, saveUserData } = useContext(AuthContext);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLoginPress = async () => {
-    if (!username || !password) {
-      setError("Por favor, preencha o usuário e a senha.");
+    if (!email || !password) {
+      setError("Por favor, preencha o email e a senha.");
       return;
     }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Por favor, insira um email válido.");
+      return;
+    }
+
     setLoading(true);
     setError("");
+
     try {
-      const response = await axios.post('https://fakestoreapi.com/auth/login', {
-        username: username,
-        password: password,
-      });
-      if (response.data.token) {
-        onLogin();
+      // 1. Fazer login e obter token
+      const signinResponse = await signin(email, password);
+
+      if (signinResponse.access_token) {
+        // 2. Buscar dados do usuário
+        const userData = await getMe();
+
+        // 3. Atualizar contexto e salvar no AsyncStorage
+        setToken(signinResponse.access_token);
+        await saveUserData(userData);
+        setIsAuthenticated(true);
+
+        // 4. Redirecionar baseado no tipo de usuário
+        // Roles administrativas: ROLE_ADMIN, ROLE_COMMERCIAL, ROLE_MANAGER_STORE -> Área Administrativa
+        // Role cliente: ROLE_CLIENT -> Área de Usuário
+        if (isAdminRole(userData.roles)) {
+          // É Admin, Comercial ou Manager - vai para área administrativa
+          onAdminLogin();
+        } else {
+          // É Cliente - vai para área de usuário
+          onLogin();
+        }
       }
     } catch (apiError) {
       console.error("Erro no login:", apiError);
-      setError("Usuário ou senha inválidos.");
+      setError(apiError.message || "Email ou senha inválidos.");
     } finally {
       setLoading(false);
     }
@@ -58,8 +86,8 @@ export default function Login({ onLogin, onAdminLogin }) {
         {
           text: "Usar Login de Teste",
           onPress: () => {
-            setUsername("johnd");
-            setPassword("m38rmF$");
+            setEmail("manager@email.com");
+            setPassword("135791");
             setError("");
           }
         },
@@ -80,10 +108,11 @@ export default function Login({ onLogin, onAdminLogin }) {
         <View style={styles.spacer} />
 
         <CustomInput
-          placeholder="Usuário"
-          value={username}
-          onChangeText={setUsername}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
           autoCapitalize="none"
+          keyboardType="email-address"
         />
         <CustomInput
           placeholder="Senha"

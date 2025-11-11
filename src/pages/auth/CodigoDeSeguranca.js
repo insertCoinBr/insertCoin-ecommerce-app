@@ -4,33 +4,76 @@ import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from "../../context/AuthContext";
+import { validateCode, verifyEmail, forgotPassword } from '../../services/authService';
 
 import Logo from '../../components/app/Logo';
 import CodeInput from '../../components/app/CodeInput';
 import CustomButton from '../../components/app/CustomButton';
+import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function CodigoDeSeguranca({ route }) {
   const navigation = useNavigation();
+  const { tempUserData, setTempUserData } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const { email } = useContext(AuthContext);
+  const [error, setError] = useState("");
 
   const isCodeComplete = code.every(digit => digit !== "");
 
-  const handleLogin = () => {
+  const handleValidateCode = async () => {
+    if (!isCodeComplete) {
+      setError("Por favor, preencha o código completo.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+
+    try {
+      const codeString = code.join("");
+      const verificationType = tempUserData.verificationType || 'VERIFY_EMAIL';
+
+      // Valida o código
+      await validateCode(tempUserData.email, codeString, verificationType);
+
+      // Atualiza o contexto indicando que o código foi verificado
+      setTempUserData({
+        ...tempUserData,
+        isVerified: true,
+      });
+
+      // Navega para a tela de criar senha
       navigation.navigate('CriarSenha');
-    }, 2000);
+    } catch (apiError) {
+      console.error("Erro ao validar código:", apiError);
+      setError(apiError.message || "Código inválido. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+
+    try {
+      const verificationType = tempUserData.verificationType || 'VERIFY_EMAIL';
+
+      // Reenvia o código baseado no tipo de verificação
+      if (verificationType === 'VERIFY_EMAIL') {
+        await verifyEmail(tempUserData.email);
+      } else if (verificationType === 'FORGOT_PASSWORD') {
+        await forgotPassword(tempUserData.email);
+      }
+
       setCode(["", "", "", "", "", ""]);
-    }, 2000);
+      setError("");
+    } catch (apiError) {
+      console.error("Erro ao reenviar código:", apiError);
+      setError(apiError.message || "Erro ao reenviar código. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,7 +87,7 @@ export default function CodigoDeSeguranca({ route }) {
 
         <Text style={styles.textLogin}>Código de Segurança</Text>
         <Text style={styles.textLink2}>Código enviado para seu email:</Text>
-        <Text style={styles.textLink2}>{email}</Text>
+        <Text style={styles.textLink2}>{tempUserData.email}</Text>
 
         <View style={styles.spacer} />
         <View style={styles.spacer} />
@@ -55,12 +98,14 @@ export default function CodigoDeSeguranca({ route }) {
           onChangeCode={setCode}
         />
 
+        <ErrorMessage message={error} />
+
         <View style={styles.spacer} />
         <View style={styles.spacer} />
 
         <CustomButton
           title="Validar Código"
-          onPress={handleLogin}
+          onPress={handleValidateCode}
           loading={loading}
           disabled={!isCodeComplete}
           variant="primary"

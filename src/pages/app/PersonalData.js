@@ -1,7 +1,10 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useContext } from "react";
 import { View, Text, StyleSheet, TextInput, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
+
+// CONTEXTS
+import { AuthContext } from "../../context/AuthContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
@@ -29,13 +32,16 @@ export default function PersonalData({ navigation }) {
   const nameRef = useRef(null);
   const emailRef = useRef(null);
 
-  // Dados do usuário (normalmente viriam de um contexto/API)
-  const [userData, setUserData] = useState({
-    name: "Tio do Claudio",
-    email: "email@email.com",
+  // Buscar dados do usuário do contexto
+  const { user } = useContext(AuthContext);
+
+  // Dados do usuário vindos da API /auth/me
+  const userData = {
+    name: user?.name || "Usuário",
+    email: user?.email || "email@email.com",
     avatar: null,
-    coins: 150,
-  });
+    coins: user?.point || 0,
+  };
 
   const [fullName, setFullName] = useState(userData.name);
   const [email, setEmail] = useState(userData.email);
@@ -51,17 +57,10 @@ export default function PersonalData({ navigation }) {
     navigation.navigate(route);
   };
 
-  const handleSave = () => {
-    // Validações
-    if (!fullName.trim() || !email.trim()) {
-      setError("Por favor, preencha todos os campos.");
-      return;
-    }
-
-    // Validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Por favor, insira um email válido.");
+  const handleSave = async () => {
+    // Validações apenas para o nome (email não pode ser alterado)
+    if (!fullName.trim()) {
+      setError("Por favor, preencha o nome.");
       return;
     }
 
@@ -77,12 +76,14 @@ export default function PersonalData({ navigation }) {
     }
 
     setError("");
-    // Aqui você faria a chamada à API para atualizar os dados
-    setUserData({
-      ...userData,
-      name: fullName,
-      email: email,
-    });
+
+    // TODO: Implementar chamada à API PUT /auth/me/update
+    // para atualizar apenas o nome do usuário
+    // Exemplo:
+    // await updateUserData({ name: fullName });
+    // await saveUserData(updatedUser); // Atualizar contexto
+
+    // Por enquanto, apenas volta
     navigation.goBack();
   };
 
@@ -129,7 +130,7 @@ export default function PersonalData({ navigation }) {
         {/* Texto Explicativo */}
         <View style={styles.descriptionWrapper}>
           <Text style={styles.descriptionText}>
-            Nesta página, você pode alterar seu nome completo e endereço de e-mail.
+            Nesta página, você pode alterar seu nome completo.
           </Text>
         </View>
 
@@ -159,26 +160,25 @@ export default function PersonalData({ navigation }) {
             </RPGBorder>
           </View>
 
-          {/* Email */}
-          <View 
+          {/* Email (Somente Leitura) */}
+          <View
             ref={emailRef}
             style={styles.inputWrapper}
           >
-            <Text style={styles.inputLabel}>Email</Text>
-            <RPGBorder 
-              width={345} 
-              height={50} 
-              tileSize={8} 
-              centerColor={COLORS.white}
+            <Text style={styles.inputLabel}>Email (não pode ser alterado)</Text>
+            <RPGBorder
+              width={345}
+              height={50}
+              tileSize={8}
+              centerColor="#ffffffff"
               borderType="white"
             >
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inputReadOnly]}
                 placeholder="Digite seu email"
                 placeholderTextColor="#999999"
                 value={email}
-                onChangeText={setEmail}
-                onFocus={() => handleFieldFocus(emailRef)}
+                editable={false}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -199,7 +199,7 @@ export default function PersonalData({ navigation }) {
               • O nome não deve conter números
             </Text>
             <Text style={styles.infoText}>
-              • Use um email válido
+              • O email não pode ser alterado por questões de segurança
             </Text>
           </View>
         </View>
@@ -268,6 +268,10 @@ const styles = StyleSheet.create({
     fontFamily: "VT323",
     paddingHorizontal: 12,
     paddingVertical: 0,
+  },
+  inputReadOnly: {
+    color: "#666666",
+    backgroundColor: 'transparent',
   },
   errorText: {
     color: "#FF4444",

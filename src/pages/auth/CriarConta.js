@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../../context/AuthContext';
+import { verifyEmail } from '../../services/authService';
 
 import Logo from '../../components/app/Logo';
 import CustomInput from '../../components/app/CustomInput';
@@ -11,12 +13,13 @@ import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function CriarConta({ route }) {
   const navigation = useNavigation();
+  const { tempUserData, setTempUserData } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleCreatePress = () => {
+  const handleCreatePress = async () => {
     if (!email || !username) {
       setError("Por favor, preencha todos os campos.");
       return;
@@ -40,10 +43,28 @@ export default function CriarConta({ route }) {
 
     setError("");
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      // Envia o email para verificação
+      await verifyEmail(email);
+
+      // Salva os dados temporários no contexto
+      setTempUserData({
+        ...tempUserData,
+        email: email,
+        name: username,
+        verificationType: 'VERIFY_EMAIL',
+        isVerified: false,
+      });
+
+      // Navega para a tela de código de segurança
+      navigation.navigate('CodigoDeSeguranca');
+    } catch (apiError) {
+      console.error("Erro ao enviar email:", apiError);
+      setError(apiError.message || "Erro ao enviar código. Tente novamente.");
+    } finally {
       setLoading(false);
-      navigation.navigate('CriarSenha');
-    }, 1000);
+    }
   };
 
   return (

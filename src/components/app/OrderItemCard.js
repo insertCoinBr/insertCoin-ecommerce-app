@@ -69,6 +69,9 @@ const styles = StyleSheet.create({
     height: 70,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#4C38A4',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   productImage: {
     width: '100%',

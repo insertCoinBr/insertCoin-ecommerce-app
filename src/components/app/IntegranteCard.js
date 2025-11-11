@@ -91,6 +91,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
     overflow: 'hidden',
+    backgroundColor: '#4C38A4',
+    borderRadius: 8,
   },
   avatar: {
     width: '100%',

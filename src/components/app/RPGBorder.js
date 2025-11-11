@@ -83,6 +83,8 @@ export default function RPGBorder({
   contentJustify = "space-between",
   contentAlign = "flex-start",
   overflow = "visible",
+  imageBorderRadius = 0,
+  imageBackgroundColor = null,
 }) {
   // Calcula a largura real (usa porcentagem se fornecida, senão usa width fixa)
   const calculatedWidth = widthPercent ? Math.floor(screenWidth * widthPercent) : width;
@@ -114,13 +116,24 @@ export default function RPGBorder({
     };
 
     if (centerImage) {
+      const imageStyle = {
+        width: centerWidth,
+        height: centerHeight,
+      };
+
+      if (imageBorderRadius > 0) {
+        imageStyle.borderRadius = imageBorderRadius;
+        imageStyle.overflow = 'hidden';
+      }
+
+      if (imageBackgroundColor) {
+        imageStyle.backgroundColor = imageBackgroundColor;
+      }
+
       return (
         <ImageBackground
           source={centerImage}
-          style={{
-            width: centerWidth,
-            height: centerHeight,
-          }}
+          style={imageStyle}
           resizeMode={imageResizeMode}
         >
           <View style={contentStyle}>

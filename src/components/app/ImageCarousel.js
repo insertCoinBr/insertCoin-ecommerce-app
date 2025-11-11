@@ -19,9 +19,9 @@ export default function ImageCarousel({ images = [] }) {
 
   return (
     <View style={styles.container}>
-      <RPGBorder 
-        width={IMAGE_WIDTH} 
-        height={240} 
+      <RPGBorder
+        width={IMAGE_WIDTH}
+        height={240}
         tileSize={10}
         centerColor="#1A1027"
         borderType="black"
@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
   image: {
     width: IMAGE_WIDTH - 20,
     height: 220,
+    
   },
   indicatorContainer: {
     flexDirection: 'row',

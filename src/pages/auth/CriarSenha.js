@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { AuthContext } from '../../context/AuthContext';
+import { signup, resetPassword } from '../../services/authService';
 
 //Import de Componentes
 import Logo from '../../components/app/Logo';
@@ -13,6 +15,7 @@ import PasswordRequirement from '../../components/app/PasswordRequirement';
 
 export default function CriarSenha({ route }) {
   const navigation = useNavigation();
+  const { tempUserData, clearTempData } = useContext(AuthContext);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +30,7 @@ export default function CriarSenha({ route }) {
 
   const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!password || !confirmPassword) {
       setError("Por favor, preencha todos os campos.");
       return;
@@ -43,12 +46,40 @@ export default function CriarSenha({ route }) {
       return;
     }
 
+    if (!tempUserData.isVerified) {
+      setError("Email não verificado. Por favor, valide o código primeiro.");
+      return;
+    }
+
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const verificationType = tempUserData.verificationType;
+
+      if (verificationType === 'VERIFY_EMAIL') {
+        // Criar nova conta
+        await signup({
+          name: tempUserData.name,
+          email: tempUserData.email,
+          password: password,
+        });
+      } else if (verificationType === 'FORGOT_PASSWORD') {
+        // Resetar senha
+        await resetPassword(tempUserData.email, password);
+      }
+
+      // Limpar dados temporários
+      clearTempData();
+
+      // Navegar para login
       navigation.navigate('Login');
-    }, 2000);
+    } catch (apiError) {
+      console.error("Erro ao criar senha:", apiError);
+      setError(apiError.message || "Erro ao processar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

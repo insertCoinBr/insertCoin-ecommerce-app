@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#4C38A4',
   },
   gameImage: {
     width: '100%',
