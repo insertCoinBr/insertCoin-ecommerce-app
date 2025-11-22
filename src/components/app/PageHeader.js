@@ -13,25 +13,26 @@ export default function PageHeader({ onBackPress, title }) {
   return (
     <View style={styles.header}>
       {/* Botão Voltar */}
-      <RPGBorder
-        widthPercent={0.26}
-        aspectRatio={0.6}
-        centerColor={COLORS.primary}
-        borderType="blue"
-        tileSize={8}
-        contentPadding={8}
-        contentJustify="center"
-        contentAlign="center"
+      <TouchableOpacity
+        onPress={onBackPress}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          onPress={onBackPress}
-          style={styles.backButtonContainer}
-          activeOpacity={0.8}
+        <RPGBorder
+          widthPercent={0.26}
+          aspectRatio={0.6}
+          centerColor={COLORS.primary}
+          borderType="blue"
+          tileSize={8}
+          contentPadding={8}
+          contentJustify="center"
+          contentAlign="center"
         >
-          {/* <Icon name="chevron-left" size={22} color={COLORS.textLight} style={{ marginRight: 2 }} /> */}
-          <Text style={styles.backButtonText}>VOLTAR</Text>
-        </TouchableOpacity>
-      </RPGBorder>
+          <View style={styles.backButtonContainer}>
+            {/* <Icon name="chevron-left" size={22} color={COLORS.textLight} style={{ marginRight: 2 }} /> */}
+            <Text style={styles.backButtonText}>VOLTAR</Text>
+          </View>
+        </RPGBorder>
+      </TouchableOpacity>
 
       {/* Título */}
       {title && <Text style={styles.title}>{title}</Text>}

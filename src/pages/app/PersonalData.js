@@ -1,14 +1,15 @@
-import React, { useState, useCallback, useRef, useContext } from "react";
-import { View, Text, StyleSheet, TextInput, ScrollView } from "react-native";
+import React, { useState, useRef, useContext } from "react";
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 // CONTEXTS
 import { AuthContext } from "../../context/AuthContext";
 
+// SERVICES
+import { updateMe, getMe } from "../../services/authService";
+
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import MenuButton from "../../components/app/MenuButton";
 import ProfileHeader from "../../components/app/ProfileHeader";
 import RPGBorder from "../../components/app/RPGBorder";
@@ -25,15 +26,17 @@ const COLORS = {
 export default function PersonalData({ navigation }) {
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('Home');
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Refs para as posições dos campos
   const nameRef = useRef(null);
   const emailRef = useRef(null);
+  const nameInputRef = useRef(null);
 
   // Buscar dados do usuário do contexto
-  const { user } = useContext(AuthContext);
+  const { user, saveUserData } = useContext(AuthContext);
 
   // Dados do usuário vindos da API /auth/me
   const userData = {
@@ -46,45 +49,55 @@ export default function PersonalData({ navigation }) {
   const [fullName, setFullName] = useState(userData.name);
   const [email, setEmail] = useState(userData.email);
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Home");
-    }, [])
-  );
-
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
-  };
-
   const handleSave = async () => {
     // Validações apenas para o nome (email não pode ser alterado)
     if (!fullName.trim()) {
       setError("Por favor, preencha o nome.");
+      setSuccess("");
       return;
     }
 
     // Validação de nome (mínimo 3 caracteres, sem números)
     if (fullName.trim().length < 3) {
       setError("O nome deve ter pelo menos 3 caracteres.");
+      setSuccess("");
       return;
     }
 
     if (/\d/.test(fullName)) {
       setError("O nome não deve conter números.");
+      setSuccess("");
       return;
     }
 
     setError("");
+    setLoading(true);
 
-    // TODO: Implementar chamada à API PUT /auth/me/update
-    // para atualizar apenas o nome do usuário
-    // Exemplo:
-    // await updateUserData({ name: fullName });
-    // await saveUserData(updatedUser); // Atualizar contexto
+    try {
+      // 1. Chamar API para atualizar apenas o nome - envia somente o campo name
+      await updateMe({
+        name: fullName.trim()
+      });
 
-    // Por enquanto, apenas volta
-    navigation.goBack();
+      // 2. Buscar dados atualizados do usuário
+      const updatedUser = await getMe();
+
+      // 3. Atualizar contexto com dados atualizados
+      await saveUserData(updatedUser);
+
+      setSuccess("Nome alterado com sucesso!");
+      setError("");
+
+      // Voltar após 2 segundos
+      setTimeout(() => {
+        navigation.goBack();
+      }, 2000);
+    } catch (error) {
+      setError(error.message || 'Erro ao atualizar nome. Tente novamente.');
+      setSuccess("");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFieldFocus = (ref) => {
@@ -137,27 +150,32 @@ export default function PersonalData({ navigation }) {
         {/* Formulário */}
         <View style={styles.formContainer}>
           {/* Nome Completo */}
-          <View 
+          <View
             ref={nameRef}
             style={styles.inputWrapper}
           >
             <Text style={styles.inputLabel}>Nome Completo</Text>
-            <RPGBorder 
-              width={345} 
-              height={50} 
-              tileSize={8} 
-              centerColor={COLORS.white}
-              borderType="white"
-            >
-              <TextInput
-                style={styles.input}
-                placeholder="Digite seu nome completo"
-                placeholderTextColor="#999999"
-                value={fullName}
-                onChangeText={setFullName}
-                onFocus={() => handleFieldFocus(nameRef)}
-              />
-            </RPGBorder>
+            <TouchableWithoutFeedback onPress={() => nameInputRef.current?.focus()}>
+              <View>
+                <RPGBorder
+                  width={345}
+                  height={50}
+                  tileSize={8}
+                  centerColor={COLORS.white}
+                  borderType="white"
+                >
+                  <TextInput
+                    ref={nameInputRef}
+                    style={styles.input}
+                    placeholder="Digite seu nome completo"
+                    placeholderTextColor="#999999"
+                    value={fullName}
+                    onChangeText={setFullName}
+                    onFocus={() => handleFieldFocus(nameRef)}
+                  />
+                </RPGBorder>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
           {/* Email (Somente Leitura) */}
@@ -165,12 +183,12 @@ export default function PersonalData({ navigation }) {
             ref={emailRef}
             style={styles.inputWrapper}
           >
-            <Text style={styles.inputLabel}>Email (não pode ser alterado)</Text>
+            <Text style={styles.inputLabel}>Email</Text>
             <RPGBorder
               width={345}
               height={50}
               tileSize={8}
-              centerColor="#ffffffff"
+              centerColor="#E0E0E0"
               borderType="white"
             >
               <TextInput
@@ -190,6 +208,11 @@ export default function PersonalData({ navigation }) {
             <Text style={styles.errorText}>{error}</Text>
           ) : null}
 
+          {/* Mensagem de Sucesso */}
+          {success ? (
+            <Text style={styles.successText}>✓ {success}</Text>
+          ) : null}
+
           {/* Informações Adicionais */}
           <View style={styles.infoContainer}>
             <Text style={styles.infoText}>
@@ -198,27 +221,20 @@ export default function PersonalData({ navigation }) {
             <Text style={styles.infoText}>
               • O nome não deve conter números
             </Text>
-            <Text style={styles.infoText}>
-              • O email não pode ser alterado por questões de segurança
-            </Text>
           </View>
         </View>
 
         {/* Botão Salvar */}
         <View style={styles.buttonContainer}>
           <MenuButton
-            title="Salvar Alterações"
+            title={loading ? "Salvando..." : "Salvar Alterações"}
             onPress={handleSave}
             borderType="blue"
             centerColor={COLORS.secondary}
+            disabled={loading}
           />
         </View>
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }
@@ -275,6 +291,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#FF4444",
+    fontSize: 16,
+    fontFamily: "VT323",
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  successText: {
+    color: "#4ADE80",
     fontSize: 16,
     fontFamily: "VT323",
     marginTop: 12,

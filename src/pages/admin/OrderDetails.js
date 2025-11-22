@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { colors } from "../../styles/adminStyles";
 import InfoRow from "../../components/admin/InfoRow";
 import CustomAlert from "../../components/admin/CustomAlert";
 import ConfirmModal from "../../components/admin/ConfirmModal";
+import { getAdminOrderById, deleteOrder } from "../../services/orderService";
 
 export default function OrderDetails() {
   const navigation = useNavigation();
@@ -15,27 +16,93 @@ export default function OrderDetails() {
   const [showModal, setShowModal] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
-  // Mock data - substitua com dados reais da sua API
-  const orderDetails = {
-    id: order.id,
-    status: "Created",
-    dateTime: "22/08/2025 - 10:30:24",
-    fullName: "Anderson Bohnem",
-    email: "andersonbohnem@insertcoin.com.br",
-    totalPrice: "R$ 200,00",
-    purchaseDetails: "Red Dead Redemption 2",
+  // Buscar detalhes da ordem ao carregar
+  useEffect(() => {
+    loadOrderDetails();
+  }, []);
+
+  const loadOrderDetails = async () => {
+    try {
+      setLoading(true);
+      const orderId = order.id || order.orderId;
+      const response = await getAdminOrderById(orderId, 'USD');
+      setOrderDetails(response);
+    } catch (error) {
+      console.error("Erro ao buscar detalhes da ordem:", error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to load order details'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Formatar data
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Formatar preço
+  const formatPrice = (price, currency = 'USD') => {
+    if (price === null || price === undefined) return "N/A";
+    const symbol = currency === 'BRL' ? 'R$' : '$';
+    return `${symbol} ${Number(price).toFixed(2)}`;
+  };
+
+  // Formatar detalhes de compra (lista de produtos)
+  const formatPurchaseDetails = (items) => {
+    if (!items || items.length === 0) return "N/A";
+    return items.map(item =>
+      `${item.productName || item.name || 'Product'} (x${item.quantity})`
+    ).join(', ');
   };
 
   const handleDeleteOrder = () => {
     setShowModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    // Aqui você faria a chamada à API para deletar o carrinho
-    setShowModal(false);
-    setAlertConfig({ type: 'success', message: 'Order deleted successfully' });
-    setShowAlert(true);
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleting(true);
+      setShowModal(false);
+
+      const orderId = order.id || order.orderId;
+      await deleteOrder(orderId);
+
+      setAlertConfig({
+        type: 'success',
+        message: 'Order cancelled successfully'
+      });
+      setShowAlert(true);
+    } catch (error) {
+      console.error("Erro ao deletar ordem:", error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to cancel order'
+      });
+      setShowAlert(true);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -73,41 +140,89 @@ export default function OrderDetails() {
       <Text style={styles.title}>Order</Text>
 
       {/* Content */}
-      <ScrollView 
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Order ID Card */}
-        <View style={styles.idOrder}>
-          <Text style={styles.idText}>{orderDetails.id}</Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+          <Text style={styles.loadingText}>Loading order details...</Text>
         </View>
+      ) : orderDetails ? (
+        <>
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Order ID Card */}
+            <View style={styles.idOrder}>
+              <Text style={styles.idText}>
+                {orderDetails.orderNumber || orderDetails.id || "N/A"}
+              </Text>
+            </View>
 
-        {/* Order Details */}
-        <InfoRow label="Order Status:" value={orderDetails.status} />
-        <InfoRow label="Date and time:" value={orderDetails.dateTime} />
-        <InfoRow label="Full Name:" value={orderDetails.fullName} />
-        <InfoRow label="Email:" value={orderDetails.email} />
-        <InfoRow label="Total price:" value={orderDetails.totalPrice} />
-        <InfoRow label="Purchase details:" value={orderDetails.purchaseDetails} />
-      </ScrollView>
+            {/* Order Details */}
+            <InfoRow
+              label="Order Status:"
+              value={orderDetails.status || "N/A"}
+            />
+            <InfoRow
+              label="Date and time:"
+              value={formatDateTime(orderDetails.createdAt || orderDetails.orderDate)}
+            />
+            <InfoRow
+              label="Full Name:"
+              value={orderDetails.userName || orderDetails.fullName || "N/A"}
+            />
+            <InfoRow
+              label="Email:"
+              value={orderDetails.userEmail || orderDetails.email || "N/A"}
+            />
+            <InfoRow
+              label="Total price:"
+              value={formatPrice(orderDetails.totalPrice || orderDetails.total, orderDetails.currency)}
+            />
+            <InfoRow
+              label="Payment Method:"
+              value={orderDetails.paymentMethod || "N/A"}
+            />
+            <InfoRow
+              label="Purchase details:"
+              value={formatPurchaseDetails(orderDetails.items || orderDetails.orderItems)}
+            />
+          </ScrollView>
 
-      {/* Delete Button Fixed at Bottom */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={handleDeleteOrder}
-        >
-          <Text style={styles.deleteButtonText}>Cancel Order</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Delete Button Fixed at Bottom */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.deleteButton, deleting && styles.deleteButtonDisabled]}
+              onPress={handleDeleteOrder}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.deleteButtonText}>Cancel Order</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load order details</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={loadOrderDetails}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ConfirmModal
         visible={showModal}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete this Order?"
-        highlightText={orderDetails.id}
-        confirmText="Delete"
+        title="Confirm Cancellation"
+        message="Are you sure you want to cancel this Order?"
+        highlightText={orderDetails?.orderNumber || orderDetails?.id || ""}
+        confirmText="Cancel Order"
         confirmColor="#EF4444"
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
@@ -199,6 +314,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
+  deleteButtonDisabled: {
+    backgroundColor: "#AA3333",
+    opacity: 0.7,
+  },
   deleteButtonText: {
     color: "#fff",
     fontSize: 16,
@@ -208,5 +327,39 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  loadingText: {
+    color: '#aaa',
+    marginTop: 10,
+    fontSize: 14,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  retryButton: {
+    backgroundColor: '#A855F7',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

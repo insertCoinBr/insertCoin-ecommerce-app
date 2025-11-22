@@ -1,17 +1,17 @@
-import React, { useState, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, ScrollView } from "react-native";
+import React, { useState, useRef, useContext } from "react";
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import MenuButton from "../../components/app/MenuButton";
 import ProfileHeader from "../../components/app/ProfileHeader";
 import RPGBorder from "../../components/app/RPGBorder";
 import PasswordRequirement from '../../components/app/PasswordRequirement';
 
 import useFontLoader from "../../hooks/useFontLoader";
+import { AuthContext } from "../../context/AuthContext";
+import { updateMe, getStoredToken } from "../../services/authService";
 
 const COLORS = {
   background: "#1A1027",
@@ -23,7 +23,7 @@ const COLORS = {
 export default function ChangePassword({ navigation }) {
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('Home');
+  const { user, logout } = useContext(AuthContext);
   const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +34,11 @@ export default function ChangePassword({ navigation }) {
   const newPasswordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
 
+  // Refs para os inputs de texto
+  const currentPasswordInputRef = useRef(null);
+  const newPasswordInputRef = useRef(null);
+  const confirmPasswordInputRef = useRef(null);
+
   // Validações de senha
   const hasMinLength = password.length >= 8;
   const hasUpperCase = /[A-Z]/.test(password);
@@ -43,26 +48,35 @@ export default function ChangePassword({ navigation }) {
 
   const isPasswordValid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
 
-  // Dados do usuário (normalmente viriam de um contexto/API)
-  const [userData, setUserData] = useState({
-    name: "Tio do Claudio",
-    email: "email@email.com",
-    avatar: null,
-    coins: 150,
-  });
+  // Função para traduzir erros da API para português
+  const translateError = (errorMessage) => {
+    const errorTranslations = {
+      'Current password is incorrect': 'Senha atual incorreta',
+      'current password is incorrect': 'Senha atual incorreta',
+      'incorrect password': 'Senha incorreta',
+      'wrong password': 'Senha incorreta',
+      'invalid password': 'Senha inválida',
+      'password is incorrect': 'Senha incorreta',
+      'unauthorized': 'Não autorizado',
+      'authentication failed': 'Falha na autenticação',
+    };
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Home");
-    }, [])
-  );
+    // Verificar se a mensagem de erro contém alguma das chaves de tradução
+    const lowerErrorMsg = errorMessage?.toLowerCase() || '';
+    for (const [key, value] of Object.entries(errorTranslations)) {
+      if (lowerErrorMsg.includes(key.toLowerCase())) {
+        return value;
+      }
+    }
 
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
+    // Retornar mensagem padrão se não encontrar tradução
+    return 'Erro ao trocar senha. Verifique se a senha atual está correta.';
   };
 
-  const handleContinue = () => {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleContinue = async () => {
     if (!currentPassword || !password || !confirmPassword) {
       setError("Por favor, preencha todos os campos.");
       return;
@@ -79,8 +93,50 @@ export default function ChangePassword({ navigation }) {
     }
 
     setError("");
-    // Aqui você faria a chamada à API para alterar a senha
-    navigation.goBack();
+    setLoading(true);
+
+    try {
+      // Verificar token antes de fazer a requisição
+      const token = await getStoredToken();
+      console.log('=== DEBUG CHANGE PASSWORD ===');
+      console.log('Token exists:', !!token);
+      console.log('Token preview:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
+      console.log('User data:', user);
+
+      // Chamar API para alterar a senha - envia apenas currentPassword e newPassword
+      await updateMe({
+        currentPassword: currentPassword,
+        newPassword: password
+      });
+
+      setSuccess(true);
+      setError("");
+
+      // Limpar campos
+      setCurrentPassword("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // Mostrar mensagem de sucesso e fazer logout após 2 segundos
+      // O logout automaticamente redireciona para a tela de login
+      setTimeout(async () => {
+        console.log('=== LOGOUT INITIATED ===');
+        await logout();
+        console.log('=== LOGOUT COMPLETED ===');
+      }, 2000);
+    } catch (error) {
+      // Log error details for debugging
+      console.log('=== ERROR DETAILS ===');
+      console.log('Error message:', error.message);
+      console.log('Error statusCode:', error.statusCode);
+      console.log('Error data:', error.data);
+
+      const translatedError = translateError(error.message);
+      setError(translatedError);
+      setSuccess(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFieldFocus = (ref) => {
@@ -117,10 +173,10 @@ export default function ChangePassword({ navigation }) {
       >
         {/* Header com Avatar e Informações */}
         <ProfileHeader
-          userName={userData.name}
-          userEmail={userData.email}
-          userAvatar={userData.avatar}
-          coins={userData.coins}
+          userName={user?.name || "User"}
+          userEmail={user?.email || "email@example.com"}
+          userAvatar={user?.avatar}
+          coins={user?.point || 0}
           borderType="blue"
           centerColor={COLORS.secondary}
         />
@@ -140,23 +196,28 @@ export default function ChangePassword({ navigation }) {
             style={styles.inputWrapper}
           >
             <Text style={styles.inputLabel}>Senha Atual</Text>
-            <RPGBorder 
-              width={345} 
-              height={50} 
-              tileSize={8} 
-              centerColor={COLORS.white}
-              borderType="white"
-            >
-              <TextInput
-                style={styles.input}
-                placeholder="Digite sua senha atual"
-                placeholderTextColor="#999999"
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                onFocus={() => handleFieldFocus(currentPasswordRef)}
-                secureTextEntry
-              />
-            </RPGBorder>
+            <TouchableWithoutFeedback onPress={() => currentPasswordInputRef.current?.focus()}>
+              <View>
+                <RPGBorder
+                  width={345}
+                  height={50}
+                  tileSize={8}
+                  centerColor={COLORS.white}
+                  borderType="white"
+                >
+                  <TextInput
+                    ref={currentPasswordInputRef}
+                    style={styles.input}
+                    placeholder="Digite sua senha atual"
+                    placeholderTextColor="#999999"
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    onFocus={() => handleFieldFocus(currentPasswordRef)}
+                    secureTextEntry
+                  />
+                </RPGBorder>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
           {/* Nova Senha */}
@@ -165,23 +226,28 @@ export default function ChangePassword({ navigation }) {
             style={styles.inputWrapper}
           >
             <Text style={styles.inputLabel}>Nova Senha</Text>
-            <RPGBorder 
-              width={345} 
-              height={50} 
-              tileSize={8} 
-              centerColor={COLORS.white}
-              borderType="white"
-            >
-              <TextInput
-                style={styles.input}
-                placeholder="Digite sua nova senha"
-                placeholderTextColor="#999999"
-                value={password}
-                onChangeText={setPassword}
-                onFocus={() => handleFieldFocus(newPasswordRef)}
-                secureTextEntry
-              />
-            </RPGBorder>
+            <TouchableWithoutFeedback onPress={() => newPasswordInputRef.current?.focus()}>
+              <View>
+                <RPGBorder
+                  width={345}
+                  height={50}
+                  tileSize={8}
+                  centerColor={COLORS.white}
+                  borderType="white"
+                >
+                  <TextInput
+                    ref={newPasswordInputRef}
+                    style={styles.input}
+                    placeholder="Digite sua nova senha"
+                    placeholderTextColor="#999999"
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => handleFieldFocus(newPasswordRef)}
+                    secureTextEntry
+                  />
+                </RPGBorder>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
           {/* Confirmar Nova Senha */}
@@ -190,23 +256,28 @@ export default function ChangePassword({ navigation }) {
             style={styles.inputWrapper}
           >
             <Text style={styles.inputLabel}>Confirmar Nova Senha</Text>
-            <RPGBorder 
-              width={345} 
-              height={50} 
-              tileSize={8} 
-              centerColor={COLORS.white}
-              borderType="white"
-            >
-              <TextInput
-                style={styles.input}
-                placeholder="Confirme sua nova senha"
-                placeholderTextColor="#999999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                onFocus={() => handleFieldFocus(confirmPasswordRef)}
-                secureTextEntry
-              />
-            </RPGBorder>
+            <TouchableWithoutFeedback onPress={() => confirmPasswordInputRef.current?.focus()}>
+              <View>
+                <RPGBorder
+                  width={345}
+                  height={50}
+                  tileSize={8}
+                  centerColor={COLORS.white}
+                  borderType="white"
+                >
+                  <TextInput
+                    ref={confirmPasswordInputRef}
+                    style={styles.input}
+                    placeholder="Confirme sua nova senha"
+                    placeholderTextColor="#999999"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    onFocus={() => handleFieldFocus(confirmPasswordRef)}
+                    secureTextEntry
+                  />
+                </RPGBorder>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
 
           {/* Requisitos da Senha */}
@@ -240,23 +311,24 @@ export default function ChangePassword({ navigation }) {
           {error ? (
             <Text style={styles.errorText}>{error}</Text>
           ) : null}
+
+          {/* Mensagem de Sucesso */}
+          {success ? (
+            <Text style={styles.successText}>✓ Senha alterada com sucesso!</Text>
+          ) : null}
         </View>
 
         {/* Botão Salvar */}
         <View style={styles.buttonContainer}>
           <MenuButton
-            title="Salvar Alterações"
+            title={loading ? "Salvando..." : "Salvar Alterações"}
             onPress={handleContinue}
             borderType="blue"
             centerColor={COLORS.secondary}
+            disabled={loading}
           />
         </View>
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }
@@ -319,6 +391,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "#FF4444",
+    fontSize: 16,
+    fontFamily: "VT323",
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  successText: {
+    color: "#4ADE80",
     fontSize: 16,
     fontFamily: "VT323",
     marginTop: 12,

@@ -89,7 +89,7 @@ export default function ProductGrid({
       ) : (
         <FlatList
           data={produtos}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => item?.id?.toString() || `product-${index}`}
           renderItem={renderItem}
           numColumns={2}
           scrollEnabled={false}

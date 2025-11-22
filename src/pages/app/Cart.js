@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useContext, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //IMPORTAR O CARTCONTEXT
 import { CartContext } from "../../context/CartContext";
@@ -24,14 +23,9 @@ const COLORS = {
   white: "#ffffffff"
 };
 
-const COUPONS_STORAGE_KEY = '@insertcoin:coupons';
-
 export default function Cart({ navigation }) {
   const fontLoaded = useFontLoader();
   const [activeTab, setActiveTab] = useState("Cart");
-  const [cupom, setCupom] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [cupomAplicado, setCupomAplicado] = useState(null);
 
   //USAR O CARTCONTEXT
   const {
@@ -60,46 +54,8 @@ export default function Cart({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       setActiveTab("Cart");
-      loadAppliedCoupon();
     }, [])
   );
-
-  //Carrega cupom aplicado anteriormente
-  const loadAppliedCoupon = async () => {
-    try {
-      const couponJson = await AsyncStorage.getItem(COUPONS_STORAGE_KEY);
-      if (couponJson) {
-        const couponData = JSON.parse(couponJson);
-        setCupomAplicado(couponData.code);
-        setDiscount(couponData.discount);
-        setCupom(couponData.code);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar cupom:', error);
-    }
-  };
-
-  //Salva o cupom aplicado
-  const saveCoupon = async (code, discountValue) => {
-    try {
-      const couponData = {
-        code: code,
-        discount: discountValue
-      };
-      await AsyncStorage.setItem(COUPONS_STORAGE_KEY, JSON.stringify(couponData));
-    } catch (error) {
-      console.error('Erro ao salvar cupom:', error);
-    }
-  };
-
-  //Remove o cupom salvo
-  const removeSavedCoupon = async () => {
-    try {
-      await AsyncStorage.removeItem(COUPONS_STORAGE_KEY);
-    } catch (error) {
-      console.error('Erro ao remover cupom:', error);
-    }
-  };
 
   //INCREMENTA QUANTIDADE - USA CONTEXT
   const handleIncrement = async (itemId) => {
@@ -128,68 +84,9 @@ export default function Cart({ navigation }) {
     );
   };
 
-  //CALCULA SUBTOTAL - USA CONTEXT
-  const calculateSubtotal = () => {
-    return getCartTotal();
-  };
-
-  //Calcula total com desconto
+  //CALCULA TOTAL - USA CONTEXT
   const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    return subtotal - discount;
-  };
-
-  //Aplica cupom
-  const handleApplyCupom = async () => {
-    const normalized = cupom.trim().toUpperCase();
-    const subtotal = calculateSubtotal();
-    let newDiscount = 0;
-
-    if (!normalized) {
-      showError("Erro", "Digite um código de cupom.");
-      return;
-    }
-
-    if (subtotal <= 0) {
-      showError("Erro", "Não é possível aplicar o cupom.");
-      return;
-    }
-
-    if (normalized === "PROMO10") {
-      newDiscount = subtotal * 0.1;
-    } else if (normalized === "FRETEGRATIS") {
-      newDiscount = 20.0;
-    } else {
-      setDiscount(0);
-      setCupomAplicado(null);
-      await removeSavedCoupon();
-      showError("Cupom inválido", "Verifique o código digitado e tente novamente.");
-      return;
-    }
-
-    if (newDiscount >= subtotal) {
-      showError("Cupom inválido", "O valor do cupom não pode ser maior ou igual ao total da compra.");
-      return;
-    }
-
-    setDiscount(newDiscount);
-    setCupomAplicado(normalized);
-    await saveCoupon(normalized, newDiscount);
-
-    if (normalized === "PROMO10") {
-      showSuccess("Cupom aplicado!", "Você ganhou 10% de desconto.");
-    } else if (normalized === "FRETEGRATIS") {
-      showSuccess("Cupom aplicado!", `${formatPrice(20)} de desconto concedido.`);
-    }
-  };
-
-  //Remove cupom aplicado
-  const handleRemoveCoupon = async () => {
-    setDiscount(0);
-    setCupomAplicado(null);
-    setCupom("");
-    await removeSavedCoupon();
-    showSuccess("Cupom removido", "O desconto foi removido do seu carrinho.");
+    return getCartTotal();
   };
 
   const handleTabPress = (route, tabName) => {
@@ -231,80 +128,8 @@ export default function Cart({ navigation }) {
           />
         ))}
 
-        {/* Cupom */}
-        <View style={styles.couponSection}>
-          <View style={styles.couponInputWrapper}>
-            <RPGBorder
-              width={240}
-              height="auto"
-              tileSize={8}
-              centerColor="#ffffffff"
-              borderType="white"
-            >
-              <TextInput
-                style={styles.couponPlaceholder}
-                placeholder="Cupom"
-                placeholderTextColor="#000000ff"
-                value={cupom}
-                onChangeText={setCupom}
-                editable={!cupomAplicado}
-              />
-            </RPGBorder>
-          </View>
-
-          {cupomAplicado ? (
-            <TouchableOpacity activeOpacity={0.8} onPress={handleRemoveCoupon}>
-              <RPGBorder
-                width={90}
-                height={55}
-                tileSize={8}
-                centerColor="#ff4444"
-                borderType="red"
-                contentPadding={8}
-                contentJustify="center"
-                contentAlign="center"
-              >
-                <View style={styles.couponButton}>
-                  <Text style={styles.couponButtonText}>Remover</Text>
-                </View>
-              </RPGBorder>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity activeOpacity={0.8} onPress={handleApplyCupom}>
-              <RPGBorder
-                width={90}
-                height={55}
-                tileSize={8}
-                centerColor={COLORS.secondary}
-                borderType="blue"
-                contentPadding={8}
-                contentJustify="center"
-                contentAlign="center"
-              >
-                <View style={styles.couponButton}>
-                  <Text style={styles.couponButtonText}>Aplicar</Text>
-                </View>
-              </RPGBorder>
-            </TouchableOpacity>
-          )}
-        </View>
-
         {/* Resumo */}
         <View style={styles.summarySection}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal:</Text>
-            <Text style={styles.summaryValue}>
-              {formatPrice(calculateSubtotal())}
-            </Text>
-          </View>
-          {discount > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Desconto:</Text>
-              <Text style={styles.summaryDiscount}>
-                -{formatPrice(discount)}
-              </Text>
-            </View>
-          )}
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total:</Text>
             <Text style={styles.totalValue}>{formatPrice(calculateTotal())}</Text>
@@ -362,36 +187,6 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
     paddingTop: 16,
   },
-  couponSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    marginVertical: 20,
-  },
-  couponInputWrapper: {
-    justifyContent: "center",
-  },
-  couponPlaceholder: {
-    color: "#000000ff",
-    fontSize: 16,
-    fontFamily: "VT323",
-    textAlign: "center",
-    paddingVertical: 0,
-  },
-  couponButton: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 0,
-  },
-  couponButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontFamily: "VT323",
-    textAlign: "center",
-    paddingVertical: 0,
-  },
   summarySection: {
     paddingHorizontal: 32,
     marginVertical: 16,
@@ -411,16 +206,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "VT323",
   },
-  summaryDiscount: {
-    color: "#00FF00",
-    fontSize: 18,
-    fontFamily: "VT323",
-  },
   totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 2,
-    borderTopColor: "rgba(255, 255, 255, 0.3)",
+    marginTop: 0,
   },
   totalLabel: {
     color: "#FFFFFF",

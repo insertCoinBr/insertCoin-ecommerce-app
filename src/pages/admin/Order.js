@@ -1,30 +1,70 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import OrderListItem from "../../components/admin/OrderListItem";
+import { searchOrders } from "../../services/orderService";
 
 export default function Orders() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Mock data - substitua com dados reais da sua API
-  const Orders = [
-    { id: "1000000039", date: "22/08/2025", status: "Created" },
-    { id: "1000000038", date: "21/08/2025", status: "Created" },
-    { id: "1000000037", date: "20/08/2025", status: "Created" },
-    { id: "1000000036", date: "21/08/2025", status: "Created" },
-    { id: "1000000035", date: "20/08/2025", status: "Created" },
-    { id: "1000000034", date: "21/08/2025", status: "Created" },
-    { id: "1000000033", date: "20/08/2025", status: "Created" },
-    { id: "1000000032", date: "21/08/2025", status: "Created" },
-    { id: "1000000031", date: "20/08/2025", status: "Created" },
-  ];
+  // Buscar ordens da API
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
-  const filteredOrders = Orders.filter(order =>
-    order.id.toLowerCase().includes(searchText.toLowerCase())
+  const loadOrders = async (pageNumber = 0, search = "") => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await searchOrders({
+        orderNumber: search,
+        page: pageNumber,
+        size: 10
+      });
+
+      // A resposta pode ser um array ou um objeto com content
+      const ordersData = Array.isArray(response) ? response : response.content || [];
+
+      if (pageNumber === 0) {
+        setOrders(ordersData);
+      } else {
+        setOrders(prev => [...prev, ...ordersData]);
+      }
+
+      // Verificar se tem mais páginas
+      if (response.last !== undefined) {
+        setHasMore(!response.last);
+      } else {
+        setHasMore(ordersData.length === 10);
+      }
+
+      setPage(pageNumber);
+    } catch (err) {
+      console.error("Erro ao buscar ordens:", err);
+      setError(err.message || "Erro ao carregar ordens");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (text) => {
+    setSearchText(text);
+    loadOrders(0, text);
+  };
+
+  const filteredOrders = orders.filter(order =>
+    order.orderNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
+    order.id?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleOrderPress = (order) => {
@@ -55,13 +95,18 @@ export default function Orders() {
       <View style={styles.searchBox}>
         <Ionicons name="search-outline" size={18} color="#ccc" />
         <TextInput
-          placeholder="Type to search"
+          placeholder="Type to search by order number"
           placeholderTextColor="#666"
           style={styles.searchInput}
           value={searchText}
-          onChangeText={setSearchText}
+          onChangeText={handleSearch}
         />
       </View>
+
+      {/* Error Message */}
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
 
       {/* Table Header */}
       <View style={styles.tableHeader}>
@@ -71,15 +116,26 @@ export default function Orders() {
       </View>
 
       {/* Order List */}
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-        {filteredOrders.map((order, index) => (
-          <OrderListItem
-            key={index}
-            order={order}
-            onPress={() => handleOrderPress(order)}
-          />
-        ))}
-      </ScrollView>
+      {loading && page === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+          <Text style={styles.loadingText}>Loading orders...</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+          {filteredOrders.length > 0 ? (
+            filteredOrders.map((order, index) => (
+              <OrderListItem
+                key={order.id || index}
+                order={order}
+                onPress={() => handleOrderPress(order)}
+              />
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No orders found</Text>
+          )}
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   );
@@ -173,5 +229,28 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  loadingText: {
+    color: '#aaa',
+    marginTop: 10,
+    fontSize: 14,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginBottom: 10,
+    fontSize: 14,
+  },
+  emptyText: {
+    color: '#aaa',
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 16,
   },
 });

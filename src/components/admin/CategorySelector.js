@@ -2,19 +2,48 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function CategorySelector({ 
-  selectedCategories = [], 
-  onSelectCategory,
-  categories = ["Action", "Adventure", "RPG", "Sports", "Strategy", "Simulation"]
+// Mapeamento de categorias: Inglês (exibição) -> Português (API)
+const CATEGORY_MAP = {
+  "Action": "Ação",
+  "Adventure": "Aventura",
+  "RPG": "RPG",
+  "Sports": "Esporte",
+  "FPS": "FPS"
+};
+
+// Categorias disponíveis (em inglês para exibição)
+const AVAILABLE_CATEGORIES = Object.keys(CATEGORY_MAP);
+
+export default function CategorySelector({
+  selectedCategories = [],
+  onSelectCategory
 }) {
   const [showCategories, setShowCategories] = useState(false);
 
-  const toggleCategory = (category) => {
-    if (selectedCategories.includes(category)) {
-      onSelectCategory(selectedCategories.filter(c => c !== category));
+  // Converte português para inglês para exibição
+  const getDisplayCategory = (apiCategory) => {
+    const entry = Object.entries(CATEGORY_MAP).find(([_, pt]) => pt === apiCategory);
+    return entry ? entry[0] : apiCategory;
+  };
+
+  // Converte inglês para português para API
+  const getApiCategory = (displayCategory) => {
+    return CATEGORY_MAP[displayCategory] || displayCategory;
+  };
+
+  const toggleCategory = (displayCategory) => {
+    const apiCategory = getApiCategory(displayCategory);
+
+    if (selectedCategories.includes(apiCategory)) {
+      onSelectCategory(selectedCategories.filter(c => c !== apiCategory));
     } else {
-      onSelectCategory([...selectedCategories, category]);
+      onSelectCategory([...selectedCategories, apiCategory]);
     }
+  };
+
+  // Exibe categorias selecionadas em inglês
+  const getDisplayedSelectedCategories = () => {
+    return selectedCategories.map(apiCat => getDisplayCategory(apiCat)).join(", ");
   };
 
   return (
@@ -24,31 +53,36 @@ export default function CategorySelector({
         onPress={() => setShowCategories(!showCategories)}
       >
         <Text style={styles.selectorButtonText}>
-          {selectedCategories.length > 0 
-            ? selectedCategories.join(", ") 
+          {selectedCategories.length > 0
+            ? getDisplayedSelectedCategories()
             : "Click for Select Category"}
         </Text>
-        <Ionicons 
-          name={showCategories ? "chevron-up" : "chevron-down"} 
-          size={20} 
-          color="#A855F7" 
+        <Ionicons
+          name={showCategories ? "chevron-up" : "chevron-down"}
+          size={20}
+          color="#A855F7"
         />
       </TouchableOpacity>
 
       {showCategories && (
         <View style={styles.optionsList}>
-          {categories.map((category, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.optionItem}
-              onPress={() => toggleCategory(category)}
-            >
-              <Text style={styles.optionText}>{category}</Text>
-              {selectedCategories.includes(category) && (
-                <Ionicons name="checkmark" size={20} color="#A855F7" />
-              )}
-            </TouchableOpacity>
-          ))}
+          {AVAILABLE_CATEGORIES.map((displayCategory, index) => {
+            const apiCategory = getApiCategory(displayCategory);
+            const isSelected = selectedCategories.includes(apiCategory);
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.optionItem}
+                onPress={() => toggleCategory(displayCategory)}
+              >
+                <Text style={styles.optionText}>{displayCategory}</Text>
+                {isSelected && (
+                  <Ionicons name="checkmark" size={20} color="#A855F7" />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
     </View>

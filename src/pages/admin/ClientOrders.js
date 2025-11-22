@@ -1,27 +1,72 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import { getUserOrders } from "../../services/orderService";
 
 export default function ClientOrders() {
   const navigation = useNavigation();
   const route = useRoute();
   const { client } = route.params;
   const [searchText, setSearchText] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const orders = [
-    { id: "1000000009", date: "22/08/2025", status: "Completed" },
-    { id: "1000000008", date: "21/08/2025", status: "Completed" },
-    { id: "1000000007", date: "20/08/2025", status: "Completed" },
-    { id: "1000000006", date: "18/08/2025", status: "Completed" },
-    { id: "1000000005", date: "15/08/2025", status: "Completed" },
-    { id: "1000000004", date: "10/08/2025", status: "Completed" },
-    { id: "1000000003", date: "08/08/2025", status: "Completed" },
-    { id: "1000000002", date: "04/08/2025", status: "Completed" },
-    { id: "1000000001", date: "01/08/2025", status: "Completed" },
-  ];
+  useEffect(() => {
+    fetchClientOrders();
+  }, []);
+
+  const fetchClientOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Buscar pedidos do usuário usando a API
+      const response = await getUserOrders({
+        currency: 'USD',
+        status: '',
+        orderBy: 'createdAt',
+        direction: 'desc'
+      });
+
+      // Formatar os dados para o formato esperado pela UI
+      const formattedOrders = response.map(order => ({
+        id: order.orderNumber || order.id || order.uuid,
+        uuid: order.uuid || order.id,
+        date: formatDate(order.createdAt),
+        status: translateStatus(order.status),
+        rawStatus: order.status
+      }));
+
+      setOrders(formattedOrders);
+    } catch (err) {
+      console.error('Error fetching client orders:', err);
+      setError(err.message || 'Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const translateStatus = (status) => {
+    const statusMap = {
+      'COMPLETED': 'Completed',
+      'PENDING': 'Pending',
+      'CANCELLED': 'Cancelled',
+      'PROCESSING': 'Processing'
+    };
+    return statusMap[status] || status;
+  };
 
   const filteredOrders = orders.filter(order =>
     order.id.toLowerCase().includes(searchText.toLowerCase())
@@ -67,21 +112,46 @@ export default function ClientOrders() {
         <Text style={[styles.headerText, styles.statusColumn]}>Status</Text>
       </View>
 
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-        {filteredOrders.map((order, index) => (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+          <Text style={styles.loadingText}>Loading orders...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+          <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
-            key={index}
-            style={styles.orderItem}
-            onPress={() => handleOrderPress(order)}
+            style={styles.retryButton}
+            onPress={fetchClientOrders}
           >
-            <View style={styles.row}>
-              <Text style={styles.orderId}>{order.id}</Text>
-              <Text style={styles.date}>{order.date}</Text>
-              <Text style={styles.status}>{order.status}</Text>
-            </View>
+            <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        </View>
+      ) : filteredOrders.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="receipt-outline" size={48} color="#666" />
+          <Text style={styles.emptyText}>
+            {searchText ? 'No orders found matching your search' : 'No orders found for this client'}
+          </Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+          {filteredOrders.map((order, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.orderItem}
+              onPress={() => handleOrderPress(order)}
+            >
+              <View style={styles.row}>
+                <Text style={styles.orderId}>{order.id}</Text>
+                <Text style={styles.date}>{order.date}</Text>
+                <Text style={styles.status}>{order.status}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   );
@@ -208,5 +278,54 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    color: '#aaa',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: '#A855F7',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

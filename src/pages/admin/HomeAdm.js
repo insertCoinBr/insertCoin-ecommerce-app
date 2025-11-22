@@ -1,223 +1,109 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect, useContext } from "react";
+import { View, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from '../../context/AuthContext';
+import { getMe } from '../../services/authService';
+import { filterMenuByPermissions } from '../../utils/permissionHelper';
+import HomeAdminHeader from "../../components/admin/HomeAdminHeader";
+import ExpandableMenuItem from "../../components/admin/ExpandableMenuItem";
 
 export default function HomeAdm({ route, onLogout }) {
-  const navigation = useNavigation();
-  const [isEmployeesExpanded, setIsEmployeesExpanded] = useState(false);
-  const [isOrderExpanded, setIsOrderExpanded] = useState(false);
-  const [isClientsExpanded, setIsClientsExpanded] = useState(false);
-  const [isProductExpanded, setIsProductExpanded] = useState(false);
-  const [isPromotionExpanded, setIsPromotionExpanded] = useState(false);
-  const [isNotificationExpanded, setIsNotificationExpanded] = useState(false);     
+  const { user, saveUserData } = useContext(AuthContext);
+  const [filteredMenu, setFilteredMenu] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const menuItems = [
+    {
+      title: "Employees",
+      options: [
+        { title: "Add Employee", route: "AddEmployee" },
+        { title: "Remove Employee", route: "RemoveEmployee" },
+        { title: "View & Edit Employee", route: "EditEmployee" },
+      ],
+    },
+    {
+      title: "Orders",
+      options: [
+        { title: "View & Cancel Order", route: "Order" },
+      ],
+    },
+    {
+      title: "Clients",
+      options: [
+        { title: "Inative Client", route: "RemoveClient" },
+        { title: "View & Edit Client", route: "ViewEditClient" },
+      ],
+    },
+    {
+      title: "Products",
+      options: [
+        { title: "Add Product", route: "AddProduct" },
+        { title: "Remove Product", route: "RemoveProduct" },
+        { title: "View & Edit Product", route: "ViewEditProduct" },
+      ],
+    },
+    {
+      title: "Notifications",
+      options: [
+        { title: "Add Notification", route: "AddNotification" },
+        { title: "Remove Notification", route: "RemoveNotification" },
+        { title: "View & Edit Notification", route: "ViewEditNotification" },
+      ],
+    },
+  ];
 
-  const employeeOptions = [
-    { title: "Add Employee", route: "AddEmployee" },
-    { title: "Remove Employee", route: "RemoveEmployee" },
-    { title: "View & Edit Employee", route: "EditEmployee" },
-  ];
-  const OrderOptions = [
-    { title: "View & Cancel Order", route: "Order" },
-  ];
-  const ClientsOptions = [
-    { title: "Inative Client", route: "RemoveClient" },
-    { title: "View & Edit Client", route: "ViewEditClient" },
-  ];
-  const ProductOptions = [
-    { title: "Add Product", route: "AddProduct" },
-    { title: "Remove Product", route: "RemoveProduct" },
-    { title: "View & Edit Product", route: "ViewEditProduct" },
-  ];
-  const PromotionOptions = [
-    { title: "Add Promotion", route: "AddPromotion" },
-    { title: "Remove Promotion", route: "RemovePromotion" },
-    { title: "View & Edit Promotion", route: "ViewEditPromotion" },
-  ];
-  const NotificationOptions = [
-    { title: "Add Notification", route: "AddNotification" },
-    { title: "Remove Notification", route: "RemoveNotification" },
-    { title: "View & Edit Notification", route: "ViewEditNotification" },
-  ];
+  // Carregar dados do usuário e filtrar menu baseado em permissões
+  useEffect(() => {
+    const loadUserAndMenu = async () => {
+      try {
+        setLoading(true);
+
+        // Se não tiver dados do usuário no contexto, buscar da API
+        let userData = user;
+        if (!userData) {
+          userData = await getMe();
+          await saveUserData(userData);
+        }
+
+        // Filtrar menu baseado nas permissões do usuário
+        if (userData && userData.roles) {
+          const filtered = filterMenuByPermissions(menuItems, userData.roles);
+          setFilteredMenu(filtered);
+        } else {
+          // Se não tiver roles, não mostra nada
+          setFilteredMenu([]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+        // Em caso de erro, não mostra menu
+        setFilteredMenu([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserAndMenu();
+  }, [user]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image source={require("../../../assets/LogoInsetCoin1.png")} style={styles.logo} />
-          <Text style={styles.title}>InsertCoin</Text>
-        </View>
+        <HomeAdminHeader onLogout={onLogout} />
 
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={onLogout}
-        >
-          <Text style={styles.clientText}>Sair</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Menu */}
-            <ScrollView style={styles.scrollView}>
-              {/* Employees Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsEmployeesExpanded(!isEmployeesExpanded)}
-              >
-                <Text style={styles.menuText}>Employees</Text>
-                <Ionicons 
-                  name={isEmployeesExpanded ? "chevron-down-outline" : "chevron-forward-outline"} 
-                  size={18} 
-                  color="#aaa" 
-                />
-              </TouchableOpacity>
-      
-              {isEmployeesExpanded && (
-                <View style={styles.subMenu}>
-                  {employeeOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Order Options Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsOrderExpanded(!isOrderExpanded)}
-              >
-                <Text style={styles.menuText}>Orders</Text>
-                <Ionicons
-                  name={isOrderExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
-                  size={18}
-                  color="#aaa"
-                />
-              </TouchableOpacity>
-              {isOrderExpanded && (
-                <View style={styles.subMenu}>
-                  {OrderOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Clients Options Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsClientsExpanded(!isClientsExpanded)}
-              >
-                <Text style={styles.menuText}>Clients</Text>
-                <Ionicons
-                  name={isClientsExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
-                  size={18}
-                  color="#aaa"
-                />
-              </TouchableOpacity>
-              {isClientsExpanded && (
-                <View style={styles.subMenu}>
-                  {ClientsOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Product Options Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsProductExpanded(!isProductExpanded)}
-              >
-                <Text style={styles.menuText}>Products</Text>
-                <Ionicons
-                  name={isProductExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
-                  size={18}
-                  color="#aaa"
-                />
-              </TouchableOpacity>
-              {isProductExpanded && (
-                <View style={styles.subMenu}>
-                  {ProductOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Promotions Options Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsPromotionExpanded(!isPromotionExpanded)}
-              >
-                <Text style={styles.menuText}>Promotion</Text>
-                <Ionicons
-                  name={isPromotionExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
-                  size={18}
-                  color="#aaa"
-                />
-              </TouchableOpacity>
-              {isPromotionExpanded && (
-                <View style={styles.subMenu}>
-                  {PromotionOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              {/* Notification Options Expandable */}
-              <TouchableOpacity 
-                style={styles.expandableItem}
-                onPress={() => setIsNotificationExpanded(!isNotificationExpanded)}
-              >
-                <Text style={styles.menuText}>Notification</Text>
-                <Ionicons
-                  name={isNotificationExpanded ? "chevron-down-outline" : "chevron-forward-outline"}
-                  size={18}
-                  color="#aaa"
-                />
-              </TouchableOpacity>
-              {isNotificationExpanded && (
-                <View style={styles.subMenu}>
-                  {NotificationOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.subMenuItem}
-                      onPress={() => navigation.navigate(option.route)}
-                    >
-                      <Text style={styles.subMenuText}>{option.title}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </ScrollView>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        ) : (
+          <ScrollView style={styles.scrollView}>
+            {filteredMenu.map((item, index) => (
+              <ExpandableMenuItem
+                key={index}
+                title={item.title}
+                options={item.options}
+              />
+            ))}
+          </ScrollView>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -233,88 +119,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#0A0F24",
     paddingHorizontal: 20,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logo: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-  },
-  title: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  backButton: {
-    backgroundColor: "#1D3CFD",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  clientText: {
-    color: "#fff",
-    fontSize: 14,
-  },
-  menuItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomColor: "#1B254F",
-    borderBottomWidth: 1,
-  },
-  menuText: {
-    color: "#fff",
-    fontSize: 16,
-  },
   scrollView: {
-    marginTop: 30, 
+    marginTop: 30,
     flex: 1,
   },
-  expandableItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomColor: "#1B254F",
-    borderBottomWidth: 1,
-  },
-  menuText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  subMenu: {
-    backgroundColor: "#0D1429",
-    borderLeftWidth: 2,
-    borderLeftColor: "#A855F7",
-    marginLeft: 10,
-  },
-  subMenuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingLeft: 15,
-    borderBottomColor: "#1B254F",
-    borderBottomWidth: 1,
-  },
-  subMenuIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#A855F7",
-    marginRight: 12,
-  },
-  subMenuText: {
-    color: "#fff",
-    fontSize: 15,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

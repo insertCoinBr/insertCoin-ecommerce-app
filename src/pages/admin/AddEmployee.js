@@ -7,6 +7,7 @@ import { colors } from "../../styles/adminStyles";
 import PermissionDropdown from "../../components/admin/PermissionDropdown";
 import PrimaryButton from "../../components/admin/PrimaryButton";
 import CustomAlert from "../../components/admin/CustomAlert";
+import { adminSignup } from "../../services/authService";
 
 export default function AddEmployee() {
   const navigation = useNavigation();
@@ -17,6 +18,7 @@ export default function AddEmployee() {
   const [selectedPermission, setSelectedPermission] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [loading, setLoading] = useState(false);
 
   const validatePassword = (pass) => {
     const hasUpperCase = /[A-Z]/.test(pass);
@@ -30,7 +32,7 @@ export default function AddEmployee() {
 
   const validation = validatePassword(password);
 
-  const handleCreateEmployee = () => {
+  const handleCreateEmployee = async () => {
     if (!fullName || !email || !password || !confirmPassword || !selectedPermission) {
       setAlertConfig({ type: 'error', message: 'Please fill all fields' });
       setShowAlert(true);
@@ -49,8 +51,43 @@ export default function AddEmployee() {
       return;
     }
 
-    setAlertConfig({ type: 'success', message: 'Employee created successfully' });
-    setShowAlert(true);
+    // Permissão selecionada já está no formato da API
+    const role = selectedPermission;
+    if (!role || (role !== "COMMERCIAL" && role !== "MANAGER_STORE")) {
+      setAlertConfig({ type: 'error', message: 'Invalid permission selected' });
+      setShowAlert(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await adminSignup({
+        name: fullName,
+        email: email,
+        password: password,
+        role: role
+      });
+
+      setAlertConfig({ type: 'success', message: 'Employee created successfully' });
+      setShowAlert(true);
+
+      // Limpar formulário
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setSelectedPermission("");
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to create employee. Please try again.'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAlertClose = () => {
@@ -147,15 +184,16 @@ export default function AddEmployee() {
         <PermissionDropdown
           selectedPermission={selectedPermission}
           onSelectPermission={setSelectedPermission}
-          permissions={["Gerente", "Super Admin"]}
+          permissions={["COMMERCIAL", "MANAGER_STORE"]}
         />
       </ScrollView>
 
       {/* Botão fixo no final */}
       <View style={styles.buttonContainer}>
         <PrimaryButton
-          title="Create Employee"
+          title={loading ? "Creating..." : "Create Employee"}
           onPress={handleCreateEmployee}
+          disabled={loading}
         />
       </View>
 

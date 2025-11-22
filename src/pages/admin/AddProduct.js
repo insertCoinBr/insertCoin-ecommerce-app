@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import React, { useState, useContext, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,9 +9,13 @@ import PrimaryButton from "../../components/admin/PrimaryButton";
 import CategorySelector from "../../components/admin/CategorySelector";
 import PlatformSelector from "../../components/admin/PlatformSelector";
 import CustomAlert from "../../components/admin/CustomAlert";
+import { addProduct } from "../../services/productService";
+import { uploadImage, validateImageSize } from "../../services/cloudinaryService";
+import { AuthContext } from '../../context/AuthContext';
 
 export default function AddProduct() {
   const navigation = useNavigation();
+  const { user } = useContext(AuthContext);
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -21,6 +25,16 @@ export default function AddProduct() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [exchangeRate] = useState(5.20); // Taxa de câmbio BRL para USD
+  const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Log user data on mount
+  useEffect(() => {
+    console.log('=== Current User Data ===');
+    console.log('User:', user);
+    console.log('User roles:', user?.roles);
+    console.log('User email:', user?.email);
+  }, []);
 
   const formatBRL = (value) => {
     const numericValue = value.replace(/\D/g, '');
@@ -59,16 +73,28 @@ export default function AddProduct() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [3, 4],
-      quality: 1,
+      aspect: [4, 3],
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setProductImage(result.assets[0].uri);
+      const imageUri = result.assets[0].uri;
+
+      // Validar tamanho da imagem
+      try {
+        await validateImageSize(imageUri, 5); // Máximo 5MB
+        setProductImage(imageUri);
+      } catch (error) {
+        setAlertConfig({
+          type: 'error',
+          message: error.message || 'Image is too large. Please select a smaller image (max 5MB).'
+        });
+        setShowAlert(true);
+      }
     }
   };
 
-  const handleCreateProduct = () => {
+  const handleCreateProduct = async () => {
     if (!productName || !price || !description || !selectedPlatform) {
       setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
       setShowAlert(true);
@@ -87,8 +113,84 @@ export default function AddProduct() {
       return;
     }
 
-    setAlertConfig({ type: 'success', message: 'Product created successfully' });
-    setShowAlert(true);
+    if (!productImage) {
+      setAlertConfig({ type: 'error', message: 'Please select a product image' });
+      setShowAlert(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Upload da imagem para o Cloudinary
+      setUploadingImage(true);
+      let imageUrl = "https://via.placeholder.com/300x400"; // Fallback
+
+      try {
+        const uploadResult = await uploadImage(productImage, {
+          folder: 'products', // Pasta no Cloudinary
+        });
+        imageUrl = uploadResult.url;
+        console.log('Image uploaded successfully:', imageUrl);
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        // Se o upload falhar, pergunta ao usuário se quer continuar
+        setAlertConfig({
+          type: 'error',
+          message: 'Failed to upload image. Please check Cloudinary settings in cloudinaryService.js'
+        });
+        setShowAlert(true);
+        setUploadingImage(false);
+        setLoading(false);
+        return;
+      } finally {
+        setUploadingImage(false);
+      }
+
+      // 2. Calcular preço em USD
+      const priceInUSD = parseFloat(price) / 100 / exchangeRate;
+
+      // 3. Criar produto com a URL da imagem do Cloudinary
+      const productData = {
+        name: productName,
+        price: parseFloat(priceInUSD.toFixed(2)),
+        category: selectedCategories,
+        platform: selectedPlatform,
+        description: description,
+        img: imageUrl // URL do Cloudinary
+      };
+
+      console.log('=== Creating product with data ===');
+      console.log('Product Data:', JSON.stringify(productData, null, 2));
+
+      await addProduct(productData);
+
+      console.log('Product created successfully!');
+      setAlertConfig({ type: 'success', message: 'Product created successfully' });
+      setShowAlert(true);
+
+      // Limpar form
+      setProductName("");
+      setPrice("");
+      setDescription("");
+      setProductImage(null);
+      setSelectedCategories([]);
+      setSelectedPlatform("");
+    } catch (error) {
+      console.error('=== Error creating product ===');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.statusCode);
+      console.error('Error data:', error.data);
+
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to create product. Please try again.'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAlertClose = () => {
@@ -173,7 +275,7 @@ export default function AddProduct() {
               <Ionicons name="image-outline" size={40} color="#ffffffff" />
               <Text style={styles.imagePickerText}>
                 Click to select an image (max 5MB){'\n'}
-                PNG, JPG (Max. 800 x 400 px, 4:3 Ratio)
+                PNG, JPG (Recommended: 800x600px, 4:3)
               </Text>
             </View>
           )}
@@ -191,9 +293,16 @@ export default function AddProduct() {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
+        {uploadingImage && (
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator size="small" color="#A855F7" />
+            <Text style={styles.uploadingText}>Uploading image...</Text>
+          </View>
+        )}
         <PrimaryButton
-          title="Create Product"
+          title={loading ? "Creating..." : "Create Product"}
           onPress={handleCreateProduct}
+          disabled={loading || uploadingImage}
         />
       </View>
 
@@ -315,11 +424,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#ffffffff",
     borderStyle: "dashed",
-    padding: 20,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15,
-    minHeight: 150,
+    aspectRatio: 1.33,
+    width: "100%",
   },
   imagePlaceholder: {
     alignItems: "center",
@@ -332,7 +441,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: "100%",
-    height: 200,
+    height: "100%",
     borderRadius: 8,
     resizeMode: "cover",
   },
@@ -346,5 +455,17 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  uploadingText: {
+    color: '#A855F7',
+    fontSize: 14,
+    marginLeft: 8,
   },
 });

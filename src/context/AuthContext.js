@@ -72,13 +72,12 @@ export function AuthProvider({ children }) {
           setIsAuthenticated(true);
           await setStoredUserData(userData);
         } catch (error) {
-          console.error("Erro ao restaurar sessão:", error);
           // Token inválido, limpar tudo
           await clearAllAuthData();
         }
       }
     } catch (error) {
-      console.error("Erro ao restaurar sessão:", error);
+      // Erro ao restaurar sessão
     } finally {
       setIsLoading(false);
     }
@@ -98,13 +97,15 @@ export function AuthProvider({ children }) {
   // Função para fazer logout
   const logout = async () => {
     try {
+      console.log('=== LOGOUT FUNCTION CALLED ===');
       await clearAllAuthData();
       setUser(null);
       setToken(null);
       setIsAuthenticated(false);
       clearTempData();
+      console.log('=== LOGOUT: isAuthenticated set to false ===');
     } catch (error) {
-      console.error("Erro ao fazer logout:", error);
+      console.log('=== LOGOUT ERROR ===', error);
     }
   };
 

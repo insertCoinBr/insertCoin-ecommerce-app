@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useCallback, useMemo, useEffect, useContext, useRef } from "react";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -12,6 +12,12 @@ import OrderCard from "../../components/app/OrderCard";
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
 
+// CONTEXTS
+import { CurrencyContext } from "../../context/CurrencyContext";
+
+// SERVICES
+import { getUserOrders } from "../../services/orderService";
+
 const COLORS = {
   background: "#1A1027",
   primary: "#4C38A4",
@@ -19,54 +25,134 @@ const COLORS = {
 
 export default function Orders({ navigation }) {
   const fontLoaded = useFontLoader();
+  const { currency } = useContext(CurrencyContext);
   const [activeTab, setActiveTab] = useState("Orders");
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const timersRef = useRef({});
 
-  // Dados de exemplo dos pedidos
-  const pedidos = useMemo(() => [
-    {
-      id: 1,
-      orderNumber: "123456-78901",
-      status: "Processando",
-      date: "15/01/24",
-      total: "R$ 299,99",
-    },
-    {
-      id: 2,
-      orderNumber: "234567-89012",
-      status: "Cancelado",
-      date: "12/01/24",
-      total: "R$ 149,99",
-    },
-    {
-      id: 3,
-      orderNumber: "345678-90123",
-      status: "Entregue",
-      date: "10/01/24",
-      total: "R$ 499,99",
-    },
-    {
-      id: 4,
-      orderNumber: "456789-01234",
-      status: "Processando",
-      date: "18/01/24",
-      total: "R$ 599,99",
-    },
-    {
-      id: 5,
-      orderNumber: "567890-12345",
-      status: "Entregue",
-      date: "05/01/24",
-      total: "R$ 199,99",
-    },
-  ], []);
+  // Mapeia status da API para status exibido
+  const mapStatus = (apiStatus) => {
+    switch (apiStatus) {
+      case 'WAITING_PIX_PAYMENT':
+        return 'Pagamento Pendente';
+      case 'PENDING':
+        return 'Confirmação pendente';
+      case 'COMPLETED':
+      case 'Concluído':
+        return 'Concluído';
+      case 'CANCELLED':
+        return 'Cancelado';
+      default:
+        return apiStatus;
+    }
+  };
+
+  // Busca pedidos da API
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Busca pedidos com a moeda atual
+      const response = await getUserOrders({
+        currency: currency,
+        status: '',
+        orderBy: 'createdAt',
+        direction: 'desc'
+      });
+
+      console.log('=== Pedidos recebidos da API ===');
+      console.log('Total de pedidos:', response.length);
+      if (response.length > 0) {
+        console.log('Exemplo do primeiro pedido:', JSON.stringify(response[0], null, 2));
+      }
+
+      // Adapta os dados da API para o formato do componente
+      const adaptedOrders = response.map(order => {
+        // Formata a data
+        const orderDate = new Date(order.createdAt);
+        const formattedDate = orderDate.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        });
+
+        // Formata o preço com símbolo da moeda
+        const currencySymbol = currency === 'USD' ? '$' : 'R$';
+        const totalValue = order.total || order.totalAmount || order.amount || 0;
+        const formattedTotal = `${currencySymbol} ${totalValue.toLocaleString(currency === 'USD' ? 'en-US' : 'pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`;
+
+        // Mapeia o status
+        const mappedStatus = mapStatus(order.status);
+
+        // Se o status for PENDING, agenda timer para mudar para Concluído após 10s
+        const orderId = order.uuid || order.id;
+        if (order.status === 'PENDING') {
+          // Limpa timer anterior se existir
+          if (timersRef.current[orderId]) {
+            clearTimeout(timersRef.current[orderId]);
+          }
+
+          // Cria novo timer
+          timersRef.current[orderId] = setTimeout(() => {
+            setPedidos(prev => prev.map(p =>
+              p.id === orderId
+                ? { ...p, status: 'Concluído' }
+                : p
+            ));
+            delete timersRef.current[orderId];
+          }, 10000); // 10 segundos
+        }
+
+        return {
+          id: orderId,
+          orderNumber: order.orderNumber,
+          status: mappedStatus,
+          date: formattedDate,
+          total: formattedTotal,
+          rawData: order // Mantém dados originais para detalhes
+        };
+      });
+
+      setPedidos(adaptedOrders);
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+      setPedidos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currency]);
+
+  // Carrega pedidos ao montar o componente
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Recarrega pedidos quando a moeda mudar
+  useEffect(() => {
+    if (pedidos.length > 0) {
+      fetchOrders();
+    }
+  }, [currency]);
 
   // Atualiza a tab ativa quando entra na tela
   useFocusEffect(
     useCallback(() => {
       setActiveTab("Orders");
-    }, [])
+      fetchOrders(); // Recarrega pedidos ao voltar para a tela
+    }, [fetchOrders])
   );
+
+  // Limpa timers ao desmontar
+  useEffect(() => {
+    return () => {
+      Object.values(timersRef.current).forEach(timer => clearTimeout(timer));
+      timersRef.current = {};
+    };
+  }, []);
 
   // Handler do filtro selecionado
   const handleFiltro = (filtro) => {
@@ -98,45 +184,56 @@ export default function Orders({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
 
-      <PageHeader 
-        onBackPress={() => navigation.goBack()} 
-        title="Meus Pedidos" 
+      <PageHeader
+        onBackPress={() => navigation.goBack()}
+        title="Meus Pedidos"
       />
 
       {/* Barra de Filtros */}
         <FilterBar
           filtroAtivo={filtroAtivo}
           onFiltroPress={handleFiltro}
-          filtros={["Todos", "Processando", "Entregue", "Cancelado"]}
+          filtros={["Todos", "Pagamento Pendente", "Confirmação pendente", "Concluído", "Cancelado"]}
         />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        
-        {/* Lista de Pedidos */}
-        <View style={styles.cardsContainer}>
-          {pedidosFiltrados.length > 0 ? (
-            pedidosFiltrados.map((pedido) => (
-              <OrderCard
-                key={pedido.id}
-                orderNumber={pedido.orderNumber}
-                status={pedido.status}
-                date={pedido.date}
-                total={pedido.total}
-                onPress={() => handleOrderPress(pedido)}
-              />
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>Nenhum pedido encontrado</Text>
-              <Text style={styles.emptySubtitle}>
-                Não há pedidos com status "{filtroAtivo}"
-              </Text>
-            </View>
-          )}
-        </View>
+
+        {/* Loading */}
+        {loading && pedidos.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Carregando pedidos...</Text>
+          </View>
+        ) : (
+          /* Lista de Pedidos */
+          <View style={styles.cardsContainer}>
+            {pedidosFiltrados.length > 0 ? (
+              pedidosFiltrados.map((pedido) => (
+                <OrderCard
+                  key={pedido.id}
+                  orderNumber={pedido.orderNumber}
+                  status={pedido.status}
+                  date={pedido.date}
+                  total={pedido.total}
+                  onPress={() => handleOrderPress(pedido)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyTitle}>Nenhum pedido encontrado</Text>
+                <Text style={styles.emptySubtitle}>
+                  {filtroAtivo === "Todos"
+                    ? "Você ainda não possui pedidos"
+                    : `Não há pedidos com status "${filtroAtivo}"`
+                  }
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
@@ -152,6 +249,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 120,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  loadingText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontFamily: "VT323",
+    marginTop: 16,
   },
   cardsContainer: {
     alignItems: "center",

@@ -2,12 +2,37 @@ import React from "react";
 import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
 
 export default function OrderListItem({ order, onPress }) {
+  // Formatar data se vier no formato ISO
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Usar orderNumber se disponível, senão usa id
+  const displayId = order.orderNumber || order.id || "N/A";
+
+  // Usar createdAt, orderDate ou date
+  const displayDate = formatDate(order.createdAt || order.orderDate || order.date);
+
+  // Status
+  const displayStatus = order.status || "N/A";
+
   return (
     <TouchableOpacity style={styles.OrderItem} onPress={onPress}>
       <View style={styles.row}>
-        <Text style={styles.orderId}>{order.id}</Text>
-        <Text style={styles.date}>{order.date}</Text>
-        <Text style={styles.status}>{order.status}</Text>
+        <Text style={styles.orderId}>{displayId}</Text>
+        <Text style={styles.date}>{displayDate}</Text>
+        <Text style={styles.status}>{displayStatus}</Text>
       </View>
     </TouchableOpacity>
   );

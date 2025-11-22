@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import CustomAlert from "../../components/admin/CustomAlert";
 import ConfirmModal from "../../components/admin/ConfirmModal";
+import { searchClients, getUserById, updateClient } from "../../services/authService";
 
 export default function RemoveClient() {
   const navigation = useNavigation();
@@ -13,27 +14,80 @@ export default function RemoveClient() {
   const [showModal, setShowModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [selectedItems, setSelectedItems] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const [clients, setClients] = useState([
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem", isActive: true },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat", isActive: true },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari", isActive: true },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel", isActive: true },
-    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles", isActive: true },
-    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos", isActive: true },
-    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva", isActive: true },
-    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra", isActive: true },
-    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda", isActive: true },
-    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima", isActive: true },
-  ]);
+  // Carregar clients da API
+  useEffect(() => {
+    loadClients();
+  }, [page]);
 
-  const filteredClients = clients.filter(client =>
-    client.isActive && (
-      client.email.toLowerCase().includes(searchText.toLowerCase()) ||
-      client.name.toLowerCase().includes(searchText.toLowerCase())
-    )
-  );
+  const loadClients = async () => {
+    try {
+      setLoading(true);
+      const response = await searchClients({
+        email: searchText,
+        page: page,
+        size: 20
+      });
+
+      // A resposta pode vir em formato paginado
+      let clientList = [];
+      if (response.content) {
+        clientList = response.content;
+        setTotalPages(response.totalPages || 0);
+      } else if (Array.isArray(response)) {
+        clientList = response;
+      }
+
+      // Buscar detalhes completos de cada client (incluindo campo active)
+      if (clientList.length > 0) {
+        const detailedClients = await Promise.all(
+          clientList.map(async (client) => {
+            try {
+              const fullData = await getUserById(client.id);
+              return fullData;
+            } catch (error) {
+              console.error('Erro ao buscar detalhes do client:', client.id, error);
+              return client;
+            }
+          })
+        );
+        setClients(detailedClients);
+      } else {
+        setClients([]);
+      }
+    } catch (error) {
+      console.error('Error loading clients:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to load clients'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recarregar quando buscar
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadClients();
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchText]);
+
+  // Filtrar apenas clients ativos
+  const filteredClients = clients.filter(client => {
+    const isActive = client.active !== false && client.active !== "false" && client.active !== 0;
+    return isActive;
+  });
 
   const toggleItemSelection = (itemId) => {
     setSelectedItems(prev =>
@@ -64,25 +118,48 @@ export default function RemoveClient() {
     setShowModal(true);
   };
 
-  const handleConfirmInactivate = () => {
-    if (selectedClient?.count) {
-      // Inactivate multiple
-      setClients(clients.map(client =>
-        selectedItems.includes(client.id)
-          ? { ...client, isActive: false }
-          : client
-      ));
-      setSelectedItems([]);
-    } else {
-      // Inactivate single
-      setClients(clients.map(client =>
-        client.id === selectedClient.id
-          ? { ...client, isActive: false }
-          : client
-      ));
+  const handleConfirmInactivate = async () => {
+    try {
+      setDeleting(true);
+      setShowModal(false);
+
+      if (selectedClient?.count) {
+        // Inativar múltiplos
+        const promises = selectedItems.map(id => {
+          return updateClient(id, { active: false });
+        });
+        await Promise.all(promises);
+
+        // Remover imediatamente da lista local para feedback instantâneo
+        setClients(prev => prev.filter(client => !selectedItems.includes(client.id)));
+        setAlertConfig({ type: 'success', message: `${selectedItems.length} client(s) inactivated successfully` });
+        setSelectedItems([]);
+      } else {
+        // Inativar único
+        await updateClient(selectedClient.id, { active: false });
+
+        // Remover imediatamente da lista local para feedback instantâneo
+        setClients(prev => prev.filter(client => client.id !== selectedClient.id));
+        setAlertConfig({ type: 'success', message: 'Client inactivated successfully' });
+      }
+
+      setShowAlert(true);
+
+      // Recarregar lista do servidor em background
+      loadClients();
+    } catch (error) {
+      console.error('Error inactivating client:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to inactivate client'
+      });
+      setShowAlert(true);
+
+      // Em caso de erro, recarregar para garantir consistência
+      loadClients();
+    } finally {
+      setDeleting(false);
     }
-    setShowModal(false);
-    setShowAlert(true);
   };
 
   const handleCancelInactivate = () => {
@@ -139,40 +216,46 @@ export default function RemoveClient() {
           </View>
         )}
 
-        <ScrollView style={styles.list}>
-          {filteredClients.map((client) => (
-            <TouchableOpacity
-              key={client.id}
-              style={styles.itemCard}
-              onPress={() => toggleItemSelection(client.id)}
-            >
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        ) : (
+          <ScrollView style={styles.list}>
+            {filteredClients.map((client) => (
               <TouchableOpacity
-                style={styles.checkboxContainer}
+                key={client.id}
+                style={styles.itemCard}
                 onPress={() => toggleItemSelection(client.id)}
               >
-                <Ionicons
-                  name={selectedItems.includes(client.id) ? "checkbox" : "square-outline"}
-                  size={24}
-                  color="#A855F7"
-                />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => toggleItemSelection(client.id)}
+                >
+                  <Ionicons
+                    name={selectedItems.includes(client.id) ? "checkbox" : "square-outline"}
+                    size={24}
+                    color="#A855F7"
+                  />
+                </TouchableOpacity>
 
-              <View style={styles.itemInfo}>
-                <Text style={styles.clientEmail}>{client.email}</Text>
-                <Text style={styles.clientName}>{client.name}</Text>
-              </View>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.clientEmail}>{client.email}</Text>
+                  <Text style={styles.clientName}>{client.name}</Text>
+                </View>
 
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleSelectClient(client);
-                }}
-              >
-                <Ionicons name="ban-outline" size={20} color="#F59E0B" />
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleSelectClient(client);
+                  }}
+                >
+                  <Ionicons name="ban-outline" size={20} color="#F59E0B" />
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        )}
         </View>
       </SafeAreaView>
 
@@ -193,8 +276,8 @@ export default function RemoveClient() {
 
       <CustomAlert
         visible={showAlert}
-        type="success"
-        message="Client inactivated successfully"
+        type={alertConfig.type}
+        message={alertConfig.message}
         onClose={() => setShowAlert(false)}
       />
     </>
@@ -325,5 +408,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

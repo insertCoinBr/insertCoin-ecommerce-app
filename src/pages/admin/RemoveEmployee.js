@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import CustomAlert from "../../components/admin/CustomAlert";
 import ConfirmModal from "../../components/admin/ConfirmModal";
+import { searchEmployees, updateEmployee, getUserById } from "../../services/authService";
 
 export default function RemoveEmployee() {
   const navigation = useNavigation();
@@ -15,20 +16,81 @@ export default function RemoveEmployee() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [selectedItems, setSelectedItems] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // Mock data - substitua com dados reais da sua API
-  const [employees, setEmployees] = useState([
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem" },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat" },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
-    { id: 5, email: "cristianesalles@insertcoin.com.br", name: "Cristiane Salles" },
-  ]);
+  // Carregar employees da API
+  useEffect(() => {
+    loadEmployees();
+  }, [page]);
 
-  const filteredEmployees = employees.filter(emp =>
-    emp.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    emp.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await searchEmployees({
+        email: searchText,
+        page: page,
+        size: 20
+      });
+
+      // A resposta pode vir em formato paginado
+      let employeeList = [];
+      if (response.content) {
+        employeeList = response.content;
+        setTotalPages(response.totalPages || 0);
+      } else if (Array.isArray(response)) {
+        employeeList = response;
+      }
+
+      // Buscar detalhes completos de cada employee (incluindo campo active)
+      if (employeeList.length > 0) {
+        const detailedEmployees = await Promise.all(
+          employeeList.map(async (emp) => {
+            try {
+              const fullData = await getUserById(emp.id);
+              return fullData;
+            } catch (error) {
+              console.error('Erro ao buscar detalhes do employee:', emp.id, error);
+              // Se falhar, retorna os dados básicos
+              return emp;
+            }
+          })
+        );
+        setEmployees(detailedEmployees);
+      } else {
+        setEmployees([]);
+      }
+    } catch (error) {
+      console.error('Error loading employees:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to load employees'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recarregar quando buscar
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadEmployees();
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchText]);
+
+  // Filtrar apenas employees ativos (active === true ou undefined/null)
+  const filteredEmployees = employees.filter(emp => {
+    // Considerar ativo se: active é true, undefined, null, ou não existe
+    // Considerar inativo se: active é false ou "false" (string)
+    const isActive = emp.active !== false && emp.active !== "false" && emp.active !== 0;
+    return isActive;
+  });
 
   const toggleItemSelection = (itemId) => {
     setSelectedItems(prev =>
@@ -61,19 +123,48 @@ export default function RemoveEmployee() {
     setShowModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedEmployee?.count) {
-      // Delete multiple
-      setEmployees(employees.filter(emp => !selectedItems.includes(emp.id)));
-      setAlertConfig({ type: 'success', message: `${selectedItems.length} employee(s) removed successfully` });
-      setSelectedItems([]);
-    } else {
-      // Delete single
-      setEmployees(employees.filter(emp => emp.id !== selectedEmployee.id));
-      setAlertConfig({ type: 'success', message: 'Employee removed successfully' });
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleting(true);
+      setShowModal(false);
+
+      if (selectedEmployee?.count) {
+        // Inativar múltiplos
+        const promises = selectedItems.map(id => {
+          return updateEmployee(id, { active: false });
+        });
+        await Promise.all(promises);
+
+        // Remover imediatamente da lista local para feedback instantâneo
+        setEmployees(prev => prev.filter(emp => !selectedItems.includes(emp.id)));
+        setAlertConfig({ type: 'success', message: `${selectedItems.length} employee(s) inactivated successfully` });
+        setSelectedItems([]);
+      } else {
+        // Inativar único
+        await updateEmployee(selectedEmployee.id, { active: false });
+
+        // Remover imediatamente da lista local para feedback instantâneo
+        setEmployees(prev => prev.filter(emp => emp.id !== selectedEmployee.id));
+        setAlertConfig({ type: 'success', message: 'Employee inactivated successfully' });
+      }
+
+      setShowAlert(true);
+
+      // Recarregar lista do servidor em background
+      loadEmployees();
+    } catch (error) {
+      console.error('Error inactivating employee:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to inactivate employee'
+      });
+      setShowAlert(true);
+
+      // Em caso de erro, recarregar para garantir consistência
+      loadEmployees();
+    } finally {
+      setDeleting(false);
     }
-    setShowModal(false);
-    setShowAlert(true);
   };
 
   const handleCancelDelete = () => {
@@ -134,8 +225,13 @@ export default function RemoveEmployee() {
         )}
 
         {/* Employee List */}
-        <ScrollView style={styles.list}>
-          {filteredEmployees.map((employee) => (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        ) : (
+          <ScrollView style={styles.list}>
+            {filteredEmployees.map((employee) => (
             <TouchableOpacity
               key={employee.id}
               style={styles.itemCard}
@@ -167,7 +263,8 @@ export default function RemoveEmployee() {
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+          </ScrollView>
+        )}
         </View>
       </SafeAreaView>
 
@@ -320,5 +417,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

@@ -26,7 +26,7 @@ import BottomTabBar from "../../components/app/BottomTabBar";
 import StarRating from "../../components/app/StarRating";
 
 // SERVICES
-import { getProdutoById } from "../../services/produtosService";
+import { getProductById } from "../../services/productService";
 
 // HOOKS
 import useFontLoader from "../../hooks/useFontLoader";
@@ -71,10 +71,22 @@ export default function ProductDetail({ route, navigation }) {
   const { getProductRatingData } = useContext(RatingsContext);
 
   useEffect(() => {
+    console.log('📦 Produto recebido no ProductDetail:', {
+      id: produto.id,
+      title: produto.title,
+      category: produto.category,
+      platform: produto.platform,
+      hasDescription: !!produto.description
+    });
+
     if (produto.description) {
+      // Produto já tem descrição, usar direto
+      console.log('✅ Usando produto da lista (não busca API)');
       setProduct(produto);
       loadRating();
     } else {
+      // Buscar produto completo da API
+      console.log('🔄 Buscando produto da API...');
       fetchProduct();
     }
   }, [produto]);
@@ -87,10 +99,31 @@ export default function ProductDetail({ route, navigation }) {
 
   async function fetchProduct() {
     setLoading(true);
-    const response = await getProdutoById(produto.id);
-    setProduct(response);
+    try {
+      const response = await getProductById(produto.id);
+
+      console.log('🔍 Produto da API:', response);
+
+      // Adapta os dados da API para o formato do app
+      const adaptedProduct = {
+        id: response.uuid || response.id,
+        title: response.name || response.title,
+        price: response.price,
+        image: response.imageUrl || response.image,
+        category: Array.isArray(response.category) ? response.category.join(', ') : (response.category || 'Sem categoria'),
+        platform: response.platform || 'Sem plataforma',
+        description: response.description,
+        avaliation: response.rating || response.avaliation || 0
+      };
+
+      console.log('✅ Produto adaptado:', adaptedProduct);
+
+      setProduct(adaptedProduct);
+      loadRating();
+    } catch (error) {
+      console.error('Erro ao carregar produto:', error);
+    }
     setLoading(false);
-    loadRating();
   }
 
   async function loadRating() {
@@ -100,7 +133,7 @@ export default function ProductDetail({ route, navigation }) {
     if (ratingData.totalRatings === 0 && produto.avaliation !== undefined) {
       setRating({
         averageRating: produto.avaliation,
-        totalRatings: 1 // Simula que tem pelo menos 1 avaliação
+        totalRatings: 0 // Simula que tem pelo menos 1 avaliação
       });
     } else {
       setRating(ratingData);
@@ -172,8 +205,8 @@ export default function ProductDetail({ route, navigation }) {
   if (!fontLoaded || loading || !product) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <PageHeader 
-          onBackPress={() => navigation.goBack()} 
+        <PageHeader
+          onBackPress={() => navigation.goBack()}
           title="Detalhes do Produto"
         />
         <View style={styles.loaderContainer}>

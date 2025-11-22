@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { View, StyleSheet, ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from "@react-navigation/native";
@@ -14,8 +14,11 @@ import FilterModal from '../../components/app/FilterModal';
 // HOOKS
 import useFontLoader from '../../hooks/useFontLoader';
 
+// CONTEXTS
+import { CurrencyContext } from "../../context/CurrencyContext";
+
 // SERVIÇOS
-import { getProdutosList } from "../../services/produtosService";
+import { getProducts } from "../../services/productService";
 
 const COLORS = {
   background: "#1A1027",
@@ -43,9 +46,19 @@ export default function ProductList({ navigation }) {
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);
 
+  // Pega a moeda atual
+  const { currency } = useContext(CurrencyContext);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Recarrega produtos quando a moeda mudar
+  useEffect(() => {
+    if (produtosList.length > 0) {
+      fetchData();
+    }
+  }, [currency]);
 
   useFocusEffect(
       useCallback(() => {
@@ -101,10 +114,28 @@ export default function ProductList({ navigation }) {
 
   async function fetchData() {
     setLoading(true);
-    const response = await getProdutosList();
-    setProdutosList(response);
-    setFilteredList(response);
-    setDestaques(response.slice(0, 5));
+    try {
+      // Passa a moeda atual para a API
+      const response = await getProducts(currency);
+
+      // Adapta os dados da API para o formato do app
+      const adaptedProducts = response.map(product => ({
+        id: product.uuid || product.id,
+        title: product.name || product.title,
+        price: product.price,
+        image: product.imageUrl || product.image,
+        category: Array.isArray(product.category) ? product.category.join(', ') : product.category,
+        platform: product.platform,
+        description: product.description,
+        avaliation: product.rating || product.avaliation || 0
+      }));
+
+      setProdutosList(adaptedProducts);
+      setFilteredList(adaptedProducts);
+      setDestaques(adaptedProducts.slice(0, 5));
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
+    }
     setLoading(false);
   }
 

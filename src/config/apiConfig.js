@@ -80,6 +80,22 @@ export const PRODUCT_ENDPOINTS = {
   LIST: '/products',
   BY_ID: '/products', // /:id
   RATING: '/products/rating', // /:productId
+  CATEGORIES: '/products/categories',
+  PLATFORMS: '/products/platforms',
+  // Admin endpoints
+  ADD: '/ws/products/addProduct',
+  REMOVE: '/ws/products/removeProduct', // /:id
+  UPDATE: '/ws/products/updateProduct', // /:id
+};
+
+// ============ ENDPOINTS DE ORDERS ============
+
+export const ORDER_ENDPOINTS = {
+  CREATE: '/orders',
+  BY_ID: '/orders', // /:orderId
+  USER_ORDERS: '/orders/user',
+  // Admin endpoints
+  DELETE: '/orders/admin/deleteOrder', // /:orderId
 };
 
 // ============ FUNÇÕES HELPER ============
@@ -122,14 +138,25 @@ export const getProductUrl = (endpoint) => {
 };
 
 
+/**
+ * Constrói URL completa para endpoints de orders
+ * @param {string} endpoint - Endpoint de orders
+ * @returns {string} URL completa
+ */
+export const getOrderUrl = (endpoint) => {
+  return buildUrl(API_URLS.GATEWAY, endpoint);
+};
+
 export default {
   API_URLS,
   AUTH_ENDPOINTS,
   ADMIN_ENDPOINTS,
   CURRENCY_ENDPOINTS,
   PRODUCT_ENDPOINTS,
+  ORDER_ENDPOINTS,
   buildUrl,
   getAuthUrl,
   getCurrencyUrl,
   getProductUrl,
+  getOrderUrl,
 };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Switch } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,22 +7,39 @@ import { colors } from "../../styles/adminStyles";
 import PermissionDropdown from "../../components/admin/PermissionDropdown";
 import PrimaryButton from "../../components/admin/PrimaryButton";
 import CustomAlert from "../../components/admin/CustomAlert";
+import { updateEmployee } from "../../services/authService";
 
 export default function EditEmployeeForm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { employee } = route.params;
 
-  const [fullName, setFullName] = useState(employee.name);
-  const [email, setEmail] = useState(employee.email);
+  // Mapear role da API para permissão do dropdown
+  const getInitialPermission = () => {
+    const currentRole = employee.roles && employee.roles.length > 0
+      ? employee.roles[0].replace('ROLE_', '')
+      : null;
+
+    const reverseRoleMap = {
+      "COMMERCIAL": "COMMERCIAL",
+      "MANAGER_STORE": "MANAGER_STORE"
+    };
+
+    return reverseRoleMap[currentRole] || "COMMERCIAL";
+  };
+
+  const [fullName, setFullName] = useState(employee.name || "");
+  const [email, setEmail] = useState(employee.email || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [selectedPermission, setSelectedPermission] = useState("Gerente"); // Mock - buscar da API
+  const [selectedPermission, setSelectedPermission] = useState(getInitialPermission());
   const [showPermissions, setShowPermissions] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
+  const [loading, setLoading] = useState(false);
+  const [isActive, setIsActive] = useState(employee.active !== false);
 
-  const permissions = ["Gerente", "Super Admin"];
+  const permissions = ["COMMERCIAL", "MANAGER_STORE"];
 
   const validatePassword = (pass) => {
     if (!pass) return { hasUpperCase: true, hasLowerCase: true, hasNumber: true, hasSpecial: true, hasMinLength: true };
@@ -38,8 +55,8 @@ export default function EditEmployeeForm() {
 
   const validation = validatePassword(password);
 
-  const handleUpdateEmployee = () => {
-    if (!fullName || !email || !selectedPermission) {
+  const handleUpdateEmployee = async () => {
+    if (!fullName || !selectedPermission) {
       setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
       setShowAlert(true);
       return;
@@ -57,9 +74,65 @@ export default function EditEmployeeForm() {
       return;
     }
 
-    // Aqui você faria a chamada à API para atualizar o funcionário
-    setAlertConfig({ type: 'success', message: 'Employee updated successfully' });
-    setShowAlert(true);
+    // Permissão selecionada já está no formato da API
+    const role = selectedPermission;
+    if (!role || (role !== "COMMERCIAL" && role !== "MANAGER_STORE")) {
+      setAlertConfig({ type: 'error', message: 'Invalid permission selected' });
+      setShowAlert(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Montar updateData apenas com campos que mudaram
+      const updateData = {};
+
+      // Verificar se nome mudou
+      if (fullName !== employee.name) {
+        updateData.name = fullName;
+      }
+
+      // Verificar se role mudou (comparar com primeira role do employee)
+      const currentRole = employee.roles && employee.roles.length > 0
+        ? employee.roles[0].replace('ROLE_', '')
+        : null;
+      if (role !== currentRole) {
+        updateData.role = role;
+      }
+
+      // Verificar se status ativo mudou
+      if (isActive !== (employee.active !== false)) {
+        updateData.active = isActive;
+      }
+
+      // Incluir password se foi preenchido
+      if (password) {
+        updateData.password = password;
+      }
+
+      // Se não houver nada para atualizar
+      if (Object.keys(updateData).length === 0) {
+        setAlertConfig({ type: 'info', message: 'No changes to update' });
+        setShowAlert(true);
+        setLoading(false);
+        return;
+      }
+
+      await updateEmployee(employee.id, updateData);
+
+      setAlertConfig({ type: 'success', message: 'Employee updated successfully' });
+      setShowAlert(true);
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to update employee. Please try again.'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAlertClose = () => {
@@ -100,9 +173,9 @@ export default function EditEmployeeForm() {
 
         <Text style={styles.label}>Email:</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.inputDisabled]}
           value={email}
-          onChangeText={setEmail}
+          editable={false}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -151,13 +224,34 @@ export default function EditEmployeeForm() {
         <PermissionDropdown
   selectedPermission={selectedPermission}
   onSelectPermission={setSelectedPermission}
-  permissions={["Gerente", "Super Admin"]}
+  permissions={permissions}
 />
+
+        {/* Status */}
+        <View style={styles.switchContainer}>
+          <Text style={styles.label}>Status:</Text>
+          <View style={styles.switchRow}>
+            <Text style={[styles.statusText, !isActive && styles.statusTextActive]}>
+              Inactive
+            </Text>
+            <Switch
+              value={isActive}
+              onValueChange={setIsActive}
+              trackColor={{ false: "#767577", true: "#A855F7" }}
+              thumbColor={isActive ? "#fff" : "#f4f3f4"}
+              style={styles.switch}
+            />
+            <Text style={[styles.statusText, isActive && styles.statusTextActive]}>
+              Active
+            </Text>
+          </View>
+        </View>
 
         {/* Update Button */}
         <PrimaryButton
-          title="Update Employee"
+          title={loading ? "Updating..." : "Update Employee"}
           onPress={handleUpdateEmployee}
+          disabled={loading}
         />
       </ScrollView>
 
@@ -233,6 +327,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
   },
+  inputDisabled: {
+    backgroundColor: "#1B254F",
+    color: "#999",
+    opacity: 0.7,
+  },
   requirements: {
     marginBottom: 20,
   },
@@ -281,5 +380,28 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  statusText: {
+    color: "#666",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  statusTextActive: {
+    color: "#A855F7",
+  },
+  switch: {
+    marginHorizontal: 5,
   },
 });

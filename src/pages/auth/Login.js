@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -8,9 +8,9 @@ import {
   ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { AuthContext } from '../../context/AuthContext';
-import { signin, getMe } from '../../services/authService';
+import { signin, getMe, clearAllAuthData } from '../../services/authService';
 import { isAdminRole } from '../../utils/roleHelper';
 
 import Logo from '../../components/app/Logo';
@@ -20,11 +20,23 @@ import ErrorMessage from '../../components/app/ErrorMessage';
 
 export default function Login({ onLogin, onAdminLogin }) {
   const navigation = useNavigation();
-  const { setToken, setIsAuthenticated, saveUserData } = useContext(AuthContext);
+  const { setToken, setIsAuthenticated, saveUserData, logout } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Limpa o token sempre que a tela de login for focada
+  useFocusEffect(
+    React.useCallback(() => {
+      const clearAuth = async () => {
+        await clearAllAuthData();
+        setToken(null);
+        setIsAuthenticated(false);
+      };
+      clearAuth();
+    }, [])
+  );
 
   const handleLoginPress = async () => {
     if (!email || !password) {
@@ -67,33 +79,35 @@ export default function Login({ onLogin, onAdminLogin }) {
         }
       }
     } catch (apiError) {
-      console.error("Erro no login:", apiError);
-      setError(apiError.message || "Email ou senha inválidos.");
+      // Traduzir mensagens de erro para português
+      let errorMessage = "Email ou senha inválidos.";
+
+      if (apiError.message) {
+        if (apiError.message.toLowerCase().includes("disabled") ||
+            apiError.message.toLowerCase().includes("inativo")) {
+          errorMessage = "Usuário inativo!";
+
+          // Mostrar popup informativo
+          Alert.alert(
+            "Conta Inativa",
+            "Sua conta está inativa. Por favor, entre em contato com o suporte:\n\ninsertcoin.app@gmail.com",
+            [
+              {
+                text: "OK",
+                style: "default"
+              }
+            ],
+            { cancelable: true }
+          );
+        } else {
+          errorMessage = apiError.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAdminPress = () => {
-    onAdminLogin();
-  };
-
-  const showValidLoginsAlert = () => {
-    Alert.alert(
-      "Para sua conveniência",
-      "Use um login de teste para entrar rapidamente.",
-      [
-        {
-          text: "Usar Login de Teste",
-          onPress: () => {
-            setEmail("manager@email.com");
-            setPassword("135791");
-            setError("");
-          }
-        },
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
   };
 
   return (
@@ -140,24 +154,6 @@ export default function Login({ onLogin, onAdminLogin }) {
         <CustomButton
           title="Criar Conta"
           onPress={() => navigation.navigate('CriarConta')}
-          variant="secondary"
-        />
-
-        <CustomButton
-          title="Usar login de teste?"
-          onPress={showValidLoginsAlert}
-          variant="secondary"
-        />
-
-        <CustomButton
-          title="Teste Navegar Codigo de Segurança"
-          onPress={() => navigation.navigate('CodigoDeSeguranca')}
-          variant="secondary"
-        />
-
-        <CustomButton
-          title="Área Administrativa"
-          onPress={handleAdminPress}
           variant="secondary"
         />
       </ScrollView>

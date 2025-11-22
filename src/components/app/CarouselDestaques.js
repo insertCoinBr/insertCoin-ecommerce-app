@@ -56,7 +56,7 @@ export default function CarouselDestaques({
         ref={carouselRef}
         data={destaques}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item, index) => item?.id?.toString() || `carousel-${index}`}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={CAROUSEL_ITEM_WIDTH - 60}

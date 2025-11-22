@@ -9,22 +9,23 @@ import PrimaryButton from "../../components/admin/PrimaryButton";
 import CategorySelector from "../../components/admin/CategorySelector";
 import PlatformSelector from "../../components/admin/PlatformSelector";
 import CustomAlert from "../../components/admin/CustomAlert";
+import { updateProduct } from "../../services/productService";
 
 export default function EditProductForm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { product } = route.params;
 
-  const [productName, setProductName] = useState(product.name);
-  const [price, setPrice] = useState("10000"); // 100.00 em centavos
-  const [codeProduct, setCodeProduct] = useState(product.code);
-  const [description, setDescription] = useState("Estados Unidos, 1899. Arthur Morgan e a gangue Van der Linde são bandidos em fuga. Com agentes federais e os melhores caçadores de recompensas no seu encalço, a gangue precisa roubar, assaltar e lutar para sobreviver no impiedoso coração dos Estados Unidos. Conforme divisões internas profundas ameaçam despedaçar a gangue, Arthur deve fazer uma escolha entre os seus próprios ideais e a lealdade à gangue que o criou.");
-  const [productImage, setProductImage] = useState(null);
-  const [selectedCategories, setSelectedCategories] = useState(["Action"]);
-  const [selectedPlatform, setSelectedPlatform] = useState("PC");
+  const [productName, setProductName] = useState(product.name || "");
+  const [price, setPrice] = useState(product.price ? Math.floor(product.price * 520).toString() : "0"); // Converter USD para BRL em centavos (sem arredondar)
+  const [description, setDescription] = useState(product.description || "");
+  const [productImage, setProductImage] = useState(product.imageUrl || product.img || null);
+  const [selectedCategories, setSelectedCategories] = useState(product.category || []);
+  const [selectedPlatform, setSelectedPlatform] = useState(product.platform || "");
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [exchangeRate] = useState(5.20); // Taxa de câmbio BRL para USD
+  const [loading, setLoading] = useState(false);
 
   const formatBRL = (value) => {
     const numericValue = value.replace(/\D/g, '');
@@ -63,7 +64,7 @@ export default function EditProductForm() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [3, 4],
+      aspect: [4, 3],
       quality: 1,
     });
 
@@ -72,8 +73,8 @@ export default function EditProductForm() {
     }
   };
 
-  const handleUpdateProduct = () => {
-    if (!productName || !price || !description || !selectedPlatform || !codeProduct) {
+  const handleUpdateProduct = async () => {
+    if (!productName || !price || !description || !selectedPlatform) {
       setAlertConfig({ type: 'error', message: 'Please fill all required fields' });
       setShowAlert(true);
       return;
@@ -91,8 +92,44 @@ export default function EditProductForm() {
       return;
     }
 
-    setAlertConfig({ type: 'success', message: 'Product updated successfully' });
-    setShowAlert(true);
+    setLoading(true);
+
+    try {
+      const priceInUSD = parseFloat(price) / 100 / exchangeRate;
+
+      const productData = {
+        name: productName,
+        price: parseFloat(priceInUSD.toFixed(2)),
+        category: selectedCategories,
+        platform: selectedPlatform,
+        description: description,
+        img: productImage || product.imageUrl || product.img || "https://via.placeholder.com/300x400"
+      };
+
+      console.log('=== Updating product ===');
+      console.log('Product UUID:', product.uuid);
+      console.log('Product Data:', JSON.stringify(productData, null, 2));
+
+      await updateProduct(product.uuid || product.id, productData);
+
+      console.log('Product updated successfully!');
+      setAlertConfig({ type: 'success', message: 'Product updated successfully' });
+      setShowAlert(true);
+    } catch (error) {
+      console.error('=== Error updating product ===');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.statusCode);
+      console.error('Error data:', error.data);
+
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to update product. Please try again.'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAlertClose = () => {
@@ -158,13 +195,6 @@ export default function EditProductForm() {
           )}
         </View>
 
-        <Text style={styles.label}>Code Product:</Text>
-        <TextInput
-          style={styles.input}
-          value={codeProduct}
-          onChangeText={setCodeProduct}
-        />
-
         <Text style={styles.label}>Description:</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
@@ -180,8 +210,8 @@ export default function EditProductForm() {
             <Image source={{ uri: productImage }} style={styles.productImage} />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Image 
-                source={require("../../../assets/LogoInsetCoin1.png")} 
+              <Image
+                source={require("../../../assets/LogoInsetCoin1.png")}
                 style={styles.productImage}
               />
             </View>
@@ -189,7 +219,7 @@ export default function EditProductForm() {
         </TouchableOpacity>
         <Text style={styles.imageNote}>
           Click to select an image (max 5MB){'\n'}
-          PNG, JPG (Max. 800 x 400 px, 4:3 Ratio)
+          PNG, JPG (Recommended: 800x600px, 4:3)
         </Text>
 
         <CategorySelector
@@ -329,13 +359,15 @@ const styles = StyleSheet.create({
     borderColor: "#ffffffff",
     overflow: "hidden",
     marginBottom: 8,
+    aspectRatio: 1.33,
+    width: "100%",
   },
   imagePlaceholder: {
     alignItems: "center",
   },
   productImage: {
     width: "100%",
-    height: 200,
+    height: "100%",
     resizeMode: "cover",
   },
   imageNote: {

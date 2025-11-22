@@ -11,6 +11,12 @@ export default function OrderCard({
 }) {
   const getStatusColor = () => {
     switch (status) {
+      case "Pagamento Pendente":
+        return "#FFD700"; // amarelo
+      case "Confirmação pendente":
+        return "#FFA600"; // laranja
+      case "Concluído":
+        return "#00C851"; // verde
       case "Processando":
         return "#FFA600"; // laranja
       case "Cancelado":

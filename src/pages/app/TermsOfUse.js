@@ -1,11 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import RPGBorder from "../../components/app/RPGBorder";
 
 // HOOKS
@@ -19,18 +17,6 @@ const COLORS = {
 
 export default function Terms({ navigation }) {
   const fontLoaded = useFontLoader();
-  const [activeTab, setActiveTab] = useState('Notification');
-
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Notification");
-    }, [])
-  );
-
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
-  };
 
   if (!fontLoaded) {
     return null;
@@ -94,11 +80,6 @@ export default function Terms({ navigation }) {
           </RPGBorder>
         </View>
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }

@@ -1,35 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from "../../styles/adminStyles";
 import PrimaryButton from "../../components/admin/PrimaryButton";
-import SwitchButton from "../../components/admin/SwitchButton";
 import { NotificationStorage } from "../../services/NotificationStorage";
 import CustomAlert from "../../components/admin/CustomAlert";
 
 export default function AddNotification() {
   const navigation = useNavigation();
-  const route = useRoute();
-  
-  const [notificationType, setNotificationType] = useState("New Notification");
+
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [image, setImage] = useState(null);
-  const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
-
-  useEffect(() => {
-    if (route.params?.selectedPromotion) {
-      const promo = route.params.selectedPromotion;
-      setSelectedPromotion(promo);
-      setTitle(promo.title);
-      setSubtitle(promo.subtitle);
-    }
-  }, [route.params?.selectedPromotion]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -52,21 +39,6 @@ export default function AddNotification() {
     }
   };
 
-  const handleNotificationTypeChange = (type) => {
-    setNotificationType(type);
-    // Limpar campos ao trocar tipo
-    if (type === "New Notification") {
-      setSelectedPromotion(null);
-      setTitle("");
-      setSubtitle("");
-      setImage(null);
-    } else {
-      setTitle("");
-      setSubtitle("");
-      setImage(null);
-    }
-  };
-
   const handleCreateNotification = async () => {
     if (!title || !subtitle || !image) {
       setAlertConfig({ type: 'error', message: 'Please fill all fields and select an image' });
@@ -80,8 +52,6 @@ export default function AddNotification() {
         description: subtitle,
         image,
         isFavorite: false,
-        type: notificationType,
-        promotionId: selectedPromotion?.id || null,
       };
 
       await NotificationStorage.save(notification);
@@ -132,30 +102,11 @@ export default function AddNotification() {
 
       <Text style={styles.title}>Add Notification</Text>
 
-      <ScrollView 
+      <ScrollView
         style={styles.formScroll}
         contentContainerStyle={styles.formContent}
         showsVerticalScrollIndicator={false}
       >
-        <SwitchButton
-          option1="New Notification"
-          option2="Existing Promotion"
-          selected={notificationType}
-          onSelect={handleNotificationTypeChange}
-        />
-
-        {notificationType === "Existing Promotion" && (
-          <TouchableOpacity
-            style={styles.selectPromotionButton}
-            onPress={() => navigation.navigate("SelectPromotion", { returnRoute: "AddNotification" })}
-          >
-            <Text style={styles.selectPromotionButtonText}>
-              {selectedPromotion ? selectedPromotion.title : "Select Promotion"}
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color="#A855F7" />
-          </TouchableOpacity>
-        )}
-
         <Text style={styles.label}>Title</Text>
         <TextInput
           style={styles.input}
@@ -277,22 +228,6 @@ const styles = StyleSheet.create({
   textArea: {
     height: 80,
     textAlignVertical: "top",
-  },
-  selectPromotionButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#A855F7",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  selectPromotionButtonText: {
-    color: "#fff",
-    fontSize: 16,
   },
   imagePickerButton: {
     backgroundColor: "#0D1429",

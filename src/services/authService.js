@@ -307,6 +307,142 @@ export const getMe = async () => {
 };
 
 /**
+ * PUT /auth/me/update
+ * Atualiza dados do usuário logado
+ * @param {Object} updateData - Dados para atualizar
+ * @param {string} updateData.name - Nome (opcional)
+ * @param {string} updateData.currentPassword - Senha atual (para trocar senha)
+ * @param {string} updateData.newPassword - Nova senha (para trocar senha)
+ * @param {boolean} updateData.active - Status da conta (para desativar)
+ * @returns {Promise} Resposta da API
+ */
+export const updateMe = async (updateData) => {
+  try {
+    const response = await api.put('/auth/me/update', updateData);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+// ============ ADMIN ENDPOINTS ============
+
+/**
+ * POST /auth/admin/signup
+ * Cria um novo funcionário (requer autenticação de admin)
+ * @param {Object} employeeData - Dados do funcionário
+ * @param {string} employeeData.name - Nome do funcionário
+ * @param {string} employeeData.email - Email do funcionário
+ * @param {string} employeeData.password - Senha do funcionário
+ * @param {string} employeeData.role - Função (COMMERCIAL, MANAGER, etc)
+ * @returns {Promise} Resposta da API
+ */
+export const adminSignup = async (employeeData) => {
+  try {
+    const response = await api.post('/auth/admin/signup', employeeData);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * PUT /auth/admin/employees/update/:id
+ * Atualiza dados de um funcionário
+ * @param {string} id - ID do funcionário
+ * @param {Object} updateData - Dados para atualizar
+ * @param {string} updateData.name - Nome (opcional)
+ * @param {string} updateData.password - Senha (opcional)
+ * @param {string} updateData.role - Função (opcional)
+ * @param {boolean} updateData.active - Status ativo (opcional)
+ * @returns {Promise} Resposta da API
+ */
+export const updateEmployee = async (id, updateData) => {
+  try {
+    const response = await api.put(`/auth/admin/employees/update/${id}`, updateData);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * PUT /auth/admin/clients/update/:id
+ * Atualiza dados de um cliente
+ * @param {string} id - ID do cliente
+ * @param {Object} updateData - Dados para atualizar
+ * @param {string} updateData.name - Nome (opcional)
+ * @param {number} updateData.point - Pontos (opcional)
+ * @param {boolean} updateData.active - Status ativo (opcional)
+ * @returns {Promise} Resposta da API
+ */
+export const updateClient = async (id, updateData) => {
+  try {
+    const response = await api.put(`/auth/admin/clients/update/${id}`, updateData);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * GET /auth/admin/users/:id
+ * Obtém dados de um usuário específico
+ * @param {string} id - ID do usuário
+ * @returns {Promise} Dados do usuário
+ */
+export const getUserById = async (id) => {
+  try {
+    const response = await api.get(`/auth/admin/users/${id}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * GET /auth/admin/employees/search
+ * Busca funcionários com paginação
+ * @param {Object} params - Parâmetros de busca
+ * @param {string} params.email - Email para filtrar (opcional)
+ * @param {number} params.page - Página (padrão: 0)
+ * @param {number} params.size - Tamanho da página (padrão: 10)
+ * @returns {Promise} Lista paginada de funcionários
+ */
+export const searchEmployees = async (params = {}) => {
+  try {
+    const { email = '', page = 0, size = 10 } = params;
+    const response = await api.get('/auth/admin/employees/search', {
+      params: { email, page, size }
+    });
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * GET /auth/admin/clients/search
+ * Busca clientes com paginação
+ * @param {Object} params - Parâmetros de busca
+ * @param {string} params.email - Email para filtrar (opcional)
+ * @param {number} params.page - Página (padrão: 0)
+ * @param {number} params.size - Tamanho da página (padrão: 10)
+ * @returns {Promise} Lista paginada de clientes
+ */
+export const searchClients = async (params = {}) => {
+  try {
+    const { email = '', page = 0, size = 10 } = params;
+    const response = await api.get('/auth/admin/clients/search', {
+      params: { email, page, size }
+    });
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
  * Função auxiliar para tratar erros da API
  * @param {Error} error - Erro retornado pela API
  * @returns {Error} Erro formatado

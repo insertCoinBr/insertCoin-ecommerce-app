@@ -13,21 +13,24 @@ export default function InfoRow({ label, value, style }) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    width: '100%',
   },
   label: {
     color: "#CCCCCC",
     fontSize: 18,
     fontFamily: "VT323",
-    flex: 1,
+    minWidth: 100,
+    marginRight: 8,
   },
   value: {
     color: "#FFFFFF",
     fontSize: 18,
     fontFamily: "VT323",
-    flex: 2,
+    flex: 1,
+    minWidth: 0,
   },
 });

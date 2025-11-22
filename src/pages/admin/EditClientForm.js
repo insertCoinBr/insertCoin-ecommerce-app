@@ -5,20 +5,22 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import PrimaryButton from "../../components/admin/PrimaryButton";
+import { updateClient } from "../../services/authService";
 
 export default function EditClientForm() {
   const navigation = useNavigation();
   const route = useRoute();
   const { client } = route.params;
 
-  const [fullName, setFullName] = useState(client.name);
-  const [email, setEmail] = useState(client.email);
-  const [points, setPoints] = useState("300");
-  const [isActive, setIsActive] = useState(client.isActive !== undefined ? client.isActive : true);
+  const [fullName, setFullName] = useState(client.name || "");
+  const [email, setEmail] = useState(client.email || "");
+  const [points, setPoints] = useState(client.point ? client.point.toString() : "0");
+  const [isActive, setIsActive] = useState(client.active !== false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '', onClose: null });
+  const [loading, setLoading] = useState(false);
 
   const showAlert = (type, message, onClose = null) => {
     setAlertConfig({ type, message, onClose });
@@ -49,8 +51,8 @@ export default function EditClientForm() {
     setPendingStatus(null);
   };
 
-  const handleUpdateClient = () => {
-    if (!fullName || !email) {
+  const handleUpdateClient = async () => {
+    if (!fullName) {
       showAlert('error', 'Please fill all required fields');
       return;
     }
@@ -61,12 +63,49 @@ export default function EditClientForm() {
       return;
     }
 
-    showAlert('success', 'Client updated successfully', () => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'HomeAdm' }],
+    setLoading(true);
+
+    try {
+      // Montar updateData apenas com campos que mudaram
+      const updateData = {};
+
+      // Verificar se nome mudou
+      if (fullName !== client.name) {
+        updateData.name = fullName;
+      }
+
+      // Verificar se pontos mudaram
+      const pointsNum = parseInt(points, 10);
+      if (!isNaN(pointsNum) && pointsNum !== client.point) {
+        updateData.point = pointsNum;
+      }
+
+      // Verificar se status ativo mudou
+      if (isActive !== (client.active !== false)) {
+        updateData.active = isActive;
+      }
+
+      // Se não houver nada para atualizar
+      if (Object.keys(updateData).length === 0) {
+        showAlert('info', 'No changes to update');
+        setLoading(false);
+        return;
+      }
+
+      await updateClient(client.id, updateData);
+
+      showAlert('success', 'Client updated successfully', () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'HomeAdm' }],
+        });
       });
-    });
+    } catch (error) {
+      console.error('Error updating client:', error);
+      showAlert('error', error.message || 'Failed to update client. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -143,8 +182,9 @@ export default function EditClientForm() {
 
       <View style={styles.buttonContainer}>
         <PrimaryButton
-          title="Update Client"
+          title={loading ? "Updating..." : "Update Client"}
           onPress={handleUpdateClient}
+          disabled={loading}
         />
       </View>
 

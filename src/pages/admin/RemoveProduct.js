@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import CustomAlert from "../../components/admin/CustomAlert";
 import ConfirmModal from "../../components/admin/ConfirmModal";
+import { getProducts, removeProduct } from "../../services/productService";
 
 export default function RemoveProduct() {
   const navigation = useNavigation();
@@ -15,22 +16,42 @@ export default function RemoveProduct() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [selectedItems, setSelectedItems] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const [products, setProducts] = useState([
-    { id: 1, code: "ACT-PC-0001", name: "Red Dead Redemption 2" },
-    { id: 2, code: "ACT-PC-0002", name: "GTA V" },
-    { id: 3, code: "BR-HAOL-0003", name: "Fortnite" },
-    { id: 4, code: "SPT-XBX-0004", name: "FIFA 24" },
-    { id: 5, code: "RAC-XBX-0005", name: "Forza Horizon 5" },
-    { id: 6, code: "RAC-SW-0006", name: "Mario Kart 8 Deluxe" },
-    { id: 7, code: "ACT-SW-0007", name: "The Legend of Zelda: TOTK" },
-    { id: 8, code: "BR-PC-0008", name: "Call of Duty: Warzone" },
-    { id: 9, code: "SPT-PS-0009", name: "NBA 2K24" },
-  ]);
+  // Carregar products da API
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await getProducts();
+
+      if (Array.isArray(response)) {
+        setProducts(response);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to load products'
+      });
+      setShowAlert(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrar produtos localmente
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchText.toLowerCase())
+    product.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.uuid?.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.platform?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const toggleItemSelection = (itemId) => {
@@ -45,7 +66,7 @@ export default function RemoveProduct() {
     if (selectedItems.length === filteredProducts.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(filteredProducts.map(item => item.id));
+      setSelectedItems(filteredProducts.map(item => item.uuid || item.id));
     }
   };
 
@@ -64,19 +85,48 @@ export default function RemoveProduct() {
     setShowModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedProduct?.count) {
-      // Delete multiple
-      setProducts(products.filter(product => !selectedItems.includes(product.id)));
-      setAlertConfig({ type: 'success', message: `${selectedItems.length} product(s) removed successfully` });
-      setSelectedItems([]);
-    } else {
-      // Delete single
-      setProducts(products.filter(product => product.id !== selectedProduct.id));
-      setAlertConfig({ type: 'success', message: 'Product removed successfully' });
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleting(true);
+      setShowModal(false);
+
+      if (selectedProduct?.count) {
+        // Deletar múltiplos
+        const promises = selectedItems.map(id => {
+          return removeProduct(id);
+        });
+        await Promise.all(promises);
+
+        // Remover da lista local
+        setProducts(prev => prev.filter(product => !selectedItems.includes(product.uuid || product.id)));
+        setAlertConfig({ type: 'success', message: `${selectedItems.length} product(s) removed successfully` });
+        setSelectedItems([]);
+      } else {
+        // Deletar único
+        await removeProduct(selectedProduct.uuid || selectedProduct.id);
+
+        // Remover da lista local
+        setProducts(prev => prev.filter(product => (product.uuid || product.id) !== (selectedProduct.uuid || selectedProduct.id)));
+        setAlertConfig({ type: 'success', message: 'Product removed successfully' });
+      }
+
+      setShowAlert(true);
+
+      // Recarregar lista do servidor em background
+      loadProducts();
+    } catch (error) {
+      console.error('Error removing product:', error);
+      setAlertConfig({
+        type: 'error',
+        message: error.message || 'Failed to remove product'
+      });
+      setShowAlert(true);
+
+      // Em caso de erro, recarregar para garantir consistência
+      loadProducts();
+    } finally {
+      setDeleting(false);
     }
-    setShowModal(false);
-    setShowAlert(true);
   };
 
   const handleCancelDelete = () => {
@@ -133,40 +183,49 @@ export default function RemoveProduct() {
           </View>
         )}
 
-        <ScrollView style={styles.list}>
-          {filteredProducts.map((product) => (
-            <TouchableOpacity
-              key={product.id}
-              style={styles.itemCard}
-              onPress={() => toggleItemSelection(product.id)}
-            >
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => toggleItemSelection(product.id)}
-              >
-                <Ionicons
-                  name={selectedItems.includes(product.id) ? "checkbox" : "square-outline"}
-                  size={24}
-                  color="#A855F7"
-                />
-              </TouchableOpacity>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+          </View>
+        ) : (
+          <ScrollView style={styles.list}>
+            {filteredProducts.map((product, index) => {
+              const productId = product.uuid || product.id;
+              return (
+                <TouchableOpacity
+                  key={productId || `product-${index}`}
+                  style={styles.itemCard}
+                  onPress={() => toggleItemSelection(productId)}
+                >
+                  <TouchableOpacity
+                    style={styles.checkboxContainer}
+                    onPress={() => toggleItemSelection(productId)}
+                  >
+                    <Ionicons
+                      name={selectedItems.includes(productId) ? "checkbox" : "square-outline"}
+                      size={24}
+                      color="#A855F7"
+                    />
+                  </TouchableOpacity>
 
-              <View style={styles.itemInfo}>
-                <Text style={styles.productCode}>{product.code}</Text>
-                <Text style={styles.productName}>{product.name}</Text>
-              </View>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.productName}>{product.name}</Text>
+                    <Text style={styles.productSubtitle}>{product.platform || 'N/A'}</Text>
+                  </View>
 
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleSelectProduct(product);
-                }}
-              >
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleSelectProduct(product);
+                    }}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
         </View>
       </SafeAreaView>
 
@@ -325,19 +384,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#1B254F",
   },
-  productCode: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   productName: {
-    color: "#aaa",
-    fontSize: 13,
-    marginTop: 4,
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  productSubtitle: {
+    color: "#A855F7",
+    fontSize: 14,
   },
   logo: {
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

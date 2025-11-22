@@ -30,6 +30,10 @@ export default function Routes() {
         setIsLoggedIn(true);
         setIsAdmin(false);
       }
+    } else if (!isAuthenticated) {
+      // Se não está autenticado, resetar para AuthStack
+      setIsLoggedIn(false);
+      setIsAdmin(false);
     }
   }, [isAuthenticated, user]);
 

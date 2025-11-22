@@ -1,11 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import FAQItem from "../../components/app/FAQItem";
 
 // HOOKS
@@ -19,7 +17,6 @@ const COLORS = {
 
 export default function FAQ({ navigation }) {
   const fontLoaded = useFontLoader();
-  const [activeTab, setActiveTab] = useState('Notification');
 
   const faqData = [
     {
@@ -54,17 +51,6 @@ export default function FAQ({ navigation }) {
     },
   ];
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Notification");
-    }, [])
-  );
-
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
-  };
-
   if (!fontLoaded) {
     return null;
   }
@@ -90,11 +76,6 @@ export default function FAQ({ navigation }) {
           />
         ))}
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }

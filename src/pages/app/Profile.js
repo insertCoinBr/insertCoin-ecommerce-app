@@ -1,15 +1,16 @@
-import React, { useState, useCallback, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 //IMPORTAR OS CONTEXTS
 import { FavoritesContext } from "../../context/FavoritesContext";
 import { AuthContext } from "../../context/AuthContext";
 
+// SERVICES
+import { updateMe } from "../../services/authService";
+
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import ProfileHeader from "../../components/app/ProfileHeader";
 import MenuButton from "../../components/app/MenuButton";
 import CurrencyToggle from "../../components/app/CurrencyToggle";
@@ -28,7 +29,6 @@ const COLORS = {
 
 export default function Profile({ navigation, onLogout }) {
   const fontLoaded = useFontLoader();
-  const [activeTab, setActiveTab] = useState('Notification');
   const [currency, setCurrency] = useState('BRL');
 
   // Estados dos modais
@@ -37,7 +37,10 @@ export default function Profile({ navigation, onLogout }) {
 
   //USAR OS CONTEXTS
   const { getFavoritesCount } = useContext(FavoritesContext);
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
+
+  // Estados de loading
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Dados do usuário vindos da API /auth/me
   const userData = {
@@ -47,21 +50,24 @@ export default function Profile({ navigation, onLogout }) {
     coins: user?.point || 0, // A API retorna "point" não "coins"
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Notification");
-    }, [])
-  );
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      // Chamar API para desativar conta (active: false)
+      await updateMe({ active: false });
 
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
-  };
+      // Fechar modal
+      setModalVisible(false);
 
-  const handleDelete = () => {
-    setModalVisible(false);
-    if (onLogout) {
-      onLogout();
+      // Fazer logout após desativar conta
+      await logout();
+    } catch (error) {
+      console.log('Erro ao excluir conta:', error);
+      setModalVisible(false);
+      // Mesmo em caso de erro, fazer logout
+      await logout();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -127,16 +133,17 @@ export default function Profile({ navigation, onLogout }) {
         {/* Modal de Confirmação - Excluir Conta */}
         <ConfirmModal
           visible={modalVisible}
-          onClose={() => setModalVisible(false)}
+          onClose={() => !isDeleting && setModalVisible(false)}
           onConfirm={handleDelete}
           title="Excluir Conta"
           message="Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita."
-          confirmText="Excluir"
+          confirmText={isDeleting ? "Excluindo..." : "Excluir"}
           cancelText="Cancelar"
           borderTypeButton1="blue"
           centerColorButton1={COLORS.secondary}
           borderTypeButton2="red"
           centerColorButton2={COLORS.red}
+          disabled={isDeleting}
         />
 
         {/* Seção Moeda */}
@@ -209,11 +216,6 @@ export default function Profile({ navigation, onLogout }) {
           centerColorButton2={COLORS.red}
         />
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }

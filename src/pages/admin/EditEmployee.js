@@ -1,30 +1,69 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import { searchEmployees, getUserById } from "../../services/authService";
 
 export default function EditEmployee() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock data - substitua com dados reais da sua API
-  const employees = [
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem" },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat" },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari" },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel" },
-    { id: 5, email: "cristianesalles@insertcoin.com.br", name: "Cristiane Salles" },
-  ];
+  // Carregar employees da API
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
-  const filteredEmployees = employees.filter(emp =>
-    emp.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    emp.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await searchEmployees({
+        email: searchText,
+        page: 0,
+        size: 20
+      });
 
-  const handleSelectEmployee = (employee) => {
-    navigation.navigate("EditEmployeeForm", { employee });
+      // A resposta pode vir em formato paginado
+      if (response.content) {
+        setEmployees(response.content);
+      } else if (Array.isArray(response)) {
+        setEmployees(response);
+      }
+    } catch (error) {
+      console.error('Error loading employees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recarregar quando buscar
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadEmployees();
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchText]);
+
+  // Filtrar apenas employees ativos
+  const filteredEmployees = employees.filter(emp => {
+    return emp.active !== false && emp.active !== "false" && emp.active !== 0;
+  });
+
+  const handleSelectEmployee = async (employee) => {
+    try {
+      setLoading(true);
+      // Buscar dados completos do employee (incluindo active, roles, etc)
+      const fullEmployeeData = await getUserById(employee.id);
+      navigation.navigate("EditEmployeeForm", { employee: fullEmployeeData });
+    } catch (error) {
+      console.error('Error loading employee details:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,17 +99,23 @@ export default function EditEmployee() {
       </View>
 
       {/* Employee List */}
-      <ScrollView style={styles.list}>
-        {filteredEmployees.map((employee) => (
-          <TouchableOpacity
-            key={employee.id}
-            style={styles.employeeItem}
-            onPress={() => handleSelectEmployee(employee)}
-          >
-            <Text style={styles.employeeEmail}>{employee.email}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+        </View>
+      ) : (
+        <ScrollView style={styles.list}>
+          {filteredEmployees.map((employee) => (
+            <TouchableOpacity
+              key={employee.id}
+              style={styles.employeeItem}
+              onPress={() => handleSelectEmployee(employee)}
+            >
+              <Text style={styles.employeeEmail}>{employee.email}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   );
@@ -148,5 +193,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

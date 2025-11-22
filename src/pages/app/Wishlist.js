@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useContext } from "react";
+import React, { useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
 
 //IMPORTAR OS CONTEXTS
 import { CartContext } from "../../context/CartContext";
@@ -11,7 +10,6 @@ import { useAlert } from "../../context/AlertContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
-import BottomTabBar from "../../components/app/BottomTabBar";
 import WishlistItemCard from "../../components/app/WishlistItemCard";
 import RPGBorder from "../../components/app/RPGBorder";
 import MenuButton from "../../components/app/MenuButton";
@@ -26,7 +24,6 @@ const COLORS = {
 
 export default function Wishlist({ navigation }) {
   const fontLoaded = useFontLoader();
-  const [activeTab, setActiveTab] = useState('Notification');
 
   //USAR O CARTCONTEXT
   const { addToCart, addMultipleToCart } = useContext(CartContext);
@@ -46,17 +43,6 @@ export default function Wishlist({ navigation }) {
 
   //USAR O CURRENCYCONTEXT
   const { formatPrice } = useContext(CurrencyContext);
-
-  useFocusEffect(
-    useCallback(() => {
-      setActiveTab("Notification");
-    }, [])
-  );
-
-  const handleTabPress = (route, tabName) => {
-    setActiveTab(tabName);
-    navigation.navigate(route);
-  };
 
   //REMOVER DOS FAVORITOS USANDO CONTEXT
   const handleRemoveItem = async (itemId) => {
@@ -145,10 +131,6 @@ export default function Wishlist({ navigation }) {
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando favoritos...</Text>
         </View>
-        <BottomTabBar 
-          activeTab={activeTab}
-          onTabPress={handleTabPress}
-        />
       </SafeAreaView>
     );
   }
@@ -181,11 +163,6 @@ export default function Wishlist({ navigation }) {
             />
           </View>
         </View>
-
-        <BottomTabBar 
-          activeTab={activeTab}
-          onTabPress={handleTabPress}
-        />
       </SafeAreaView>
     );
   }
@@ -279,11 +256,6 @@ export default function Wishlist({ navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      <BottomTabBar 
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-      />
     </SafeAreaView>
   );
 }

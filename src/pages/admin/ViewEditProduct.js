@@ -1,33 +1,69 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image} from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import { getProducts, getProductById } from "../../services/productService";
 
 export default function ViewEditProduct() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const products = [
-    { id: 1, code: "ACT-PC-0001", name: "Red Dead Redemption 2" },
-    { id: 2, code: "ACT-PC-0002", name: "GTA V" },
-    { id: 3, code: "BR-HAOL-0003", name: "Fortnite" },
-    { id: 4, code: "SPT-XBX-0004", name: "FIFA 24" },
-    { id: 5, code: "RAC-XBX-0005", name: "Forza Horizon 5" },
-    { id: 6, code: "RAC-SW-0006", name: "Mario Kart 8 Deluxe" },
-    { id: 7, code: "ACT-SW-0007", name: "The Legend of Zelda: TOTK" },
-    { id: 8, code: "BR-PC-0008", name: "Call of Duty: Warzone" },
-    { id: 9, code: "SPT-PS-0009", name: "NBA 2K24" },
-  ];
+  // Carregar products da API
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading products...');
+
+      const response = await getProducts();
+      console.log('Products loaded successfully:', response);
+
+      // A API retorna um array de produtos
+      if (Array.isArray(response)) {
+        setProducts(response);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('=== Error loading products ===');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.statusCode);
+      console.error('Error data:', error.data);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrar produtos localmente
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchText.toLowerCase())
+    product.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+    product.uuid?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const handleSelectProduct = (product) => {
-    navigation.navigate("EditProductForm", { product });
+  const handleSelectProduct = async (product) => {
+    try {
+      setLoading(true);
+      console.log('Loading product details for UUID:', product.uuid);
+
+      // Buscar dados completos do produto
+      const fullProductData = await getProductById(product.uuid);
+      console.log('Product details loaded:', fullProductData);
+
+      navigation.navigate("EditProductForm", { product: fullProductData });
+    } catch (error) {
+      console.error('Error loading product details:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,22 +96,29 @@ export default function ViewEditProduct() {
       </View>
 
       <View style={styles.tableHeader}>
-        <Text style={[styles.headerText, styles.codeColumn]}>Code</Text>
-        <Text style={[styles.headerText, styles.nameColumn]}>Name</Text>
+        <Text style={[styles.headerText, styles.nameColumn]}>Games</Text>
       </View>
 
-      <ScrollView style={styles.list}>
-        {filteredProducts.map((product) => (
-          <TouchableOpacity
-            key={product.id}
-            style={styles.productItem}
-            onPress={() => handleSelectProduct(product)}
-          >
-            <Text style={styles.productCode}>{product.code}</Text>
-            <Text style={styles.productName}>{product.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+        </View>
+      ) : (
+        <ScrollView style={styles.list}>
+          {filteredProducts.map((product, index) => (
+            <TouchableOpacity
+              key={product.uuid || `product-${index}`}
+              style={styles.productItem}
+              onPress={() => handleSelectProduct(product)}
+            >
+              <View style={styles.productInfo}>
+                <Text style={styles.productName}>{product.name || 'Unnamed'}</Text>
+                <Text style={styles.productSubtitle}>{product.platform || 'N/A'}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   );
@@ -149,9 +192,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  codeColumn: {
-    width: 120,
-  },
   nameColumn: {
     flex: 1,
   },
@@ -161,23 +201,32 @@ const styles = StyleSheet.create({
   productItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#1B254F",
   },
-  productCode: {
-    color: "#fff",
-    fontSize: 14,
-    width: 120,
+  productInfo: {
+    flex: 1,
   },
   productName: {
     color: "#fff",
-    fontSize: 15,
-    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  productSubtitle: {
+    color: "#A855F7",
+    fontSize: 14,
   },
   logo: {
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });

@@ -60,8 +60,17 @@ export default function CriarConta({ route }) {
       // Navega para a tela de código de segurança
       navigation.navigate('CodigoDeSeguranca');
     } catch (apiError) {
-      console.error("Erro ao enviar email:", apiError);
-      setError(apiError.message || "Erro ao enviar código. Tente novamente.");
+      // Verificar se o erro é de email já cadastrado
+      const errorMessage = apiError.message || "";
+      const errorData = apiError.data || {};
+
+      if (errorMessage.toLowerCase().includes("already registered") ||
+          errorData.status?.toLowerCase().includes("already registered")) {
+        setError("Este email já possui uma conta cadastrada. Por favor, faça login.");
+      } else {
+        console.error("Erro ao enviar email:", apiError);
+        setError(errorMessage || "Erro ao enviar código. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }

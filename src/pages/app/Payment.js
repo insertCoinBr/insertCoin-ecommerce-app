@@ -1,17 +1,21 @@
 import React, { useState, useCallback, useContext } from "react";
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 
 //  IMPORTAR OS CONTEXTS
 import { CartContext } from "../../context/CartContext";
 import { CurrencyContext } from "../../context/CurrencyContext";
+import { useAlert } from "../../context/AlertContext";
 
 // COMPONENTES
 import PageHeader from "../../components/app/PageHeader";
 import BottomTabBar from "../../components/app/BottomTabBar";
 import PaymentMethodCard from "../../components/app/PaymentMethodCard";
 import RPGBorder from "../../components/app/RPGBorder";
+
+// SERVICES
+import { createOrderPix, createOrderCard } from "../../services/orderService";
 
 import useFontLoader from "../../hooks/useFontLoader";
 
@@ -24,14 +28,16 @@ const COLORS = {
 
 export default function Payment({ navigation, route }) {
   const fontLoaded = useFontLoader();
-  const { currency } = useContext(CurrencyContext);
-  
+  const { currency, formatPrice } = useContext(CurrencyContext);
+  const { showSuccess, showError } = useAlert();
+
   //USAR O CARTCONTEXT
-  const { getCartTotal, clearCart } = useContext(CartContext);
-  
+  const { getCartTotal, clearCart, cartItems } = useContext(CartContext);
+
   const [activeTab, setActiveTab] = useState('Cart');
   const [selectedPayment, setSelectedPayment] = useState('credit');
-  
+  const [loading, setLoading] = useState(false);
+
   // Dados de pagamento
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -56,22 +62,77 @@ export default function Payment({ navigation, route }) {
     navigation.navigate(route);
   };
 
-  const formatPrice = (value) => {
-    return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
-  };
-
-  //FINALIZAR COMPRA - LIMPA O CARRINHO
+  //FINALIZAR COMPRA - CHAMA API
   const handleFinalizePurchase = async () => {
-    if (selectedPayment === 'credit' && (!cardName || !cardNumber || !cardDate || !cardCVV)) {
-      alert('Por favor, preencha todos os dados do cartão');
+    // Validações
+    if (cartItems.length === 0) {
+      showError('Carrinho Vazio', 'Adicione produtos ao carrinho antes de finalizar a compra.');
       return;
     }
-    
-    //LIMPA O CARRINHO APÓS COMPRA
-    await clearCart();
-    
-    // Vai para tela de sucesso
-    navigation.navigate('Success');
+
+    if (selectedPayment === 'credit' && (!cardName || !cardNumber || !cardDate || !cardCVV)) {
+      showError('Dados Incompletos', 'Por favor, preencha todos os dados do cartão');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Preparar items do pedido
+      const items = cartItems.map(item => ({
+        productId: item.id,
+        quantity: item.quantity
+      }));
+
+      let orderResponse;
+
+      if (selectedPayment === 'pix') {
+        // Criar pedido PIX
+        orderResponse = await createOrderPix({
+          items,
+          currency: currency
+        });
+      } else {
+        // Criar pedido CARTÃO
+        // Separar mês e ano da data (formato MMAA)
+        const expiryMonth = parseInt(cardDate.substring(0, 2), 10);
+        const expiryYear = parseInt('20' + cardDate.substring(2, 4), 10);
+
+        orderResponse = await createOrderCard({
+          items,
+          currency: currency,
+          card: {
+            number: cardNumber.replace(/\s/g, ''), // Remove espaços
+            holderName: cardName,
+            expiryMonth,
+            expiryYear,
+            cvv: cardCVV
+          }
+        });
+      }
+
+      console.log('Pedido criado com sucesso:', orderResponse);
+
+      // Limpa o carrinho após sucesso
+      await clearCart();
+
+      // Mostra mensagem de sucesso e navega
+      showSuccess(
+        'Pedido Realizado!',
+        'Seu pedido foi criado com sucesso.',
+        {
+          onClose: () => navigation.navigate('Success')
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      showError(
+        'Erro ao Processar Pedido',
+        error.message || 'Não foi possível processar seu pedido. Tente novamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!fontLoaded) {
@@ -238,23 +299,28 @@ export default function Payment({ navigation, route }) {
         )}
 
         {/* Botão Envio de Ordem */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleFinalizePurchase}
           activeOpacity={0.8}
           style={styles.submitButtonWrapper}
+          disabled={loading}
         >
           <RPGBorder
             width={345}
             height={66}
             tileSize={8}
-            centerColor={COLORS.secondary}
+            centerColor={loading ? '#666666' : COLORS.secondary}
             borderType="blue"
             contentPadding={8}
             contentJustify="center"
             contentAlign="center"
           >
             <View style={styles.submitButton}>
-              <Text style={styles.submitButtonText}>Envio de Ordem</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.submitButtonText}>Envio de Ordem</Text>
+              )}
             </View>
           </RPGBorder>
         </TouchableOpacity>

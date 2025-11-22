@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Image,
   Animated,
   Dimensions
@@ -164,31 +165,33 @@ export default function RPGAlert({
       animationType="none"
       onRequestClose={handleClose}
     >
-      <Animated.View
-        style={[
-          styles.overlay,
-          {
-            opacity: fadeAnim,
-          }
-        ]}
-      >
+      <TouchableWithoutFeedback onPress={handleClose}>
         <Animated.View
           style={[
-            styles.modalWrapper,
+            styles.overlay,
             {
-              transform: [
-                { scale: scaleAnim },
-                {
-                  translateY: scaleAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-50, 0],
-                  })
-                }
-              ],
+              opacity: fadeAnim,
             }
           ]}
         >
-          <RPGBorder
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <Animated.View
+              style={[
+                styles.modalWrapper,
+                {
+                  transform: [
+                    { scale: scaleAnim },
+                    {
+                      translateY: scaleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-50, 0],
+                      })
+                    }
+                  ],
+                }
+              ]}
+            >
+              <RPGBorder
             widthPercent={0.92}
             height={autoClose ? 321 : (showCancel ? 481 : 451)}
             tileSize={10}
@@ -299,8 +302,10 @@ export default function RPGAlert({
               )}
             </View>
           </RPGBorder>
+            </Animated.View>
+          </TouchableWithoutFeedback>
         </Animated.View>
-      </Animated.View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }

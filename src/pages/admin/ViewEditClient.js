@@ -1,34 +1,88 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
+import { searchClients, getUserById } from "../../services/authService";
 
 export default function ViewEditClient() {
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const clients = [
-    { id: 1, email: "andersonbohnem@insertcoin.com.br", name: "Anderson Bohnem", isActive: true },
-    { id: 2, email: "luisfelipepagnussat@insertcoin.com.br", name: "Luis Felipe Pagnussat", isActive: true },
-    { id: 3, email: "guilhermeferrari@insertcoin.com.br", name: "Guilherme Ferrari", isActive: true },
-    { id: 4, email: "eduardomorel@insertcoin.com.br", name: "Eduardo Morel", isActive: true },
-    { id: 5, email: "cristianosalles@insertcoin.com.br", name: "Cristiano Salles", isActive: true },
-    { id: 6, email: "carlossantos@insertcoin.com.br", name: "Carlos Santos", isActive: true },
-    { id: 7, email: "lucassilva@insertcoin.com.br", name: "Lucas Silva", isActive: true },
-    { id: 8, email: "pauloalcantra@insertcoin.com.br", name: "Paulo Alcantra", isActive: true },
-    { id: 9, email: "ricardomazda@insertcoin.com.br", name: "Ricardo Mazda", isActive: true },
-    { id: 10, email: "julialima@insertcoin.com.br", name: "Julia Lima", isActive: true },
-  ];
+  // Carregar clients da API
+  useEffect(() => {
+    loadClients();
+  }, [page]);
 
-  const filteredClients = clients.filter(client =>
-    client.email.toLowerCase().includes(searchText.toLowerCase()) ||
-    client.name.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const loadClients = async () => {
+    try {
+      setLoading(true);
+      const response = await searchClients({
+        email: searchText,
+        page: page,
+        size: 20
+      });
 
-  const handleSelectClient = (client) => {
-    navigation.navigate("EditClientForm", { client });
+      // A resposta pode vir em formato paginado
+      let clientList = [];
+      if (response.content) {
+        clientList = response.content;
+        setTotalPages(response.totalPages || 0);
+      } else if (Array.isArray(response)) {
+        clientList = response;
+      }
+
+      // Buscar detalhes completos de cada client (incluindo campo active)
+      if (clientList.length > 0) {
+        const detailedClients = await Promise.all(
+          clientList.map(async (client) => {
+            try {
+              const fullData = await getUserById(client.id);
+              return fullData;
+            } catch (error) {
+              console.error('Erro ao buscar detalhes do client:', client.id, error);
+              return client;
+            }
+          })
+        );
+        setClients(detailedClients);
+      } else {
+        setClients([]);
+      }
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recarregar quando buscar
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      loadClients();
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchText]);
+
+  // Mostrar todos os clients (ativos e inativos)
+
+  const handleSelectClient = async (client) => {
+    try {
+      setLoading(true);
+      // Buscar dados completos do client antes de editar
+      const fullClientData = await getUserById(client.id);
+      navigation.navigate("EditClientForm", { client: fullClientData });
+    } catch (error) {
+      console.error('Error loading client details:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,24 +114,30 @@ export default function ViewEditClient() {
         />
       </View>
 
-      <ScrollView style={styles.list}>
-        {filteredClients.map((client) => (
-          <TouchableOpacity
-            key={client.id}
-            style={styles.clientItem}
-            onPress={() => handleSelectClient(client)}
-          >
-            <View style={styles.clientInfo}>
-              <Text style={styles.clientEmail}>{client.email}</Text>
-              {!client.isActive && (
-                <View style={styles.inactiveBadge}>
-                  <Text style={styles.inactiveBadgeText}>Inactive</Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A855F7" />
+        </View>
+      ) : (
+        <ScrollView style={styles.list}>
+          {clients.map((client) => (
+            <TouchableOpacity
+              key={client.id}
+              style={styles.clientItem}
+              onPress={() => handleSelectClient(client)}
+            >
+              <View style={styles.clientInfo}>
+                <Text style={styles.clientEmail}>{client.email}</Text>
+                {client.active === false && (
+                  <View style={styles.inactiveBadge}>
+                    <Text style={styles.inactiveBadgeText}>Inactive</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   );
@@ -173,5 +233,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });
