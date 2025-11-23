@@ -95,24 +95,24 @@ export default function EditProductForm() {
     setLoading(true);
 
     try {
-      const priceInUSD = parseFloat(price) / 100 / exchangeRate;
+      const priceInBRL = parseFloat(price) / 100;
 
       const productData = {
         name: productName,
-        price: parseFloat(priceInUSD.toFixed(2)),
+        price: parseFloat(priceInBRL.toFixed(2)),
         category: selectedCategories,
         platform: selectedPlatform,
         description: description,
         img: productImage || product.imageUrl || product.img || "https://via.placeholder.com/300x400"
       };
 
-      console.log('=== Updating product ===');
-      console.log('Product UUID:', product.uuid);
-      console.log('Product Data:', JSON.stringify(productData, null, 2));
+      // console.log('=== Updating product ===');
+      // console.log('Product UUID:', product.uuid);
+      // console.log('Product Data:', JSON.stringify(productData, null, 2));
 
       await updateProduct(product.uuid || product.id, productData);
 
-      console.log('Product updated successfully!');
+      // console.log('Product updated successfully!');
       setAlertConfig({ type: 'success', message: 'Product updated successfully' });
       setShowAlert(true);
     } catch (error) {

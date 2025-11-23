@@ -97,15 +97,15 @@ export function AuthProvider({ children }) {
   // Função para fazer logout
   const logout = async () => {
     try {
-      console.log('=== LOGOUT FUNCTION CALLED ===');
+      // console.log('=== LOGOUT FUNCTION CALLED ===');
       await clearAllAuthData();
       setUser(null);
       setToken(null);
       setIsAuthenticated(false);
       clearTempData();
-      console.log('=== LOGOUT: isAuthenticated set to false ===');
+      // console.log('=== LOGOUT: isAuthenticated set to false ===');
     } catch (error) {
-      console.log('=== LOGOUT ERROR ===', error);
+      // console.log('=== LOGOUT ERROR ===', error);
     }
   };
 

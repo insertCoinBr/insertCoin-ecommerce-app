@@ -32,64 +32,44 @@ export default function OrderDetails({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [ratedProducts, setRatedProducts] = useState({});
 
-  // Pega o número do pedido da navegação
-  const { orderNumber } = route.params || { orderNumber: "XXXX-XXXX" };
+  // Pega o número do pedido e os dados completos da navegação
+  const { orderNumber, order } = route.params || { orderNumber: "XXXX-XXXX", order: null };
 
   // Contexts
   const { rateProduct, hasRated, getUserRatingData } = useContext(RatingsContext);
   const { showSuccess, showError } = useAlert();
 
   useEffect(() => {
-    // Simula busca de dados do pedido
+    // Usa os dados da API recebidos via params
     fetchOrderDetails();
-  }, []);
+  }, [order]);
 
   const fetchOrderDetails = async () => {
     setLoading(true);
 
-    // Simula chamada de API
-    setTimeout(() => {
-      const mockData = {
-        orderNumber: orderNumber,
-        items: [
-          {
-            id: 1,
-            name: "Need for Speed™ Most Wanted",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1262560/header.jpg?t=1605151411",
-            quantity: 1,
-            price: 550.00
-          },
-          {
-            id: 2,
-            name: "Forza Horizon 5",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1551360/header.jpg?t=1746471508",
-            quantity: 2,
-            price: 550.00
-          },
-          {
-            id: 3,
-            name: "DEVOUR",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1274570/9e87b6a67f6c72fc7a29cb91a36d901b5be45c3d/header_alt_assets_4.jpg?t=1760547195",
-            quantity: 1,
-            price: 350.00
-          },
-          {
-            id: 4,
-            name: "PEAK",
-            image: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/3527290/31bac6b2eccf09b368f5e95ce510bae2baf3cfcd/header.jpg?t=1759172507",
-            quantity: 1,
-            price: 800.00
-          },
-        ],
-        total: 2800.00
-      };
+    try {
+      if (order && order.items) {
+        // Adapta os dados da API para o formato do componente
+        const adaptedData = {
+          orderNumber: order.orderNumber || orderNumber,
+          items: order.items.map(item => ({
+            id: item.product?.uuid || item.product?.id || item.productId,
+            name: item.product?.name || item.product?.title || "Produto",
+            image: item.product?.imageUrl || item.product?.img || item.product?.image || "https://via.placeholder.com/300x400",
+            quantity: item.quantity || 1,
+            price: item.unitPrice || item.price || 0
+          })),
+          total: order.totalAmount || order.total || 0
+        };
 
-      setOrderData(mockData);
+        setOrderData(adaptedData);
+        loadExistingRatings(adaptedData.items);
+      }
+    } catch (error) {
+      console.error('Erro ao processar dados do pedido:', error);
+    } finally {
       setLoading(false);
-
-      // Carrega avaliações existentes
-      loadExistingRatings(mockData.items);
-    }, 1000);
+    }
   };
 
   const loadExistingRatings = (items) => {

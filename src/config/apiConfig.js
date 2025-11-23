@@ -21,12 +21,12 @@ const getLocalIP = () => {
 
     if (debuggerHost) {
       const ip = debuggerHost.split(':')[0];
-      console.log('[API Config] IP detectado automaticamente:', ip);
+      // console.log('[API Config] IP detectado automaticamente:', ip);
       return ip;
     }
 
     // Fallback para IP padrão caso não consiga detectar
-    console.warn('[API Config] Não foi possível detectar IP, usando fallback: localHost');
+    // console.warn('[API Config] Não foi possível detectar IP, usando fallback: localHost');
     return 'localHost';
   } catch (error) {
     console.error('[API Config] Erro ao detectar IP:', error);

@@ -62,7 +62,7 @@ export default function Profile({ navigation, onLogout }) {
       // Fazer logout após desativar conta
       await logout();
     } catch (error) {
-      console.log('Erro ao excluir conta:', error);
+      // console.log('Erro ao excluir conta:', error);
       setModalVisible(false);
       // Mesmo em caso de erro, fazer logout
       await logout();

@@ -36,10 +36,10 @@ export function CurrencyProvider({ children }) {
       const saved = await AsyncStorage.getItem(CURRENCY_STORAGE_KEY);
       if (saved && CURRENCIES[saved]) {
         setCurrencyState(saved);
-        console.log(`Moeda carregada: ${saved}`);
+        // console.log(`Moeda carregada: ${saved}`);
       }
     } catch (e) {
-      console.warn('Erro ao carregar moeda:', e);
+      // console.warn('Erro ao carregar moeda:', e);
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export function CurrencyProvider({ children }) {
     }
 
     setCurrencyState(newCurrency);
-    console.log(`Moeda alterada para: ${newCurrency}`);
+    // console.log(`Moeda alterada para: ${newCurrency}`);
   };
 
   const formatPrice = (value) => {

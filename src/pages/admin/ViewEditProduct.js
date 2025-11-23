@@ -20,10 +20,10 @@ export default function ViewEditProduct() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      console.log('Loading products...');
+      // console.log('Loading products...');
 
       const response = await getProducts();
-      console.log('Products loaded successfully:', response);
+      // console.log('Products loaded successfully:', response);
 
       // A API retorna um array de produtos
       if (Array.isArray(response)) {
@@ -52,11 +52,11 @@ export default function ViewEditProduct() {
   const handleSelectProduct = async (product) => {
     try {
       setLoading(true);
-      console.log('Loading product details for UUID:', product.uuid);
+      // console.log('Loading product details for UUID:', product.uuid);
 
       // Buscar dados completos do produto
       const fullProductData = await getProductById(product.uuid);
-      console.log('Product details loaded:', fullProductData);
+      // console.log('Product details loaded:', fullProductData);
 
       navigation.navigate("EditProductForm", { product: fullProductData });
     } catch (error) {

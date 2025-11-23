@@ -16,6 +16,7 @@ import useFontLoader from '../../hooks/useFontLoader';
 
 // CONTEXTS
 import { CurrencyContext } from "../../context/CurrencyContext";
+import { AuthContext } from "../../context/AuthContext";
 
 // SERVIÇOS
 import { getProducts } from "../../services/productService";
@@ -46,8 +47,9 @@ export default function ProductList({ navigation }) {
   const fontLoaded = useFontLoader();
   const scrollViewRef = useRef(null);
 
-  // Pega a moeda atual
+  // Pega a moeda atual e autenticação
   const { currency } = useContext(CurrencyContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
     fetchData();
@@ -113,6 +115,12 @@ export default function ProductList({ navigation }) {
   }, [searchText, produtosList, selectedCategory, selectedPlatform]);
 
   async function fetchData() {
+    // Só busca produtos se o usuário estiver autenticado
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       // Passa a moeda atual para a API

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useContext, useRef } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -16,7 +16,7 @@ import useFontLoader from "../../hooks/useFontLoader";
 import { CurrencyContext } from "../../context/CurrencyContext";
 
 // SERVICES
-import { getUserOrders } from "../../services/orderService";
+import { getUserOrders, getOrderById } from "../../services/orderService";
 
 const COLORS = {
   background: "#1A1027",
@@ -30,7 +30,6 @@ export default function Orders({ navigation }) {
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const timersRef = useRef({});
 
   // Mapeia status da API para status exibido
   const mapStatus = (apiStatus) => {
@@ -61,10 +60,10 @@ export default function Orders({ navigation }) {
         direction: 'desc'
       });
 
-      console.log('=== Pedidos recebidos da API ===');
-      console.log('Total de pedidos:', response.length);
+      // console.log('=== Pedidos recebidos da API ===');
+      // console.log('Total de pedidos:', response.length);
       if (response.length > 0) {
-        console.log('Exemplo do primeiro pedido:', JSON.stringify(response[0], null, 2));
+        // console.log('Exemplo do primeiro pedido:', JSON.stringify(response[0], null, 2));
       }
 
       // Adapta os dados da API para o formato do componente
@@ -87,25 +86,7 @@ export default function Orders({ navigation }) {
 
         // Mapeia o status
         const mappedStatus = mapStatus(order.status);
-
-        // Se o status for PENDING, agenda timer para mudar para Concluído após 10s
         const orderId = order.uuid || order.id;
-        if (order.status === 'PENDING') {
-          // Limpa timer anterior se existir
-          if (timersRef.current[orderId]) {
-            clearTimeout(timersRef.current[orderId]);
-          }
-
-          // Cria novo timer
-          timersRef.current[orderId] = setTimeout(() => {
-            setPedidos(prev => prev.map(p =>
-              p.id === orderId
-                ? { ...p, status: 'Concluído' }
-                : p
-            ));
-            delete timersRef.current[orderId];
-          }, 10000); // 10 segundos
-        }
 
         return {
           id: orderId,
@@ -146,14 +127,6 @@ export default function Orders({ navigation }) {
     }, [fetchOrders])
   );
 
-  // Limpa timers ao desmontar
-  useEffect(() => {
-    return () => {
-      Object.values(timersRef.current).forEach(timer => clearTimeout(timer));
-      timersRef.current = {};
-    };
-  }, []);
-
   // Handler do filtro selecionado
   const handleFiltro = (filtro) => {
     setFiltroAtivo(filtro);
@@ -170,11 +143,23 @@ export default function Orders({ navigation }) {
     navigation.navigate(route);
   };
 
-  const handleOrderPress = (pedido) => {
-    navigation.navigate("OrderDetails", {
-      orderNumber: pedido.orderNumber,
-      order: pedido, // Passa o objeto completo também
-    });
+  const handleOrderPress = async (pedido) => {
+    try {
+      // Busca os detalhes completos do pedido da API
+      const orderDetails = await getOrderById(pedido.id, currency);
+
+      navigation.navigate("OrderDetails", {
+        orderNumber: pedido.orderNumber,
+        order: orderDetails, // Passa os dados completos da API
+      });
+    } catch (error) {
+      console.error('Erro ao buscar detalhes do pedido:', error);
+      // Em caso de erro, navega com os dados que já temos
+      navigation.navigate("OrderDetails", {
+        orderNumber: pedido.orderNumber,
+        order: pedido,
+      });
+    }
   };
 
   if (!fontLoaded) {

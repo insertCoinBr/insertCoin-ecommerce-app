@@ -111,7 +111,7 @@ export default function Payment({ navigation, route }) {
         });
       }
 
-      console.log('Pedido criado com sucesso:', orderResponse);
+      // console.log('Pedido criado com sucesso:', orderResponse);
 
       // Limpa o carrinho após sucesso
       await clearCart();
@@ -126,10 +126,30 @@ export default function Payment({ navigation, route }) {
       );
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
-      showError(
-        'Erro ao Processar Pedido',
-        error.message || 'Não foi possível processar seu pedido. Tente novamente.'
-      );
+
+      // Melhorar mensagem de erro para o usuário
+      let errorMessage = 'Não foi possível processar seu pedido. Tente novamente.';
+
+      if (error.message) {
+        // Se for produto não encontrado
+        if (error.message.includes('Produto não encontrado') || error.message.includes('Product not found')) {
+          errorMessage = 'Um ou mais produtos no carrinho não estão mais disponíveis. Por favor, remova-os e tente novamente.';
+        }
+        // Se for erro 500 do servidor
+        else if (error.message.includes('[500]') || error.message.includes('500')) {
+          errorMessage = 'Ocorreu um erro no servidor. Por favor, tente novamente em alguns instantes.';
+        }
+        // Se for erro de conexão
+        else if (error.message.includes('Network') || error.message.includes('connect')) {
+          errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+        }
+        // Outros erros específicos
+        else if (!error.message.includes('[') && !error.message.includes('http')) {
+          errorMessage = error.message;
+        }
+      }
+
+      showError('Erro ao Processar Pedido', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -383,7 +403,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: "#ffffffff",
+    color: "#000000",
     fontSize: 16,
     fontFamily: "VT323",
     paddingHorizontal: 12,

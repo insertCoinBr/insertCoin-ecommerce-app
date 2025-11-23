@@ -30,10 +30,10 @@ export default function AddProduct() {
 
   // Log user data on mount
   useEffect(() => {
-    console.log('=== Current User Data ===');
-    console.log('User:', user);
-    console.log('User roles:', user?.roles);
-    console.log('User email:', user?.email);
+    // console.log('=== Current User Data ===');
+    // console.log('User:', user);
+    // console.log('User roles:', user?.roles);
+    // console.log('User email:', user?.email);
   }, []);
 
   const formatBRL = (value) => {
@@ -131,7 +131,7 @@ export default function AddProduct() {
           folder: 'products', // Pasta no Cloudinary
         });
         imageUrl = uploadResult.url;
-        console.log('Image uploaded successfully:', imageUrl);
+        // console.log('Image uploaded successfully:', imageUrl);
       } catch (uploadError) {
         console.error('Image upload error:', uploadError);
         // Se o upload falhar, pergunta ao usuário se quer continuar
@@ -147,25 +147,25 @@ export default function AddProduct() {
         setUploadingImage(false);
       }
 
-      // 2. Calcular preço em USD
-      const priceInUSD = parseFloat(price) / 100 / exchangeRate;
+      // 2. Calcular preço em BRL (sem conversão)
+      const priceInBRL = parseFloat(price) / 100;
 
       // 3. Criar produto com a URL da imagem do Cloudinary
       const productData = {
         name: productName,
-        price: parseFloat(priceInUSD.toFixed(2)),
+        price: parseFloat(priceInBRL.toFixed(2)),
         category: selectedCategories,
         platform: selectedPlatform,
         description: description,
         img: imageUrl // URL do Cloudinary
       };
 
-      console.log('=== Creating product with data ===');
-      console.log('Product Data:', JSON.stringify(productData, null, 2));
+      // console.log('=== Creating product with data ===');
+      // console.log('Product Data:', JSON.stringify(productData, null, 2));
 
       await addProduct(productData);
 
-      console.log('Product created successfully!');
+      // console.log('Product created successfully!');
       setAlertConfig({ type: 'success', message: 'Product created successfully' });
       setShowAlert(true);
 

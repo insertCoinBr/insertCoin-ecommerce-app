@@ -96,8 +96,8 @@ export function NotificationsProvider({ children }) {
         }));
         setNotifications(updatedNotifications);
         
-        console.log(`${data.read?.length || 0} notificações lidas carregadas`);
-        console.log(`${data.favorites?.length || 0} notificações favoritadas carregadas`);
+        // console.log(`${data.read?.length || 0} notificações lidas carregadas`);
+        // console.log(`${data.favorites?.length || 0} notificações favoritadas carregadas`);
       }
     } catch (error) {
       console.error('Erro ao carregar dados das notificações:', error);
@@ -113,7 +113,7 @@ export function NotificationsProvider({ children }) {
         favorites: favorites,
       };
       await AsyncStorage.setItem(NOTIFICATIONS_READ_KEY, JSON.stringify(data));
-      console.log(`Dados salvos: ${read.length} lidas, ${favorites.length} favoritas`);
+      // console.log(`Dados salvos: ${read.length} lidas, ${favorites.length} favoritas`);
     } catch (error) {
       console.error('Erro ao salvar dados das notificações:', error);
       throw error;
@@ -123,7 +123,7 @@ export function NotificationsProvider({ children }) {
   const markAsRead = async (notificationId) => {
     try {
       if (readNotifications.includes(notificationId)) {
-        console.log('Notificação já está marcada como lida');
+        // console.log('Notificação já está marcada como lida');
         return false;
       }
 
@@ -136,7 +136,7 @@ export function NotificationsProvider({ children }) {
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(updatedRead, favoriteNotifications);
-      console.log(`Notificação ${notificationId} marcada como lida`);
+      // console.log(`Notificação ${notificationId} marcada como lida`);
       return true;
     } catch (error) {
       console.error('Erro ao marcar como lida:', error);
@@ -156,7 +156,7 @@ export function NotificationsProvider({ children }) {
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(allIds, favoriteNotifications);
-      console.log(`Todas as ${allIds.length} notificações marcadas como lidas`);
+      // console.log(`Todas as ${allIds.length} notificações marcadas como lidas`);
       return true;
     } catch (error) {
       console.error('Erro ao marcar todas como lidas:', error);
@@ -171,10 +171,10 @@ export function NotificationsProvider({ children }) {
 
       if (isFav) {
         updatedFavorites = favoriteNotifications.filter(id => id !== notificationId);
-        console.log(`Notificação ${notificationId} removida dos favoritos`);
+        // console.log(`Notificação ${notificationId} removida dos favoritos`);
       } else {
         updatedFavorites = [...favoriteNotifications, notificationId];
-        console.log(`Notificação ${notificationId} adicionada aos favoritos`);
+        // console.log(`Notificação ${notificationId} adicionada aos favoritos`);
       }
 
       setFavoriteNotifications(updatedFavorites);
@@ -208,7 +208,7 @@ export function NotificationsProvider({ children }) {
       setNotifications(updatedNotifications);
 
       await saveNotificationsData(updatedRead, updatedFavorites);
-      console.log(`Notificação ${notificationId} deletada`);
+      // console.log(`Notificação ${notificationId} deletada`);
       return true;
     } catch (error) {
       console.error('Erro ao deletar notificação:', error);
@@ -222,7 +222,7 @@ export function NotificationsProvider({ children }) {
       setReadNotifications([]);
       setFavoriteNotifications([]);
       await AsyncStorage.removeItem(NOTIFICATIONS_READ_KEY);
-      console.log('Todas as notificações foram removidas');
+      // console.log('Todas as notificações foram removidas');
       return true;
     } catch (error) {
       console.error('Erro ao limpar notificações:', error);

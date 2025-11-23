@@ -31,10 +31,10 @@ export function FavoritesProvider({ children }) {
       if (favoritesJson) {
         const favs = JSON.parse(favoritesJson);
         setFavorites(favs);
-        console.log(`${favs.length} favoritos carregados`);
+        // console.log(`${favs.length} favoritos carregados`);
       } else {
         setFavorites([]);
-        console.log('Nenhum favorito salvo, iniciando vazio');
+        // console.log('Nenhum favorito salvo, iniciando vazio');
       }
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error);
@@ -47,7 +47,7 @@ export function FavoritesProvider({ children }) {
   const saveFavorites = async (favs) => {
     try {
       await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favs));
-      console.log(`${favs.length} favoritos salvos`);
+      // console.log(`${favs.length} favoritos salvos`);
     } catch (error) {
       console.error('Erro ao salvar favoritos:', error);
       throw error;
@@ -58,7 +58,7 @@ export function FavoritesProvider({ children }) {
     try {
       const alreadyExists = favorites.some(fav => fav.id === product.id);
       if (alreadyExists) {
-        console.log('Produto já está nos favoritos');
+        // console.log('Produto já está nos favoritos');
         return false;
       }
 
@@ -75,7 +75,7 @@ export function FavoritesProvider({ children }) {
 
       setFavorites(updatedFavorites);
       await saveFavorites(updatedFavorites);
-      console.log(`Adicionado aos favoritos: ${product.title}`);
+      // console.log(`Adicionado aos favoritos: ${product.title}`);
       return true;
     } catch (error) {
       console.error('Erro ao adicionar aos favoritos:', error);
@@ -92,7 +92,7 @@ export function FavoritesProvider({ children }) {
       await saveFavorites(updatedFavorites);
       
       if (productToRemove) {
-        console.log(`Removido dos favoritos: ${productToRemove.title}`);
+        // console.log(`Removido dos favoritos: ${productToRemove.title}`);
       }
       return true;
     } catch (error) {
@@ -124,7 +124,7 @@ export function FavoritesProvider({ children }) {
     try {
       setFavorites([]);
       await AsyncStorage.removeItem(FAVORITES_STORAGE_KEY);
-      console.log('Todos os favoritos foram removidos');
+      // console.log('Todos os favoritos foram removidos');
       return true;
     } catch (error) {
       console.error('Erro ao limpar favoritos:', error);

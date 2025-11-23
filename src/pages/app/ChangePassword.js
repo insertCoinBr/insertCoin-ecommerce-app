@@ -98,10 +98,10 @@ export default function ChangePassword({ navigation }) {
     try {
       // Verificar token antes de fazer a requisição
       const token = await getStoredToken();
-      console.log('=== DEBUG CHANGE PASSWORD ===');
-      console.log('Token exists:', !!token);
-      console.log('Token preview:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
-      console.log('User data:', user);
+      // console.log('=== DEBUG CHANGE PASSWORD ===');
+      // console.log('Token exists:', !!token);
+      // console.log('Token preview:', token ? token.substring(0, 30) + '...' : 'NO TOKEN');
+      // console.log('User data:', user);
 
       // Chamar API para alterar a senha - envia apenas currentPassword e newPassword
       await updateMe({
@@ -120,16 +120,16 @@ export default function ChangePassword({ navigation }) {
       // Mostrar mensagem de sucesso e fazer logout após 2 segundos
       // O logout automaticamente redireciona para a tela de login
       setTimeout(async () => {
-        console.log('=== LOGOUT INITIATED ===');
+        // console.log('=== LOGOUT INITIATED ===');
         await logout();
-        console.log('=== LOGOUT COMPLETED ===');
+        // console.log('=== LOGOUT COMPLETED ===');
       }, 2000);
     } catch (error) {
       // Log error details for debugging
-      console.log('=== ERROR DETAILS ===');
-      console.log('Error message:', error.message);
-      console.log('Error statusCode:', error.statusCode);
-      console.log('Error data:', error.data);
+      // console.log('=== ERROR DETAILS ===');
+      // console.log('Error message:', error.message);
+      // console.log('Error statusCode:', error.statusCode);
+      // console.log('Error data:', error.data);
 
       const translatedError = translateError(error.message);
       setError(translatedError);

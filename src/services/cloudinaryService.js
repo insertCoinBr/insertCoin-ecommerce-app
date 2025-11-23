@@ -28,18 +28,18 @@ export const uploadImage = async (imageUri, options = {}) => {
       throw new Error('Please configure Cloudinary credentials in cloudinaryService.js');
     }
 
-    console.log('Starting upload to Cloudinary...');
-    console.log('Cloud Name:', CLOUDINARY_CLOUD_NAME);
-    console.log('Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
-    console.log('Image URI:', imageUri);
+    // console.log('Starting upload to Cloudinary...');
+    // console.log('Cloud Name:', CLOUDINARY_CLOUD_NAME);
+    // console.log('Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
+    // console.log('Image URI:', imageUri);
 
     // Extrair informações do arquivo
     const filename = imageUri.split('/').pop();
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-    console.log('File type:', type);
-    console.log('Filename:', filename);
+    // console.log('File type:', type);
+    // console.log('Filename:', filename);
 
     // Criar FormData
     const formData = new FormData();
@@ -53,10 +53,10 @@ export const uploadImage = async (imageUri, options = {}) => {
     // Adicionar pasta se fornecida
     if (options.folder) {
       formData.append('folder', options.folder);
-      console.log('Folder:', options.folder);
+      // console.log('Folder:', options.folder);
     }
 
-    console.log('Uploading to:', CLOUDINARY_UPLOAD_URL);
+    // console.log('Uploading to:', CLOUDINARY_UPLOAD_URL);
 
     // Fazer upload
     const response = await fetch(CLOUDINARY_UPLOAD_URL, {
@@ -67,10 +67,10 @@ export const uploadImage = async (imageUri, options = {}) => {
       },
     });
 
-    console.log('Response status:', response.status);
+    // console.log('Response status:', response.status);
 
     const data = await response.json();
-    console.log('Response data:', data);
+    // console.log('Response data:', data);
 
     if (!response.ok) {
       const errorMessage = data.error?.message || JSON.stringify(data) || 'Failed to upload image';
@@ -78,7 +78,7 @@ export const uploadImage = async (imageUri, options = {}) => {
       throw new Error(`Cloudinary error: ${errorMessage}`);
     }
 
-    console.log('Upload successful!');
+    // console.log('Upload successful!');
     return {
       url: data.secure_url,
       publicId: data.public_id,

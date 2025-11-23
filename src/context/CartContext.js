@@ -33,7 +33,7 @@ export function CartProvider({ children }) {
       if (cartJson) {
         const cart = JSON.parse(cartJson);
         setCartItems(cart);
-        console.log(`${cart.length} itens carregados no carrinho`);
+        // console.log(`${cart.length} itens carregados no carrinho`);
       }
     } catch (error) {
       console.error('Erro ao carregar carrinho:', error);
@@ -45,7 +45,7 @@ export function CartProvider({ children }) {
   const saveCart = async (cart) => {
     try {
       await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-      console.log(`Carrinho salvo: ${cart.length} itens`);
+      // console.log(`Carrinho salvo: ${cart.length} itens`);
     } catch (error) {
       console.error('Erro ao salvar carrinho:', error);
       throw error;
@@ -63,7 +63,7 @@ export function CartProvider({ children }) {
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
-        console.log(`Quantidade incrementada: ${product.title}`);
+        // console.log(`Quantidade incrementada: ${product.title}`);
       } else {
         const newItem = {
           id: product.id,
@@ -73,7 +73,7 @@ export function CartProvider({ children }) {
           quantity: 1,
         };
         updatedCart = [...cartItems, newItem];
-        console.log(`Adicionado ao carrinho: ${product.title}`);
+        // console.log(`Adicionado ao carrinho: ${product.title}`);
       }
 
       setCartItems(updatedCart);
@@ -102,7 +102,7 @@ export function CartProvider({ children }) {
             ...updatedCart[existingItemIndex],
             quantity: updatedCart[existingItemIndex].quantity + 1
           };
-          console.log(`Quantidade incrementada: ${product.title}`);
+          // console.log(`Quantidade incrementada: ${product.title}`);
           addedCount++;
         } else {
           const newItem = {
@@ -113,14 +113,14 @@ export function CartProvider({ children }) {
             quantity: 1,
           };
           updatedCart.push(newItem);
-          console.log(`Adicionado ao carrinho: ${product.title}`);
+          // console.log(`Adicionado ao carrinho: ${product.title}`);
           addedCount++;
         }
       }
 
       setCartItems(updatedCart);
       await saveCart(updatedCart);
-      console.log(`${addedCount} itens adicionados ao carrinho`);
+      // console.log(`${addedCount} itens adicionados ao carrinho`);
       return { success: true, addedCount };
     } catch (error) {
       console.error('Erro ao adicionar múltiplos itens ao carrinho:', error);
@@ -137,7 +137,7 @@ export function CartProvider({ children }) {
       await saveCart(updatedCart);
       
       if (itemToRemove) {
-        console.log(`Removido do carrinho: ${itemToRemove.title}`);
+        // console.log(`Removido do carrinho: ${itemToRemove.title}`);
       }
       return true;
     } catch (error) {
@@ -158,7 +158,7 @@ export function CartProvider({ children }) {
 
       setCartItems(updatedCart);
       await saveCart(updatedCart);
-      console.log(`Quantidade atualizada para: ${newQuantity}`);
+      // console.log(`Quantidade atualizada para: ${newQuantity}`);
       return true;
     } catch (error) {
       console.error('Erro ao atualizar quantidade:', error);
@@ -198,7 +198,7 @@ export function CartProvider({ children }) {
     try {
       setCartItems([]);
       await AsyncStorage.removeItem(CART_STORAGE_KEY);
-      console.log('Carrinho limpo');
+      // console.log('Carrinho limpo');
       return true;
     } catch (error) {
       console.error('Erro ao limpar carrinho:', error);
