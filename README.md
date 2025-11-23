@@ -24,8 +24,6 @@ Aplicacao mobile de comercio eletronico especializada em jogos digitais, desenvo
 16. [Scripts Disponiveis](#scripts-disponiveis)
 17. [Dependencias](#dependencias)
 18. [Consideracoes de Seguranca](#consideracoes-de-seguranca)
-19. [Contribuicao](#contribuicao)
-20. [Licenca](#licenca)
 
 ---
 
