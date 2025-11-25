@@ -1,6 +1,7 @@
-import React, { useContext } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
+import React, { useContext, useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 
 //IMPORTAR OS CONTEXTS
 import { CartContext } from "../../context/CartContext";
@@ -24,6 +25,7 @@ const COLORS = {
 
 export default function Wishlist({ navigation }) {
   const fontLoaded = useFontLoader();
+  const [refreshing, setRefreshing] = useState(false);
 
   //USAR O CARTCONTEXT
   const { addToCart, addMultipleToCart } = useContext(CartContext);
@@ -35,6 +37,7 @@ export default function Wishlist({ navigation }) {
     clearFavorites,
     getFavoritesCount,
     getTotalFavoritesValue,
+    validateFavorites,
     loading
   } = useContext(FavoritesContext);
 
@@ -43,6 +46,32 @@ export default function Wishlist({ navigation }) {
 
   //USAR O CURRENCYCONTEXT
   const { formatPrice } = useContext(CurrencyContext);
+
+  // Validar favoritos ao focar na tela
+  useFocusEffect(
+    useCallback(() => {
+      handleRefresh();
+    }, [])
+  );
+
+  // Atualizar e validar favoritos
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      const result = await validateFavorites();
+
+      if (result.validated && result.removed > 0) {
+        showSuccess(
+          'Favoritos Atualizados',
+          `${result.removed} produto(s) não disponível(eis) foi(ram) removido(s) dos favoritos.`
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao validar favoritos:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   //REMOVER DOS FAVORITOS USANDO CONTEXT
   const handleRemoveItem = async (itemId) => {
@@ -174,9 +203,17 @@ export default function Wishlist({ navigation }) {
         title="Lista de Desejos" 
       />
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#A855F7"
+            colors={["#A855F7"]}
+          />
+        }
       >
         {/* LISTA DE ITENS DO CONTEXT */}
         {favorites.map((item) => (

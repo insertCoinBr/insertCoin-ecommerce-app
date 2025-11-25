@@ -15,7 +15,6 @@ export default function RemoveProduct() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
-  const [selectedItems, setSelectedItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -54,32 +53,6 @@ export default function RemoveProduct() {
     product.platform?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const toggleItemSelection = (itemId) => {
-    setSelectedItems(prev =>
-      prev.includes(itemId)
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedItems.length === filteredProducts.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(filteredProducts.map(item => item.uuid || item.id));
-    }
-  };
-
-  const handleDeleteSelected = () => {
-    if (selectedItems.length === 0) {
-      setAlertConfig({ type: 'error', message: 'Please select at least one item to delete' });
-      setShowAlert(true);
-      return;
-    }
-    setShowModal(true);
-    setSelectedProduct({ count: selectedItems.length });
-  };
-
   const handleSelectProduct = (product) => {
     setSelectedProduct(product);
     setShowModal(true);
@@ -90,25 +63,12 @@ export default function RemoveProduct() {
       setDeleting(true);
       setShowModal(false);
 
-      if (selectedProduct?.count) {
-        // Deletar múltiplos
-        const promises = selectedItems.map(id => {
-          return removeProduct(id);
-        });
-        await Promise.all(promises);
+      // Deletar único produto
+      await removeProduct(selectedProduct.uuid || selectedProduct.id);
 
-        // Remover da lista local
-        setProducts(prev => prev.filter(product => !selectedItems.includes(product.uuid || product.id)));
-        setAlertConfig({ type: 'success', message: `${selectedItems.length} product(s) removed successfully` });
-        setSelectedItems([]);
-      } else {
-        // Deletar único
-        await removeProduct(selectedProduct.uuid || selectedProduct.id);
-
-        // Remover da lista local
-        setProducts(prev => prev.filter(product => (product.uuid || product.id) !== (selectedProduct.uuid || selectedProduct.id)));
-        setAlertConfig({ type: 'success', message: 'Product removed successfully' });
-      }
+      // Remover da lista local
+      setProducts(prev => prev.filter(product => (product.uuid || product.id) !== (selectedProduct.uuid || selectedProduct.id)));
+      setAlertConfig({ type: 'success', message: 'Product removed successfully' });
 
       setShowAlert(true);
 
@@ -164,25 +124,6 @@ export default function RemoveProduct() {
           />
         </View>
 
-        {selectedItems.length > 0 && (
-          <View style={styles.actionBar}>
-            <TouchableOpacity style={styles.selectAllButton} onPress={toggleSelectAll}>
-              <Ionicons
-                name={selectedItems.length === filteredProducts.length ? "checkbox" : "square-outline"}
-                size={20}
-                color="#A855F7"
-              />
-              <Text style={styles.selectAllText}>
-                {selectedItems.length === filteredProducts.length ? 'Deselect All' : 'Select All'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteSelected}>
-              <Ionicons name="trash" size={20} color="#fff" />
-              <Text style={styles.deleteButtonText}>Delete ({selectedItems.length})</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#A855F7" />
@@ -192,36 +133,21 @@ export default function RemoveProduct() {
             {filteredProducts.map((product, index) => {
               const productId = product.uuid || product.id;
               return (
-                <TouchableOpacity
+                <View
                   key={productId || `product-${index}`}
                   style={styles.itemCard}
-                  onPress={() => toggleItemSelection(productId)}
                 >
-                  <TouchableOpacity
-                    style={styles.checkboxContainer}
-                    onPress={() => toggleItemSelection(productId)}
-                  >
-                    <Ionicons
-                      name={selectedItems.includes(productId) ? "checkbox" : "square-outline"}
-                      size={24}
-                      color="#A855F7"
-                    />
-                  </TouchableOpacity>
-
                   <View style={styles.itemInfo}>
                     <Text style={styles.productName}>{product.name}</Text>
                     <Text style={styles.productSubtitle}>{product.platform || 'N/A'}</Text>
                   </View>
 
                   <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleSelectProduct(product);
-                    }}
+                    onPress={() => handleSelectProduct(product)}
                   >
                     <Ionicons name="trash-outline" size={20} color="#EF4444" />
                   </TouchableOpacity>
-                </TouchableOpacity>
+                </View>
               );
             })}
           </ScrollView>
@@ -232,12 +158,8 @@ export default function RemoveProduct() {
       <ConfirmModal
         visible={showModal}
         title="Confirm Deletion"
-        message={
-          selectedProduct?.count
-            ? `Are you sure you want to remove ${selectedProduct.count} products?`
-            : "Are you sure you want to remove this product?"
-        }
-        highlightText={selectedProduct?.count ? null : selectedProduct?.name}
+        message="Are you sure you want to remove this product?"
+        highlightText={selectedProduct?.name}
         confirmText="Delete"
         confirmColor="#EF4444"
         onConfirm={handleConfirmDelete}

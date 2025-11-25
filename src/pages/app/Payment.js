@@ -44,6 +44,17 @@ export default function Payment({ navigation, route }) {
   const [cardDate, setCardDate] = useState('');
   const [cardCVV, setCardCVV] = useState('');
 
+  // Formatar data do cartão (formato MMAAAA)
+  const handleDateChange = (text) => {
+    // Remove tudo que não é número
+    const numbers = text.replace(/\D/g, '');
+
+    // Limita a 6 dígitos
+    const limitedNumbers = numbers.substring(0, 6);
+
+    setCardDate(limitedNumbers);
+  };
+
   //Total do carrinho vindo do CONTEXT ou da navegação
   const { total: routeTotal } = route.params || {};
   const total = routeTotal || getCartTotal();
@@ -94,9 +105,10 @@ export default function Payment({ navigation, route }) {
         });
       } else {
         // Criar pedido CARTÃO
-        // Separar mês e ano da data (formato MMAA)
-        const expiryMonth = parseInt(cardDate.substring(0, 2), 10);
-        const expiryYear = parseInt('20' + cardDate.substring(2, 4), 10);
+        // Separar mês e ano da data (formato MMAAAA)
+        const dateNumbers = cardDate.replace(/\D/g, ''); // Remove tudo que não é número
+        const expiryMonth = parseInt(dateNumbers.substring(0, 2), 10);
+        const expiryYear = parseInt(dateNumbers.substring(2, 6), 10);
 
         orderResponse = await createOrderCard({
           items,
@@ -121,7 +133,11 @@ export default function Payment({ navigation, route }) {
         'Pedido Realizado!',
         'Seu pedido foi criado com sucesso.',
         {
-          onClose: () => navigation.navigate('Success')
+          onClose: () => navigation.navigate('Success', {
+            orderNumber: orderResponse.orderNumber || orderResponse.id,
+            items: cartItems,
+            total: total
+          })
         }
       );
     } catch (error) {
@@ -281,12 +297,12 @@ export default function Payment({ navigation, route }) {
                 >
                   <TextInput
                     style={styles.input}
-                    placeholder="Data"
+                    placeholder="MMAAAA"
                     placeholderTextColor="#000000ff"
                     value={cardDate}
-                    onChangeText={setCardDate}
+                    onChangeText={handleDateChange}
                     keyboardType="number-pad"
-                    maxLength={4}
+                    maxLength={6}
                   />
                 </RPGBorder>
               </View>

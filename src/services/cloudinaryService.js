@@ -2,6 +2,8 @@
  * Serviço para upload de imagens no Cloudinary
  */
 
+import * as FileSystem from 'expo-file-system/legacy';
+
 // Configurações do Cloudinary
 // IMPORTANTE: Substitua com suas credenciais do Cloudinary
 const CLOUDINARY_CLOUD_NAME = 'dkz79dxka'; // Ex: 'insertcoin-app'
@@ -28,49 +30,54 @@ export const uploadImage = async (imageUri, options = {}) => {
       throw new Error('Please configure Cloudinary credentials in cloudinaryService.js');
     }
 
-    // console.log('Starting upload to Cloudinary...');
-    // console.log('Cloud Name:', CLOUDINARY_CLOUD_NAME);
-    // console.log('Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
-    // console.log('Image URI:', imageUri);
+    console.log('Starting upload to Cloudinary...');
+    console.log('Cloud Name:', CLOUDINARY_CLOUD_NAME);
+    console.log('Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
+    console.log('Image URI:', imageUri);
 
-    // Extrair informações do arquivo
+    // Converter imagem para base64 (mais confiável no Android)
+    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: 'base64',
+    });
+
+    // Determinar o tipo MIME
     const filename = imageUri.split('/').pop();
     const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    const fileType = match ? match[1].toLowerCase() : 'jpeg';
+    const mimeType = `image/${fileType}`;
 
-    // console.log('File type:', type);
-    // console.log('Filename:', filename);
+    console.log('File type:', mimeType);
+    console.log('Base64 length:', base64.length);
 
-    // Criar FormData
-    const formData = new FormData();
-    formData.append('file', {
-      uri: imageUri,
-      type: type,
-      name: filename,
-    });
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    // Criar o data URI
+    const dataUri = `data:${mimeType};base64,${base64}`;
+
+    // Criar body como application/x-www-form-urlencoded (mais confiável no Android)
+    const body = new URLSearchParams();
+    body.append('file', dataUri);
+    body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
     // Adicionar pasta se fornecida
     if (options.folder) {
-      formData.append('folder', options.folder);
-      // console.log('Folder:', options.folder);
+      body.append('folder', options.folder);
+      console.log('Folder:', options.folder);
     }
 
-    // console.log('Uploading to:', CLOUDINARY_UPLOAD_URL);
+    console.log('Uploading to:', CLOUDINARY_UPLOAD_URL);
 
-    // Fazer upload
+    // Fazer upload usando URLSearchParams ao invés de FormData
     const response = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
-      body: formData,
       headers: {
-        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: body.toString(),
     });
 
-    // console.log('Response status:', response.status);
+    console.log('Response status:', response.status);
 
     const data = await response.json();
-    // console.log('Response data:', data);
+    console.log('Response data:', data);
 
     if (!response.ok) {
       const errorMessage = data.error?.message || JSON.stringify(data) || 'Failed to upload image';
@@ -78,7 +85,7 @@ export const uploadImage = async (imageUri, options = {}) => {
       throw new Error(`Cloudinary error: ${errorMessage}`);
     }
 
-    // console.log('Upload successful!');
+    console.log('Upload successful!');
     return {
       url: data.secure_url,
       publicId: data.public_id,

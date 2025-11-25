@@ -17,6 +17,7 @@ export default function OrderDetails() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ type: 'error', message: '' });
   const [orderDetails, setOrderDetails] = useState(null);
+  const [orderPrices, setOrderPrices] = useState({ usd: null, brl: null });
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
@@ -29,8 +30,18 @@ export default function OrderDetails() {
     try {
       setLoading(true);
       const orderId = order.id || order.orderId;
-      const response = await getAdminOrderById(orderId, 'USD');
-      setOrderDetails(response);
+
+      // Buscar preços em ambas as moedas
+      const [responseUSD, responseBRL] = await Promise.all([
+        getAdminOrderById(orderId, 'USD'),
+        getAdminOrderById(orderId, 'BRL')
+      ]);
+
+      setOrderDetails(responseUSD);
+      setOrderPrices({
+        usd: responseUSD.totalAmount || responseUSD.totalPrice || responseUSD.total,
+        brl: responseBRL.totalAmount || responseBRL.totalPrice || responseBRL.total
+      });
     } catch (error) {
       console.error("Erro ao buscar detalhes da ordem:", error);
       setAlertConfig({
@@ -64,8 +75,12 @@ export default function OrderDetails() {
   // Formatar preço
   const formatPrice = (price, currency = 'USD') => {
     if (price === null || price === undefined) return "N/A";
-    const symbol = currency === 'BRL' ? 'R$' : '$';
-    return `${symbol} ${Number(price).toFixed(2)}`;
+
+    if (currency === 'BRL') {
+      return `R$ ${Number(price).toFixed(2).replace('.', ',')}`;
+    } else {
+      return `$ ${Number(price).toFixed(2)}`;
+    }
   };
 
   // Formatar detalhes de compra (lista de produtos)
@@ -170,15 +185,19 @@ export default function OrderDetails() {
             />
             <InfoRow
               label="Full Name:"
-              value={orderDetails.userName || orderDetails.fullName || "N/A"}
+              value={orderDetails.customerName || orderDetails.userName || orderDetails.fullName || "N/A"}
             />
             <InfoRow
               label="Email:"
-              value={orderDetails.userEmail || orderDetails.email || "N/A"}
+              value={orderDetails.customerEmail || orderDetails.userEmail || orderDetails.email || "N/A"}
             />
             <InfoRow
-              label="Total price:"
-              value={formatPrice(orderDetails.totalPrice || orderDetails.total, orderDetails.currency)}
+              label="Total price (USD):"
+              value={formatPrice(orderPrices.usd, 'USD')}
+            />
+            <InfoRow
+              label="Total price (BRL):"
+              value={formatPrice(orderPrices.brl, 'BRL')}
             />
             <InfoRow
               label="Payment Method:"

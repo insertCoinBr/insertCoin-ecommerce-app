@@ -1,24 +1,87 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
 import InfoRow from "../../components/admin/InfoRow";
+import { getAdminOrderById } from "../../services/orderService";
 
-export default function OrderDetails() {
+export default function ClientOrderDetails() {
   const navigation = useNavigation();
   const route = useRoute();
   const { order, client } = route.params;
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [orderPrices, setOrderPrices] = useState({ usd: null, brl: null });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const orderDetails = {
-    id: order.id,
-    status: "Completed",
-    dateTime: "22/08/2025 - 10:30:24",
-    fullName: client ? client.name : "Anderson Bohnem",
-    email: client ? client.email : "andersonbohnem@insertcoin.com.br",
-    totalPrice: "R$ 200,00",
-    purchaseDetails: "Red Dead Redemption 2",
+  useEffect(() => {
+    loadOrderDetails();
+  }, []);
+
+  const loadOrderDetails = async () => {
+    try {
+      setLoading(true);
+      const orderId = order.orderId || order.uuid || order.id;
+
+      // Buscar preços em ambas as moedas
+      const [responseUSD, responseBRL] = await Promise.all([
+        getAdminOrderById(orderId, 'USD'),
+        getAdminOrderById(orderId, 'BRL')
+      ]);
+
+      console.log('Response USD:', responseUSD);
+      console.log('Response BRL:', responseBRL);
+
+      setOrderDetails(responseUSD);
+      setOrderPrices({
+        usd: responseUSD.totalAmount || responseUSD.totalPrice || responseUSD.total,
+        brl: responseBRL.totalAmount || responseBRL.totalPrice || responseBRL.total
+      });
+    } catch (err) {
+      console.error("Erro ao buscar detalhes da ordem:", err);
+      setError(err.message || 'Failed to load order details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Formatar data
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Formatar preço
+  const formatPrice = (price, currency = 'USD') => {
+    if (price === null || price === undefined) return "N/A";
+
+    if (currency === 'BRL') {
+      return `R$ ${Number(price).toFixed(2).replace('.', ',')}`;
+    } else {
+      return `$ ${Number(price).toFixed(2)}`;
+    }
+  };
+
+  // Formatar detalhes de compra (lista de produtos)
+  const formatPurchaseDetails = (items) => {
+    if (!items || items.length === 0) return "N/A";
+    return items.map(item =>
+      `${item.productName || item.name || 'Product'} (x${item.quantity})`
+    ).join(', ');
   };
 
   return (
@@ -42,22 +105,68 @@ export default function OrderDetails() {
 
         <Text style={styles.title}>Order</Text>
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.idCard}>
-            <Text style={styles.idText}>{orderDetails.id}</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#A855F7" />
+            <Text style={styles.loadingText}>Loading order details...</Text>
           </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={loadOrderDetails}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : orderDetails ? (
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.idCard}>
+              <Text style={styles.idText}>
+                {orderDetails.orderNumber || orderDetails.id || "N/A"}
+              </Text>
+            </View>
 
-          <InfoRow label="Order Status:" value={orderDetails.status} />
-          <InfoRow label="Date and time:" value={orderDetails.dateTime} />
-          <InfoRow label="Full Name:" value={orderDetails.fullName} />
-          <InfoRow label="Email:" value={orderDetails.email} />
-          <InfoRow label="Total price:" value={orderDetails.totalPrice} />
-          <InfoRow label="Purchase details:" value={orderDetails.purchaseDetails} />
-        </ScrollView>
+            <InfoRow
+              label="Order Status:"
+              value={orderDetails.status || "N/A"}
+            />
+            <InfoRow
+              label="Date and time:"
+              value={formatDateTime(orderDetails.createdAt || orderDetails.orderDate)}
+            />
+            <InfoRow
+              label="Full Name:"
+              value={orderDetails.customerName || orderDetails.userName || orderDetails.fullName || "N/A"}
+            />
+            <InfoRow
+              label="Email:"
+              value={orderDetails.customerEmail || orderDetails.userEmail || orderDetails.email || "N/A"}
+            />
+            <InfoRow
+              label="Total price (USD):"
+              value={formatPrice(orderPrices.usd, 'USD')}
+            />
+            <InfoRow
+              label="Total price (BRL):"
+              value={formatPrice(orderPrices.brl, 'BRL')}
+            />
+            <InfoRow
+              label="Payment Method:"
+              value={orderDetails.paymentMethod || "N/A"}
+            />
+            <InfoRow
+              label="Purchase details:"
+              value={formatPurchaseDetails(orderDetails.items || orderDetails.orderItems)}
+            />
+          </ScrollView>
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -128,5 +237,41 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  loadingText: {
+    color: '#aaa',
+    marginTop: 10,
+    fontSize: 14,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  errorText: {
+    color: '#EF4444',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+    fontSize: 16,
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    backgroundColor: '#A855F7',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

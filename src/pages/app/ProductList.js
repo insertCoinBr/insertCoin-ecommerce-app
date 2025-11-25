@@ -52,12 +52,14 @@ export default function ProductList({ navigation }) {
   const { isAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
 
   // Recarrega produtos quando a moeda mudar
   useEffect(() => {
-    if (produtosList.length > 0) {
+    if (isAuthenticated && produtosList.length > 0) {
       fetchData();
     }
   }, [currency]);

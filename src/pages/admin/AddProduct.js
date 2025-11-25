@@ -71,7 +71,7 @@ export default function AddProduct() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -154,14 +154,16 @@ export default function AddProduct() {
       const productData = {
         name: productName,
         price: parseFloat(priceInBRL.toFixed(2)),
-        category: selectedCategories,
+        category: Array.isArray(selectedCategories)
+          ? selectedCategories.join(', ') // Converte array para string separada por vírgula
+          : selectedCategories,
         platform: selectedPlatform,
         description: description,
         img: imageUrl // URL do Cloudinary
       };
 
-      // console.log('=== Creating product with data ===');
-      // console.log('Product Data:', JSON.stringify(productData, null, 2));
+      console.log('=== Creating product with data ===');
+      console.log('Product Data:', JSON.stringify(productData, null, 2));
 
       await addProduct(productData);
 
@@ -180,12 +182,28 @@ export default function AddProduct() {
       console.error('=== Error creating product ===');
       console.error('Error:', error);
       console.error('Error message:', error.message);
-      console.error('Error status:', error.statusCode);
-      console.error('Error data:', error.data);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+
+      // Tentar extrair mensagem de erro do backend
+      let errorMessage = 'Failed to create product. Please try again.';
+
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data.error) {
+          errorMessage = error.response.data.error;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
 
       setAlertConfig({
         type: 'error',
-        message: error.message || 'Failed to create product. Please try again.'
+        message: errorMessage
       });
       setShowAlert(true);
     } finally {

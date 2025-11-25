@@ -78,6 +78,28 @@ export function CurrencyProvider({ children }) {
     }
   };
 
+  // Formata o preço em uma moeda específica
+  const formatPriceInCurrency = (value, currencyCode) => {
+    const currencyData = CURRENCIES[currencyCode];
+    if (!currencyData) return 'N/A';
+
+    const numValue = parseFloat(value || 0);
+
+    if (currencyCode === 'BRL') {
+      return `${currencyData.symbol} ${numValue.toFixed(2).replace('.', ',')}`;
+    } else {
+      return `${currencyData.symbol} ${numValue.toFixed(2)}`;
+    }
+  };
+
+  // Formata o preço mostrando ambas as moedas
+  const formatPriceBothCurrencies = (priceUSD, priceBRL) => {
+    return {
+      usd: formatPriceInCurrency(priceUSD, 'USD'),
+      brl: formatPriceInCurrency(priceBRL, 'BRL'),
+    };
+  };
+
   const getCurrencyData = () => {
     return CURRENCIES[currency];
   };
@@ -97,6 +119,8 @@ export function CurrencyProvider({ children }) {
         currencyData: CURRENCIES[currency],
         setCurrency,
         formatPrice,
+        formatPriceInCurrency,
+        formatPriceBothCurrencies,
         getCurrencyData,
         getAvailableCurrencies,
         loading,

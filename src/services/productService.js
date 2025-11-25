@@ -18,10 +18,13 @@ export const getProducts = async (currency = null) => {
 /**
  * GET /products/:id
  * Obtém detalhes de um produto específico
+ * @param {string} productId - ID do produto
+ * @param {string} currency - Moeda para conversão (opcional: BRL, USD)
  */
-export const getProductById = async (productId) => {
+export const getProductById = async (productId, currency = null) => {
   try {
-    const response = await api.get(`/products/${productId}`);
+    const params = currency ? { curr: currency } : {};
+    const response = await api.get(`/products/${productId}`, { params });
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar produto:', error);

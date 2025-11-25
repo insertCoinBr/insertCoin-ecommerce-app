@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../styles/adminStyles";
-import { getUserOrders } from "../../services/orderService";
+import { getAdminUserOrders } from "../../services/orderService";
 
 export default function ClientOrders() {
   const navigation = useNavigation();
@@ -23,19 +23,33 @@ export default function ClientOrders() {
     setLoading(true);
     setError(null);
     try {
-      // Buscar pedidos do usuário usando a API
-      const response = await getUserOrders({
-        currency: 'USD',
-        status: '',
-        orderBy: 'createdAt',
-        direction: 'desc'
-      });
+      // Buscar pedidos do usuário específico usando a API de admin
+      const userId = client.id || client.uuid;
+      const response = await getAdminUserOrders(userId, 'USD');
+
+      console.log('Response from API:', response);
+
+      // A resposta pode vir como array ou objeto com propriedade orders/data
+      let ordersData = [];
+      if (Array.isArray(response)) {
+        ordersData = response;
+      } else if (response && Array.isArray(response.orders)) {
+        ordersData = response.orders;
+      } else if (response && Array.isArray(response.data)) {
+        ordersData = response.data;
+      } else if (response && Array.isArray(response.content)) {
+        ordersData = response.content;
+      } else {
+        console.warn('Unexpected response format:', response);
+        ordersData = [];
+      }
 
       // Formatar os dados para o formato esperado pela UI
-      const formattedOrders = response.map(order => ({
+      const formattedOrders = ordersData.map(order => ({
         id: order.orderNumber || order.id || order.uuid,
         uuid: order.uuid || order.id,
-        date: formatDate(order.createdAt),
+        orderId: order.orderId || order.id,
+        date: formatDate(order.createdAt || order.orderDate),
         status: translateStatus(order.status),
         rawStatus: order.status
       }));
@@ -60,12 +74,24 @@ export default function ClientOrders() {
 
   const translateStatus = (status) => {
     const statusMap = {
+      'PAID': 'Concluído',
       'COMPLETED': 'Completed',
       'PENDING': 'Pending',
       'CANCELLED': 'Cancelled',
       'PROCESSING': 'Processing'
     };
     return statusMap[status] || status;
+  };
+
+  const getStatusColor = (rawStatus) => {
+    const colorMap = {
+      'PAID': '#4CAF50',        // Verde
+      'COMPLETED': '#4CAF50',   // Verde
+      'PENDING': '#FFA726',     // Laranja
+      'CANCELLED': '#EF5350',   // Vermelho
+      'PROCESSING': '#42A5F5'   // Azul
+    };
+    return colorMap[rawStatus] || '#aaa'; // Cinza padrão
   };
 
   const filteredOrders = orders.filter(order =>
@@ -146,7 +172,9 @@ export default function ClientOrders() {
               <View style={styles.row}>
                 <Text style={styles.orderId}>{order.id}</Text>
                 <Text style={styles.date}>{order.date}</Text>
-                <Text style={styles.status}>{order.status}</Text>
+                <Text style={[styles.status, { color: getStatusColor(order.rawStatus) }]}>
+                  {order.status}
+                </Text>
               </View>
             </TouchableOpacity>
           ))}

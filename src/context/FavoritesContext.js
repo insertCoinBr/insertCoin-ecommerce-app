@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_STORAGE_KEY } from '../context/storageKeys';
+import { getProducts } from '../services/productService';
 
 export const FavoritesContext = createContext({
   favorites: [],
@@ -13,6 +14,7 @@ export const FavoritesContext = createContext({
   getFavoriteById: () => null,
   getFavoritesSortedByDate: () => [],
   getFavoritesSortedByPrice: () => [],
+  validateFavorites: () => {},
   loading: false,
 });
 
@@ -21,24 +23,22 @@ export function FavoritesProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFavorites();
+    loadFavoritesFromCache();
   }, []);
 
-  const loadFavorites = async () => {
+  const loadFavoritesFromCache = async () => {
     try {
       setLoading(true);
       const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
       if (favoritesJson) {
         const favs = JSON.parse(favoritesJson);
         setFavorites(favs);
-        // console.log(`${favs.length} favoritos carregados`);
       } else {
         setFavorites([]);
-        // console.log('Nenhum favorito salvo, iniciando vazio');
       }
     } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
-      setFavorites([]); 
+      console.error('Erro ao carregar favoritos do cache:', error);
+      setFavorites([]);
     } finally {
       setLoading(false);
     }
@@ -181,6 +181,34 @@ export function FavoritesProvider({ children }) {
     return [...new Set(categories)].filter(cat => cat !== 'Sem categoria');
   };
 
+  // Validar favoritos manualmente (pode ser chamado quando necessário)
+  const validateFavorites = async () => {
+    try {
+      const storeProducts = await getProducts();
+      const availableProductIds = new Set(
+        storeProducts.map(p => p.uuid || p.id)
+      );
+
+      const validFavorites = favorites.filter(fav =>
+        availableProductIds.has(fav.id)
+      );
+
+      if (validFavorites.length !== favorites.length) {
+        setFavorites(validFavorites);
+        await saveFavorites(validFavorites);
+        return {
+          validated: true,
+          removed: favorites.length - validFavorites.length
+        };
+      }
+
+      return { validated: true, removed: 0 };
+    } catch (error) {
+      console.error('Erro ao validar favoritos:', error);
+      return { validated: false, removed: 0 };
+    }
+  };
+
   return (
     <FavoritesContext.Provider
       value={{
@@ -198,6 +226,7 @@ export function FavoritesProvider({ children }) {
         searchFavorites,
         getTotalFavoritesValue,
         getFavoriteCategories,
+        validateFavorites,
         loading,
       }}
     >

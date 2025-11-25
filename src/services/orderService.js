@@ -179,6 +179,23 @@ export const getAdminOrderById = async (orderId, currency = null) => {
 };
 
 /**
+ * GET /orders/admin/ordersUser/:userId
+ * Obtém pedidos de um usuário específico (admin)
+ * @param {string} userId - ID do usuário
+ * @param {string} currency - Moeda para conversão (opcional)
+ * @returns {Promise} Lista de pedidos do usuário
+ */
+export const getAdminUserOrders = async (userId, currency = null) => {
+  try {
+    const params = currency ? { currency } : {};
+    const response = await api.get(`/orders/admin/ordersUser/${userId}`, { params });
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
  * DELETE /orders/admin/deleteOrder/:orderId
  * Deleta um pedido (admin)
  * @param {string} orderId - ID do pedido
@@ -225,5 +242,6 @@ export default {
   getUserOrders,
   searchOrders,
   getAdminOrderById,
+  getAdminUserOrders,
   deleteOrder,
 };
