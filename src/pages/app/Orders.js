@@ -33,17 +33,23 @@ export default function Orders({ navigation }) {
 
   // Mapeia status da API para status exibido
   const mapStatus = (apiStatus) => {
-    switch (apiStatus) {
+    if (!apiStatus) return 'Desconhecido';
+    
+    // Converte para uppercase para comparação case-insensitive
+    const normalizedStatus = String(apiStatus).toUpperCase().trim();
+    
+    switch (normalizedStatus) {
       case 'WAITING_PIX_PAYMENT':
         return 'Pagamento Pendente';
       case 'PENDING':
         return 'Confirmação pendente';
-      case 'COMPLETED':
-      case 'Concluído':
+      case 'PAID':
         return 'Concluído';
       case 'CANCELLED':
         return 'Cancelado';
       default:
+        // Se não mapear, retorna o status original normalizado
+        console.log('[Orders] Status não mapeado:', apiStatus);
         return apiStatus;
     }
   };

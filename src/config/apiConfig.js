@@ -21,7 +21,7 @@ const getLocalIP = () => {
 
     if (debuggerHost) {
       const ip = debuggerHost.split(':')[0];
-      // console.log('[API Config] IP detectado automaticamente:', ip);
+      console.log('[API Config] IP detectado automaticamente:', ip);
       return ip;
     }
 

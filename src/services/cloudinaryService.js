@@ -15,7 +15,6 @@ const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOU
  * @param {string} imageUri - URI da imagem local (do ImagePicker)
  * @param {Object} options - Opções adicionais
  * @param {string} options.folder - Pasta no Cloudinary (opcional)
- * @param {Function} options.onProgress - Callback de progresso (opcional)
  * @returns {Promise<Object>} Objeto com informações da imagem (url, public_id, etc)
  */
 export const uploadImage = async (imageUri, options = {}) => {
@@ -30,62 +29,48 @@ export const uploadImage = async (imageUri, options = {}) => {
       throw new Error('Please configure Cloudinary credentials in cloudinaryService.js');
     }
 
-    console.log('Starting upload to Cloudinary...');
-    console.log('Cloud Name:', CLOUDINARY_CLOUD_NAME);
-    console.log('Upload Preset:', CLOUDINARY_UPLOAD_PRESET);
-    console.log('Image URI:', imageUri);
-
-    // Converter imagem para base64 (mais confiável no Android)
+    // Ler arquivo como base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
       encoding: 'base64',
     });
 
-    // Determinar o tipo MIME
+    // Determinar tipo MIME pela extensão
     const filename = imageUri.split('/').pop();
     const match = /\.(\w+)$/.exec(filename);
     const fileType = match ? match[1].toLowerCase() : 'jpeg';
     const mimeType = `image/${fileType}`;
 
-    console.log('File type:', mimeType);
-    console.log('Base64 length:', base64.length);
-
-    // Criar o data URI
+    // Criar FormData com estrutura simples (como no cURL que funciona)
+    const formData = new FormData();
+    
+    // Usar data URI diretamente (funciona melhor no React Native)
     const dataUri = `data:${mimeType};base64,${base64}`;
+    formData.append('file', { uri: dataUri, type: mimeType, name: filename });
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-    // Criar body como application/x-www-form-urlencoded (mais confiável no Android)
-    const body = new URLSearchParams();
-    body.append('file', dataUri);
-    body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-    // Adicionar pasta se fornecida
+    // Adicionar folder se fornecido (sem barra)
     if (options.folder) {
-      body.append('folder', options.folder);
-      console.log('Folder:', options.folder);
+      // Sanitizar folder name - remover barras e caracteres especiais
+      const sanitizedFolder = options.folder.replace(/[\/\\]/g, '_');
+      formData.append('folder', sanitizedFolder);
     }
 
-    console.log('Uploading to:', CLOUDINARY_UPLOAD_URL);
-
-    // Fazer upload usando URLSearchParams ao invés de FormData
+    // Fazer request
     const response = await fetch(CLOUDINARY_UPLOAD_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
+      body: formData,
     });
 
-    console.log('Response status:', response.status);
-
+    // Parse JSON
     const data = await response.json();
-    console.log('Response data:', data);
 
+    // Validar resposta
     if (!response.ok) {
       const errorMessage = data.error?.message || JSON.stringify(data) || 'Failed to upload image';
-      console.error('Upload failed:', errorMessage);
+      console.error('❌ Upload failed:', errorMessage);
       throw new Error(`Cloudinary error: ${errorMessage}`);
     }
 
-    console.log('Upload successful!');
     return {
       url: data.secure_url,
       publicId: data.public_id,
@@ -96,8 +81,7 @@ export const uploadImage = async (imageUri, options = {}) => {
       createdAt: data.created_at,
     };
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    console.error('Error details:', error.message);
+    console.error('❌ Cloudinary upload error:', error.message);
     throw error;
   }
 };

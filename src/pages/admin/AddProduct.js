@@ -155,8 +155,8 @@ export default function AddProduct() {
         name: productName,
         price: parseFloat(priceInBRL.toFixed(2)),
         category: Array.isArray(selectedCategories)
-          ? selectedCategories.join(', ') // Converte array para string separada por vírgula
-          : selectedCategories,
+          ? selectedCategories
+          : [selectedCategories],
         platform: selectedPlatform,
         description: description,
         img: imageUrl // URL do Cloudinary

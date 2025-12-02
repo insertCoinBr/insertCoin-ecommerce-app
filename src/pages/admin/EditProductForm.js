@@ -17,7 +17,7 @@ export default function EditProductForm() {
   const { product } = route.params;
 
   const [productName, setProductName] = useState(product.name || "");
-  const [price, setPrice] = useState(product.price ? Math.floor(product.price * 520).toString() : "0"); // Converter USD para BRL em centavos (sem arredondar)
+  const [price, setPrice] = useState(product.price ? Math.floor(product.price * 100).toString() : "0");
   const [description, setDescription] = useState(product.description || "");
   const [productImage, setProductImage] = useState(product.imageUrl || product.img || null);
   const [selectedCategories, setSelectedCategories] = useState(product.category || []);
